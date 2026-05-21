@@ -23,6 +23,7 @@ public class Formulario {
 
     private String beneficio;
 
+    @Lob
     private String descricao;
 
     private String prioridade;
