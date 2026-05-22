@@ -20,8 +20,13 @@ import {
     CreditCard,
     Download,
     FileText,
+    Fingerprint,
+    IdCard,
+    IdCardLanyard,
     Mail,
+    MailPlus,
     MapPin,
+    Phone,
     Smartphone,
     User,
     X,
@@ -114,22 +119,34 @@ export default function ReqDetailsModal({
                                     <User size={20} color="#3B82F6" /> Identificação
                                 </Heading>
                                 <DetailItem label="Nome Completo" value={req.usuario?.nome} />
-                                <DetailItem label="CPF" value={req.usuario?.cpf} icon={<CreditCard size={14} />} />
-                                <DetailItem label="RG" value={req.usuario?.rg} />
                                 <DetailItem label="Data Nascimento" value={req.usuario?.dataNascimento} icon={<Calendar size={14} />} />
-                                <DetailItem label="Matrícula" value={req.usuario?.matricula} />
+                                <DetailItem label="CPF" value={req.usuario?.cpf} icon={<CreditCard size={14} />} />
+                                <DetailItem label="RG" value={req.usuario?.rg} icon={<IdCard size={14} />} />
+                                <DetailItem label="Matrícula" value={req.usuario?.matricula} icon={<IdCardLanyard size={14} />} />
                                 <DetailItem label="Cargo" value={req.usuario?.cargo} icon={<Briefcase size={14} />} />
                                 <DetailItem label="Unidade" value={req.usuario?.unidade} icon={<Building size={14} />} />
+                                <DetailItem label="Sexo/Cor" value={`${req.usuario?.sexo} - ${req.usuario?.cor}`} icon={<Fingerprint size={14} />} />
                             </VStack>
 
                             {/* Contact & Address */}
                             <VStack align="stretch" gap={4}>
                                 <Heading size="md" display="flex" alignItems="center" gap={2} color="slate.800">
-                                    <Mail size={20} color="#3B82F6" /> Contato e Endereço
+                                    <Mail size={20} color="#3B82F6" /> Contato
                                 </Heading>
                                 <DetailItem label="E-mail" value={req.usuario?.email} icon={<Mail size={14} />} />
+                                {req.usuario.emailAlt ? (
+                                    <DetailItem label="E-mail Alternativo" value={req.usuario.emailAlt} icon={<MailPlus size={14} />} />
+                                ) : null}
                                 <DetailItem label="Celular" value={req.usuario?.celular} icon={<Smartphone size={14} />} />
-                                <DetailItem label="CEP" value={req.usuario?.endereco?.cep} icon={<MapPin size={14} />} />
+                                {req.usuario.telefone ? (
+                                    <DetailItem label="Telefone" value={req.usuario?.telefone} icon={<Phone size={14} />} />
+
+                                ) : (null)}
+
+                                <Heading size="md" display="flex" alignItems="center" gap={2} mt={3} color="slate.800">
+                                    <MapPin size={20} color="#3B82F6" /> Endereço
+                                </Heading>
+                                <DetailItem label="CEP" value={req.usuario?.endereco?.cep} />
                                 <DetailItem
                                     label="Endereço"
                                     value={`${req.usuario?.endereco?.endereco}, ${req.usuario?.endereco?.numero}`}

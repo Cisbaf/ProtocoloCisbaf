@@ -31,7 +31,7 @@ public class Usuarios {
     private String rg;
 
     @Column(nullable = false)
-    @JsonFormat(pattern = "yyyy-MM-dd")
+    @JsonFormat(pattern = "dd/MM/yyyy")
     private Date dataNascimento;
 
     @Column(nullable = false, unique = true, length = 100)

@@ -100,12 +100,19 @@ export default function RequerimentoForm() {
   // ── Submit ────────────────────────────────────────────────────────────────
   const onSubmit = async (data: FormValues) => {
     try {
+
+      let dataNascimentoFormatada = data.dataNascimento;
+      if (dataNascimentoFormatada && dataNascimentoFormatada.includes('-')) {
+        const [year, month, day] = dataNascimentoFormatada.split('-');
+        dataNascimentoFormatada = `${day}/${month}/${year}`;
+      }
+
       const payload = {
         usuario: {
           cpf: data.cpf,
           nome: data.nome,
           rg: data.rg,
-          dataNascimento: data.dataNascimento,
+          dataNascimento: dataNascimentoFormatada,
           sexo: data.sexo,
           email: data.email,
           telefone: data.telefone,
@@ -205,22 +212,30 @@ export default function RequerimentoForm() {
 
   // ── Busca de usuário por CPF ──────────────────────────────────────────────
   const fetchUsuario = async (cpf: string) => {
-    const clean = cpf.replace(/\D/g, '');
-    if (clean.length !== 11) return;
+    cpf = cpf.replace(/\D/g, '');
+    if (cpf.length !== 11) return;
 
     setIsFetchingUser(true);
     try {
-      const res = await fetch(`/api/usuarios/${clean}`);
+      const res = await fetch(`/api/usuarios/${cpf}`);
       if (!res.ok) {
-        // 404 → novo usuário, nada a fazer
         return;
       }
 
       const user = await res.json();
+      if (user.dataNascimento) {
+
+        if (user.dataNascimento.includes('/')) {
+          const [day, month, year] = user.dataNascimento.split('/');
+          setValue('dataNascimento', `${year}-${month}-${day}`);
+        } else {
+          // Caso a API retorne algo diferente, tenta setar o valor original
+          setValue('dataNascimento', user.dataNascimento);
+        }
+      }
 
       if (user.nome) setValue('nome', user.nome);
       if (user.rg) setValue('rg', user.rg);
-      if (user.dataNascimento) setValue('dataNascimento', user.dataNascimento);
       if (user.sexo) setValue('sexo', user.sexo);
       if (user.email) setValue('email', user.email);
       if (user.telefone) setValue('telefone', user.telefone);
@@ -270,12 +285,42 @@ export default function RequerimentoForm() {
     ],
   });
 
+  const sexos = createListCollection({
+    items: [
+      { label: 'Masculino', value: 'MASCULINO' },
+      { label: 'Feminino', value: 'FEMININO' },
+      { label: 'Não-binário', value: 'NAO_BINARIO' },
+      { label: 'Prefiro não responder', value: 'NAO_INFORMADO' },
+    ],
+  });
+
+  const cores = createListCollection({
+    items: [
+      { label: 'Branca', value: 'BRANCA' },
+      { label: 'Preta', value: 'PRETA' },
+      { label: 'Parda', value: 'PARDA' },
+      { label: 'Amarela', value: 'AMARELA' },
+      { label: 'Indígena', value: 'INDIGENA' },
+      { label: 'Prefiro não informar', value: 'NAO_INFORMADO' },
+    ],
+  });
+
   const beneficios = createListCollection({
     items: [
       { label: 'Refeição', value: 'refeicao' },
       { label: 'Transporte', value: 'transporte' },
     ],
   });
+
+  const unidades = createListCollection({
+    items: [
+      { label: 'Unidade I - Sede CISBAF', value: 'CISBAF' },
+      { label: 'Unidade II - CRUR/BF', value: 'CRUR' },
+      { label: 'Unidade III - Base SAMU Queimados', value: 'QUEIMADOS' },
+      { label: 'Unidade IV - Base SAMU Nilópolis', value: 'NILOPOLIS' },
+      { label: 'Unidade V - UPA Jardim Íris', value: 'IRIS' },
+    ]
+  })
 
   // ─── Render ───────────────────────────────────────────────────────────────
   return (
@@ -402,20 +447,56 @@ export default function RequerimentoForm() {
                       {/* Sexo */}
                       <Field.Root>
                         <Field.Label {...labelStyle}>SEXO</Field.Label>
-                        <Input
-                          {...register('sexo')}
-                          {...inputStyle}
-                          placeholder="Masculino / Feminino"
+                        <Controller
+                          control={control}
+                          name="sexo"
+                          render={({ field }) => (
+                            <Select.Root
+                              collection={sexos}
+                              value={field.value ? [field.value] : []}
+                              onValueChange={(details) => field.onChange(details.value[0])}
+                            >
+                              <Select.Trigger {...inputStyle}>
+                                <Select.ValueText placeholder="Selecione..." />
+                                <Select.Indicator />
+                              </Select.Trigger>
+                              <Select.Content>
+                                {sexos.items.map((item) => (
+                                  <Select.Item key={item.value} item={item}>
+                                    {item.label}
+                                  </Select.Item>
+                                ))}
+                              </Select.Content>
+                            </Select.Root>
+                          )}
                         />
                       </Field.Root>
 
-                      {/* Cor/Raça */}
+                      {/* Cor */}
                       <Field.Root>
-                        <Field.Label {...labelStyle}>COR / RAÇA</Field.Label>
-                        <Input
-                          {...register('cor')}
-                          {...inputStyle}
-                          placeholder="Ex: Parda"
+                        <Field.Label {...labelStyle}>COR / ETNIA</Field.Label>
+                        <Controller
+                          control={control}
+                          name="cor"
+                          render={({ field }) => (
+                            <Select.Root
+                              collection={cores}
+                              value={field.value ? [field.value] : []}
+                              onValueChange={(details) => field.onChange(details.value[0])}
+                            >
+                              <Select.Trigger {...inputStyle}>
+                                <Select.ValueText placeholder="Selecione..." />
+                                <Select.Indicator />
+                              </Select.Trigger>
+                              <Select.Content>
+                                {cores.items.map((item) => (
+                                  <Select.Item key={item.value} item={item}>
+                                    {item.label}
+                                  </Select.Item>
+                                ))}
+                              </Select.Content>
+                            </Select.Root>
+                          )}
                         />
                       </Field.Root>
                     </SimpleGrid>
@@ -620,11 +701,26 @@ export default function RequerimentoForm() {
 
                       <Field.Root required invalid={!!errors.unidade}>
                         <Field.Label {...labelStyle}>UNIDADE</Field.Label>
-                        <Input
-                          {...register('unidade', { required: true })}
-                          {...inputStyle}
-                          placeholder="Unidade de Lotação"
-                        />
+                        <Controller control={control} name="unidade"
+                          render={({ field }) => (
+                            <Select.Root collection={unidades} value={field.value ? [field.value] : []} onValueChange={(change) => field.onChange(change.value[0])}>
+                              <Select.Trigger {...inputStyle}>
+                                <Select.ValueText placeholder='Selecione uma unidade...' />
+                                <Select.Indicator />
+                              </Select.Trigger>
+                              <Select.Content>
+                                {unidades.items.map((item) => (
+                                  <Select.Item key={item.value} item={item}>
+                                    {item.label}
+                                  </Select.Item>
+                                ))}
+
+                              </Select.Content>
+                            </Select.Root>
+                          )}>
+
+
+                        </Controller>
                       </Field.Root>
                     </SimpleGrid>
 
@@ -655,9 +751,11 @@ export default function RequerimentoForm() {
                           onValueChange={(details) =>
                             setValue('assunto', details.value[0], { shouldValidate: true })
                           }
+                          w={450}
                         >
-                          <Select.Trigger>
+                          <Select.Trigger {...inputStyle} >
                             <Select.ValueText placeholder="Selecione um assunto" />
+                            <Select.Indicator />
                           </Select.Trigger>
                           <Select.Content>
                             {assuntos.items.map((item) => (
@@ -690,9 +788,11 @@ export default function RequerimentoForm() {
                             onValueChange={(details) =>
                               setValue('beneficio', details.value[0], { shouldValidate: true })
                             }
+                            w={450}
                           >
-                            <Select.Trigger>
+                            <Select.Trigger {...inputStyle}>
                               <Select.ValueText placeholder="Selecione o benefício" />
+                              <Select.Indicator />
                             </Select.Trigger>
                             <Select.Content>
                               {beneficios.items.map((item) => (
@@ -709,7 +809,7 @@ export default function RequerimentoForm() {
                       )}
 
                       {/* Descrição */}
-                      <Field.Root invalid={!!errors.descricao}>
+                      <Field.Root invalid={!!errors.descricao} required>
                         <Field.Label
                           fontWeight="700"
                           fontSize="sm"
