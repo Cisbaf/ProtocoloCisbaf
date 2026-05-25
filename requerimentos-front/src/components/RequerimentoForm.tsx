@@ -124,12 +124,12 @@ export default function RequerimentoForm() {
           unidade: data.unidade,
           endereco: {
             cep: data.cep,
-            endereco: data.logradouro,   // → campo "endereco" na entidade
+            endereco: data.logradouro,
             numero: data.numero,
             complemento: data.complemento,
             bairro: data.bairro,
-            cidade: data.localidade,     // → campo "cidade" na entidade
-            estado: data.uf,             // → campo "estado" na entidade
+            cidade: data.localidade,
+            estado: data.uf,
           },
         },
         assunto: data.assunto,
@@ -143,7 +143,6 @@ export default function RequerimentoForm() {
       if (data.arquivo && data.arquivo.length > 0) {
         formData.append('arquivo', data.arquivo[0]);
       } else {
-        // Backend exige o part "arquivo" mesmo vazio; envia blob vazio
         formData.append('arquivo', new Blob([]), '');
       }
 
@@ -159,7 +158,6 @@ export default function RequerimentoForm() {
       reset();
       setResetKey((prev) => prev + 1);
 
-      // Auto-hide after 15 seconds
       setTimeout(() => {
         setSubmittedId(null);
       }, 15000);
@@ -229,7 +227,6 @@ export default function RequerimentoForm() {
           const [day, month, year] = user.dataNascimento.split('/');
           setValue('dataNascimento', `${year}-${month}-${day}`);
         } else {
-          // Caso a API retorne algo diferente, tenta setar o valor original
           setValue('dataNascimento', user.dataNascimento);
         }
       }
@@ -249,13 +246,12 @@ export default function RequerimentoForm() {
       if (user.endereco) {
         const e = user.endereco;
         if (e.cep) setValue('cep', e.cep);
-        // A entidade usa "endereco" mas o form chama "logradouro"
         if (e.endereco) setValue('logradouro', e.endereco);
         if (e.numero) setValue('numero', e.numero);
         if (e.complemento) setValue('complemento', e.complemento);
         if (e.bairro) setValue('bairro', e.bairro);
-        if (e.cidade) setValue('localidade', e.cidade);   // cidade → localidade
-        if (e.estado) setValue('uf', e.estado);           // estado → uf
+        if (e.cidade) setValue('localidade', e.cidade);
+        if (e.estado) setValue('uf', e.estado);
       }
 
       toaster.create({
@@ -307,7 +303,7 @@ export default function RequerimentoForm() {
 
   const beneficios = createListCollection({
     items: [
-      { label: 'Refeição', value: 'refeicao' },
+      { label: 'Refeição', value: 'refeição' },
       { label: 'Transporte', value: 'transporte' },
     ],
   });
@@ -383,7 +379,7 @@ export default function RequerimentoForm() {
                     />
 
                     <SimpleGrid columns={{ base: 1, md: 2, lg: 3 }} gap={6}>
-                      {/* CPF */}
+                      {/* CPF (Apenas números, máximo 11) */}
                       <Field.Root required invalid={!!errors.cpf}>
                         <Field.Label {...labelStyle}>
                           <CreditCard size={14} /> CPF
@@ -394,10 +390,15 @@ export default function RequerimentoForm() {
                         <Input
                           {...register('cpf', {
                             required: 'CPF obrigatório',
+                            onChange: (e) => {
+                              // Arranca qualquer coisa que não seja número
+                              e.target.value = e.target.value.replace(/\D/g, '');
+                            },
                             onBlur: (e) => fetchUsuario(e.target.value),
                           })}
+                          maxLength={11}
                           {...inputStyle}
-                          placeholder="000.000.000-00"
+                          placeholder="Números do CPF"
                         />
                         <Field.ErrorText style={{ color: '#DC2626', fontSize: '12px' }}>
                           {errors.cpf?.message}
@@ -413,6 +414,7 @@ export default function RequerimentoForm() {
                           {...register('nome', { required: 'Nome obrigatório' })}
                           {...inputStyle}
                           placeholder="Seu nome completo"
+                          maxLength={70}
                         />
                         <Field.ErrorText style={{ color: '#DC2626', fontSize: '12px' }}>
                           {errors.nome?.message}
@@ -423,8 +425,15 @@ export default function RequerimentoForm() {
                       <Field.Root required invalid={!!errors.rg}>
                         <Field.Label {...labelStyle}>DOCUMENTO RG</Field.Label>
                         <Input
-                          {...register('rg', { required: 'RG obrigatório' })}
+                          {...register('rg', {
+                            required: 'RG obrigatório',
+                            onChange: (e) => {
+                              // Arranca qualquer coisa que não seja número
+                              e.target.value = e.target.value.replace(/\D/g, '');
+                            },
+                          })}
                           {...inputStyle}
+                          maxLength={10}
                           placeholder="Número do RG"
                         />
                         <Field.ErrorText style={{ color: '#DC2626', fontSize: '12px' }}>
@@ -524,6 +533,7 @@ export default function RequerimentoForm() {
                           {...register('email', { required: true })}
                           {...inputStyle}
                           placeholder="seu@email.com"
+                          maxLength={30}
                         />
                       </Field.Root>
 
@@ -535,28 +545,39 @@ export default function RequerimentoForm() {
                           {...register('emailAlt')}
                           {...inputStyle}
                           placeholder="outro@email.com"
+                          maxLength={30}
                         />
                       </Field.Root>
 
-                      {/* Celular */}
+                      {/* Celular (Apenas números, máximo 11) */}
                       <Field.Root>
                         <Field.Label {...labelStyle}>
                           <Smartphone size={14} /> CELULAR
                         </Field.Label>
                         <Input
-                          {...register('celular')}
+                          {...register('celular', {
+                            onChange: (e) => {
+                              e.target.value = e.target.value.replace(/\D/g, '');
+                            }
+                          })}
+                          maxLength={11}
                           {...inputStyle}
-                          placeholder="(00) 00000-0000"
+                          placeholder="Apenas números"
                         />
                       </Field.Root>
 
-                      {/* Telefone */}
+                      {/* Telefone (Apenas números, máximo 10) */}
                       <Field.Root>
                         <Field.Label {...labelStyle}>TELEFONE FIXO</Field.Label>
                         <Input
-                          {...register('telefone')}
+                          {...register('telefone', {
+                            onChange: (e) => {
+                              e.target.value = e.target.value.replace(/\D/g, '');
+                            }
+                          })}
+                          maxLength={10}
                           {...inputStyle}
-                          placeholder="(00) 0000-0000"
+                          placeholder="Apenas números"
                         />
                       </Field.Root>
                     </SimpleGrid>
@@ -582,7 +603,7 @@ export default function RequerimentoForm() {
                       </Flex>
 
                       <SimpleGrid columns={{ base: 1, md: 4 }} gap={5}>
-                        {/* CEP – dispara busca no backend */}
+                        {/* CEP (Apenas números, máximo 8) */}
                         <Field.Root required>
                           <Field.Label {...labelStyle}>
                             CEP
@@ -593,15 +614,19 @@ export default function RequerimentoForm() {
                           <Input
                             {...register('cep', {
                               required: true,
+                              onChange: (e) => {
+                                e.target.value = e.target.value.replace(/\D/g, '');
+                              },
                               onBlur: (e) => fetchCep(e.target.value),
                             })}
+                            maxLength={8}
                             {...inputStyle}
                             h="50px"
-                            placeholder="00000-000"
+                            placeholder="Apenas números"
                           />
                         </Field.Root>
 
-                        {/* Logradouro – preenchido pelo CEP (campo "endereco" na entidade) */}
+                        {/* Logradouro */}
                         <Box gridColumn={{ md: 'span 2' }}>
                           <Field.Root required>
                             <Field.Label {...labelStyle}>LOGRADOURO</Field.Label>
@@ -609,7 +634,10 @@ export default function RequerimentoForm() {
                               {...register('logradouro', { required: true })}
                               {...inputStyle}
                               h="50px"
+                              maxLength={50}
+
                             />
+
                           </Field.Root>
                         </Box>
 
@@ -617,9 +645,15 @@ export default function RequerimentoForm() {
                         <Field.Root required>
                           <Field.Label {...labelStyle}>NÚMERO</Field.Label>
                           <Input
-                            {...register('numero', { required: true })}
+                            {...register('numero', {
+                              required: true,
+                              onChange: (e) => {
+                                e.target.value = e.target.value.replace(/\D/g, '');
+                              }
+                            })}
                             {...inputStyle}
                             h="50px"
+                            maxLength={8}
                           />
                         </Field.Root>
 
@@ -631,6 +665,7 @@ export default function RequerimentoForm() {
                             {...inputStyle}
                             h="50px"
                             placeholder="Apto, Bloco…"
+                            maxLength={30}
                           />
                         </Field.Root>
 
@@ -641,28 +676,37 @@ export default function RequerimentoForm() {
                             {...register('bairro', { required: true })}
                             {...inputStyle}
                             h="50px"
+                            maxLength={30}
+
                           />
                         </Field.Root>
 
-                        {/* Cidade – campo "localidade" no form / "cidade" na entidade */}
+                        {/* Cidade */}
                         <Field.Root required>
                           <Field.Label {...labelStyle}>CIDADE</Field.Label>
                           <Input
                             {...register('localidade', { required: true })}
                             {...inputStyle}
                             h="50px"
+                            maxLength={30}
+
                           />
                         </Field.Root>
 
-                        {/* UF – campo "uf" no form / "estado" na entidade */}
+                        {/* UF (Apenas Letras, máximo 2, Maiúsculo) */}
                         <Field.Root required>
                           <Field.Label {...labelStyle}>UF</Field.Label>
                           <Input
-                            {...register('uf', { required: true })}
+                            {...register('uf', {
+                              required: true,
+                              onChange: (e) => {
+                                e.target.value = e.target.value.replace(/[^A-Za-z]/g, '').toUpperCase();
+                              }
+                            })}
                             {...inputStyle}
                             h="50px"
                             maxLength={2}
-                            placeholder="SP"
+                            placeholder="RJ"
                           />
                         </Field.Root>
                       </SimpleGrid>
@@ -681,12 +725,19 @@ export default function RequerimentoForm() {
                     />
 
                     <SimpleGrid columns={{ base: 1, md: 3 }} gap={6}>
+                      {/* MATRÍCULA (Apenas números, limite arbitrário de 10) */}
                       <Field.Root required invalid={!!errors.matricula}>
                         <Field.Label {...labelStyle}>MATRÍCULA</Field.Label>
                         <Input
-                          {...register('matricula', { required: true })}
+                          {...register('matricula', {
+                            required: true,
+                            onChange: (e) => {
+                              e.target.value = e.target.value.replace(/\D/g, '');
+                            }
+                          })}
+                          maxLength={15}
                           {...inputStyle}
-                          placeholder="000000"
+                          placeholder="Apenas números"
                         />
                       </Field.Root>
 
@@ -696,6 +747,8 @@ export default function RequerimentoForm() {
                           {...register('cargo', { required: true })}
                           {...inputStyle}
                           placeholder="Seu cargo"
+                          maxLength={50}
+
                         />
                       </Field.Root>
 
@@ -714,12 +767,9 @@ export default function RequerimentoForm() {
                                     {item.label}
                                   </Select.Item>
                                 ))}
-
                               </Select.Content>
                             </Select.Root>
                           )}>
-
-
                         </Controller>
                       </Field.Root>
                     </SimpleGrid>
@@ -877,7 +927,6 @@ export default function RequerimentoForm() {
                       {/* Prioridade */}
                       <Box p={5} bg="blue.50" borderRadius="xl" border="2px solid" borderColor="blue.100">
                         <VStack align="stretch" gap={4}>
-                          {/* Cabeçalho do Bloco no mesmo estilo do Checkbox */}
                           <HStack gap={3} align="flex-start">
                             <Box bg="blue.600" p={2} borderRadius="xl" color="white" mt={0.5}>
                               <Scale size={18} />
@@ -892,7 +941,6 @@ export default function RequerimentoForm() {
                             </VStack>
                           </HStack>
 
-                          {/* Dropdown Estilizado integrado ao React Hook Form */}
                           <Controller
                             name="prioridade_tramitacao_tipo"
                             control={control}

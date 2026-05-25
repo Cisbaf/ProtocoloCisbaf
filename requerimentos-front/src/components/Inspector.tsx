@@ -44,8 +44,9 @@ export default function Inspector() {
   const [isRefuseModalOpen, setIsRefuseModalOpen] = useState(false);
   const [refusalReason, setRefusalReason] = useState("");
   const [reqToRefuseId, setReqToRefuseId] = useState<string | null>(null);
+  const [updatingId, setUpdatingId] = useState<string | null>(null);
 
-  const bases = Array.from(new Set(requerimentos.map(r => r.usuario?.unidade).filter(Boolean)));
+  const bases = Array.from(new Set(requerimentos.map(r => r.unidade).filter(Boolean)));
   const assuntosUnicos = Array.from(new Set(requerimentos.map(r => r.assunto).filter(Boolean)));
 
   const fetchRequerimentos = async () => {
@@ -68,6 +69,8 @@ export default function Inspector() {
 
   const updateStatus = async (id: string, approved: boolean, motivo?: string) => {
     try {
+      setUpdatingId(id); // Trava apenas a linha deste ID
+
       const res = await fetch(`/api/requerimentos/${id}/status`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
@@ -76,12 +79,23 @@ export default function Inspector() {
           motivo: motivo
         })
       });
-      if (!res.ok) throw new Error("Erro ao atualizar status");
+
+      if (!res.ok) {
+        throw new Error("Erro ao atualizar status");
+      }
+
       toaster.create({ title: 'Sucesso', type: 'success' });
-      fetchRequerimentos();
+
+      // Atualiza o requerimento localmente para não precisar recarregar a tabela
+      setRequerimentos(prev =>
+        prev.map(req => req.id === id ? { ...req, confirmacao: approved } : req)
+      );
+
     } catch (err: unknown) {
       const errorMessage = err instanceof Error ? err.message : 'Erro interno';
       toaster.create({ title: 'Erro', description: errorMessage, type: 'error' });
+    } finally {
+      setUpdatingId(null); // Libera a interface
     }
   };
 
@@ -129,7 +143,7 @@ export default function Inspector() {
       r.usuario?.cpf.includes(nameFilter) ||
       r.usuario?.matricula.includes(nameFilter);
 
-    const matchesBase = baseFilter === "all" || r.usuario?.unidade === baseFilter;
+    const matchesBase = baseFilter === "all" || r.unidade === baseFilter;
     const matchesAssunto = assuntoFilter === "all" || r.assunto === assuntoFilter;
 
     const matchesStatus = statusFilter === "all" ||
@@ -356,7 +370,7 @@ export default function Inspector() {
                                     <Text fontSize="xs" fontWeight="bold" color="gray.500">{r.usuario?.cargo?.toUpperCase()}</Text>
                                     <Badge size="sm" variant="subtle">{r.usuario?.matricula}</Badge>
                                   </HStack>
-                                  <Text fontSize="xs" color="gray.400">{r.usuario?.unidade}</Text>
+                                  <Text fontSize="xs" color="gray.400">{r.unidade}</Text>
                                 </VStack>
                               </HStack>
                             </Table.Cell>
@@ -383,9 +397,9 @@ export default function Inspector() {
                             </Table.Cell>
                             <Table.Cell textAlign="right" px={6}>
                               <HStack gap={2} justify="flex-end">
-                                <Button size="sm" variant="ghost" colorPalette="blue" borderRadius="lg" onClick={() => setSelectedReq(r)}><Eye size={18} /></Button>
-                                <Button size="sm" colorPalette="green" borderRadius="lg" onClick={() => r.id && updateStatus(r.id, true)} disabled={r.confirmacao === true} shadow="sm"><CheckCircle size={18} /></Button>
-                                <Button size="sm" colorPalette="red" borderRadius="lg" onClick={() => { setReqToRefuseId(r.id || null); setIsRefuseModalOpen(true); }} disabled={r.confirmacao === false} shadow="sm"><XCircle size={18} /></Button>
+                                <Button size="sm" variant="ghost" colorPalette="blue" borderRadius="lg" onClick={() => setSelectedReq(r)} disabled={updatingId === r.id}><Eye size={18} /></Button>
+                                <Button size="sm" colorPalette="green" borderRadius="lg" onClick={() => r.id && updateStatus(r.id, true)} disabled={r.confirmacao === true || updatingId === r.id} loading={updatingId === r.id ? true : undefined} shadow="sm"><CheckCircle size={18} /></Button>
+                                <Button size="sm" colorPalette="red" borderRadius="lg" onClick={() => { setReqToRefuseId(r.id || null); setIsRefuseModalOpen(true); }} disabled={r.confirmacao === false || updatingId === r.id} shadow="sm"><XCircle size={18} /></Button>
                               </HStack>
                             </Table.Cell>
                           </Table.Row>

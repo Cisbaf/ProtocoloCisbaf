@@ -249,7 +249,7 @@ export default function BuscaForm() {
                                     <SimpleGrid columns={{ base: 1, md: 2 }} gap={4}>
                                         <DetailCard icon={<User size={20} />} label="NOME" value={data.usuario?.nome} />
                                         <DetailCard icon={<Hash size={20} />} label="MATRÍCULA" value={data.usuario?.matricula} />
-                                        <DetailCard icon={<MapPin size={20} />} label="UNIDADE" value={data.usuario?.unidade} />
+                                        <DetailCard icon={<MapPin size={20} />} label="UNIDADE" value={data.unidade} />
                                         <DetailCard icon={<Briefcase size={20} />} label="CARGO" value={data.usuario?.cargo} />
                                         <DetailCard icon={<FileText size={20} />} label="ASSUNTO" value={data.assunto} />
                                         {data.beneficio && (

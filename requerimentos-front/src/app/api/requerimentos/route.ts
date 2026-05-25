@@ -4,7 +4,7 @@ import { NextResponse } from 'next/server';
 export async function GET(request: Request) {
   try {
     const cookieHeader = request.headers.get('cookie');
-    const res = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_INTERNAL_URL}/form`, {
+    const res = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_INTERNAL_URL}/form/admin`, {
       headers: {
         ...(cookieHeader ? { Cookie: cookieHeader } : {}),
       },

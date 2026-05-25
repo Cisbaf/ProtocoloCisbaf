@@ -23,7 +23,6 @@ export interface Usuario {
   matricula: string;
   cargo: string;
   cor?: string;
-  unidade: string;
   endereco: Endereco;
 }
 
@@ -37,6 +36,7 @@ export interface Formulario {
   confirmacao?: boolean | null; // @Builder.Default = null (preenchido pelo RH)
   motivo?: string;        // preenchido pelo RH na recusa
   arquivoPath?: string;   // preenchido pelo backend após upload
+  unidade: string;
   usuario: Usuario;
 }
 

@@ -124,7 +124,7 @@ export default function ReqDetailsModal({
                                 <DetailItem label="RG" value={req.usuario?.rg} icon={<IdCard size={14} />} />
                                 <DetailItem label="Matrícula" value={req.usuario?.matricula} icon={<IdCardLanyard size={14} />} />
                                 <DetailItem label="Cargo" value={req.usuario?.cargo} icon={<Briefcase size={14} />} />
-                                <DetailItem label="Unidade" value={req.usuario?.unidade} icon={<Building size={14} />} />
+                                <DetailItem label="Unidade" value={req.unidade} icon={<Building size={14} />} />
                                 <DetailItem label="Sexo/Cor" value={`${req.usuario?.sexo} - ${req.usuario?.cor}`} icon={<Fingerprint size={14} />} />
                             </VStack>
 
