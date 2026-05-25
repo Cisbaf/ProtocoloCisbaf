@@ -64,9 +64,6 @@ public class Usuarios {
     @Enumerated(EnumType.STRING)
     private Sexos sexo;
 
-    @Enumerated(EnumType.STRING)
-    private Unidades unidade;
-
     @Embedded
     private Endereco endereco;
 }

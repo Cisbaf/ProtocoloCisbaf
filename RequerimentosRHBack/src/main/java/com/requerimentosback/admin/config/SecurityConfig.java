@@ -50,6 +50,8 @@ public class SecurityConfig {
                         // ==========================
 
                         .requestMatchers(HttpMethod.GET, "/form").authenticated()
+                        .requestMatchers(HttpMethod.GET, "/form/admin").authenticated()
+
 
                         .requestMatchers(HttpMethod.GET, "/form/{id}").permitAll()
 
@@ -62,7 +64,6 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.PUT, "/form/{id}").permitAll()
 
                         .requestMatchers(HttpMethod.DELETE, "/form/{id}").authenticated()
-
 
                         // ==========================
 
@@ -79,6 +80,18 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.PUT, "/user/{cpf}").authenticated()
 
                         .requestMatchers(HttpMethod.DELETE, "/user/{cpf}").authenticated()
+
+                        // ==========================
+
+                        // SWAGGER UI
+
+                        // ==========================
+
+                        .requestMatchers(
+                                "/v3/api-docs/**",
+                                "/swagger-ui/**",
+                                "/swagger-ui.html"
+                        ).permitAll()
 
                 )
                 .addFilterBefore(jwtRequestFilter, UsernamePasswordAuthenticationFilter.class);

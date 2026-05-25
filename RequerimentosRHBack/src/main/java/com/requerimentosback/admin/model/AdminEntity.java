@@ -1,9 +1,7 @@
 package com.requerimentosback.admin.model;
 
-import jakarta.persistence.Entity;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
+import com.requerimentosback.form.model.enuns.Unidades;
+import jakarta.persistence.*;
 import lombok.*;
 
 @Entity
@@ -18,5 +16,6 @@ public class AdminEntity {
     private Long id;
     private String username;
     private String password;
-    private String base;
+    @Enumerated(EnumType.STRING)
+    private Unidades base;
 }

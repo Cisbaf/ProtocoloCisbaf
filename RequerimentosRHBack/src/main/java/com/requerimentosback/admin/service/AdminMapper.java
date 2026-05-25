@@ -3,6 +3,7 @@ package com.requerimentosback.admin.service;
 import com.requerimentosback.admin.model.AdminEntity;
 import com.requerimentosback.admin.model.dtos.AdminRequest;
 import com.requerimentosback.admin.model.dtos.AdminResponse;
+import com.requerimentosback.form.model.enuns.Unidades;
 import org.springframework.stereotype.Service;
 
 @Service
@@ -15,7 +16,7 @@ public class AdminMapper {
         return AdminEntity.builder()
                 .username(request.username())
                 .password(request.password())
-                .base(request.base())
+                .base(Unidades.valueOf(request.base().toUpperCase()))
                 .build();
     }
     protected AdminResponse toAdminResponse(AdminEntity adminEntity) {
@@ -25,7 +26,7 @@ public class AdminMapper {
         return AdminResponse.builder()
                 .id(adminEntity.getId())
                 .username(adminEntity.getUsername())
-                .base(adminEntity.getBase())
+                .base(adminEntity.getBase().toString())
                 .build();
     }
 }

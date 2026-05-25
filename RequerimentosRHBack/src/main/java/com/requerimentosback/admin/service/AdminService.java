@@ -68,7 +68,7 @@ public class AdminService implements UserDetailsService {
                     ? user.getBase()
                     : "ADMINISTRACAO";
 
-            List<GrantedAuthority> authorities = List.of(new SimpleGrantedAuthority(userBase));
+            List<GrantedAuthority> authorities = List.of(new SimpleGrantedAuthority(userBase.toString()));
             return new User(username, user.getPassword(), authorities);
         } catch (UsernameNotFoundException e) {
             throw new UsernameNotFoundException(e.getMessage());

@@ -1,5 +1,6 @@
 package com.requerimentosback.form.model;
 
+import com.requerimentosback.form.model.enuns.Unidades;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -34,6 +35,9 @@ public class Formulario {
     private String motivo;
 
     private String arquivoPath;
+
+    @Enumerated(EnumType.STRING)
+    private Unidades unidade;
 
     @ManyToOne(cascade = CascadeType.PERSIST)
     @JoinColumn(name = "userId")

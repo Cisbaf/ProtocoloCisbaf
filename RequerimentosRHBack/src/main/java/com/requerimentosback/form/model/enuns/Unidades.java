@@ -8,7 +8,8 @@ public enum Unidades {
     CRUR("CRUR/BF"),
     QUEIMADOS("Base SAMU Queimados"),
     NILOPOLIS("Base SSAMU Nilópolis"),
-    IRIS("UPA Jardim Íris");
+    IRIS("UPA Jardim Íris"),
+    ADMIN("Administracao");
 
     private final String unidade;
     Unidades(String unidade) {
