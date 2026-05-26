@@ -14,6 +14,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.security.Principal;
+import java.util.Date;
 import java.util.List;
 import java.util.Optional;
 
@@ -66,6 +67,7 @@ public class FormularioService {
                 .orElseGet(() -> usuariosRepository.save(usuarioRequest));
 
         formulario.setUsuario(usuario);
+        formulario.setDataCriacao(new Date());
         formulario = repository.save(formulario);
 
         emailService.enviarEmailNovoFormulario(formulario);

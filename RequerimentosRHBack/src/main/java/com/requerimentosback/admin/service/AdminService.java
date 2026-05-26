@@ -30,11 +30,6 @@ public class AdminService implements UserDetailsService {
     public AdminResponse findByUsername(@NonNull String username) {
         return adminRepository.findByUsername(username).map(adminMapper::toAdminResponse).orElse(null);
     }
-
-    private AdminEntity findEntity(@NonNull String username) {
-        return adminRepository.findByUsername(username).orElse(null);
-    }
-
     public AdminResponse create(AdminRequest request) throws AuthenticationException {
         if (request == null || request.username() == null) {
             return null;
@@ -43,13 +38,14 @@ public class AdminService implements UserDetailsService {
         if (!exist) {
             throw new AuthenticationException("Usuário já cadastrado");
         }
-        String password = passwordEncoder.encode(request.password());
 
+        String password = passwordEncoder.encode(request.password());
         var entity = adminMapper.toAdminEntity(request);
 
-        entity.setPassword(passwordEncoder.encode(password));
+        entity.setPassword(password);
+        var savedEntity = adminRepository.save(entity);
 
-        return adminMapper.toAdminResponse(entity);
+        return adminMapper.toAdminResponse(savedEntity);
     }
 
 

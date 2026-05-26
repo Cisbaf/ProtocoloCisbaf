@@ -6,6 +6,7 @@ import lombok.*;
 
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.Date;
 import java.util.concurrent.ThreadLocalRandom;
 
 @Entity
@@ -27,6 +28,10 @@ public class Formulario {
     @Lob
     private String descricao;
 
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false, length = 100)
+    private Unidades unidade;
+
     private String prioridade;
 
     @Builder.Default
@@ -36,8 +41,7 @@ public class Formulario {
 
     private String arquivoPath;
 
-    @Enumerated(EnumType.STRING)
-    private Unidades unidade;
+    private Date dataCriacao;
 
     @ManyToOne(cascade = CascadeType.PERSIST)
     @JoinColumn(name = "userId")

@@ -29,17 +29,24 @@ public class AdminController {
 
     @PostMapping("/register")
     public ResponseEntity<AdminResponse> save(@RequestBody AdminRequest request) throws AuthenticationException {
+        try {
+            var admin = adminService.create(request);
+            URI uri = ServletUriComponentsBuilder.fromCurrentRequest().path("/{id}").build(admin.id());
 
-        var admin = adminService.create(request);
-        URI uri = ServletUriComponentsBuilder.fromCurrentRequest().path("/{id}").build(admin.id());
-
-        return ResponseEntity.created(uri).build();
+            return ResponseEntity.created(uri).build();
+        }catch (Exception e){
+            throw new AuthenticationException(e.getMessage());
+        }
     }
 
     @PostMapping("/login")
     public ResponseEntity<Void> login(@RequestBody LoginDTO login, HttpServletResponse response) throws AuthenticationException {
-        loginService.login(login, response);
-        return ResponseEntity.status(HttpStatus.ACCEPTED).build();
+        try {
+            loginService.login(login, response);
+            return ResponseEntity.status(HttpStatus.ACCEPTED).build();
+        }catch (Exception e){
+            throw new AuthenticationException(e.getMessage());
+        }
     }
 
     @DeleteMapping("/{id}")
