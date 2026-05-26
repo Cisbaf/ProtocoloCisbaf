@@ -10,7 +10,7 @@ export async function PUT(
     const body = await request.json();
     const cookieHeader = request.headers.get('cookie');
 
-    const getRes = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_INTERNAL_URL}/form/${id}`, {
+    const getRes = await fetch(`${process.env.BACKEND_INTERNAL_URL}/form/${id}`, {
       headers: {
         ...(cookieHeader ? { Cookie: cookieHeader } : {}),
       },
@@ -23,7 +23,7 @@ export async function PUT(
       existing.motivo = body.motivo;
     }
 
-    const putRes = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_INTERNAL_URL}/form/${id}`, {
+    const putRes = await fetch(`${process.env.BACKEND_INTERNAL_URL}/form/${id}`, {
       method: 'PUT',
       headers: {
         'Content-Type': 'application/json',

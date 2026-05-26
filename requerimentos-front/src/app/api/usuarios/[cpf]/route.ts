@@ -7,7 +7,7 @@ export async function GET(
   const { cpf } = await params;
 
   try {
-    const res = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_INTERNAL_URL}/user/${cpf}`, {});
+    const res = await fetch(`${process.env.BACKEND_INTERNAL_URL}/user/${cpf}`, {});
 
     if (res.status === 404) {
       return NextResponse.json({ error: 'Usuário não encontrado' }, { status: 404 });

@@ -4,3 +4,4 @@ private-folder-alias.json
 .vscode
 uploads
 RequerimentosRHBack/src/main/resources/application-dev.properties
+docker-compose.yml

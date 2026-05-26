@@ -57,7 +57,7 @@ export default function Login() {
                   Acesso Restrito
                 </Heading>
                 <Text color="gray.500" fontWeight="medium">
-                  Área Administrativa RH
+                  Área Administrativa
                 </Text>
               </VStack>
 

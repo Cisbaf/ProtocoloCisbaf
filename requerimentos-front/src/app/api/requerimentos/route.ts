@@ -4,7 +4,7 @@ import { NextResponse } from 'next/server';
 export async function GET(request: Request) {
   try {
     const cookieHeader = request.headers.get('cookie');
-    const res = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_INTERNAL_URL}/form/admin`, {
+    const res = await fetch(`${process.env.BACKEND_INTERNAL_URL}/form/admin`, {
       headers: {
         ...(cookieHeader ? { Cookie: cookieHeader } : {}),
       },
@@ -30,7 +30,7 @@ export async function POST(request: Request) {
     if (formulario) backendFormData.append('formulario', formulario);
     if (arquivo) backendFormData.append('arquivo', arquivo);
 
-    const res = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_INTERNAL_URL}/form`, {
+    const res = await fetch(`${process.env.BACKEND_INTERNAL_URL}/form`, {
       method: 'POST',
       body: backendFormData,
     });

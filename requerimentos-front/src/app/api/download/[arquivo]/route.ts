@@ -7,7 +7,7 @@ export async function GET(
   const { arquivo } = await params;
 
   try {
-    const urlBackend = `${process.env.NEXT_PUBLIC_BACKEND_INTERNAL_URL}/form/arquivos/download/${encodeURIComponent(arquivo)}`;
+    const urlBackend = `${process.env.BACKEND_INTERNAL_URL}/form/arquivos/download/${encodeURIComponent(arquivo)}`;
     const cookieHeader = request.headers.get('cookie');
 
     const res = await fetch(urlBackend, {

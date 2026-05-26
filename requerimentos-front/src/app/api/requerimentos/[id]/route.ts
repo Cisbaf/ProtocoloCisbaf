@@ -8,7 +8,7 @@ export async function GET(
   const cookieHeader = request.headers.get('cookie');
 
   try {
-    const res = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_INTERNAL_URL}/form/${id}`, {
+    const res = await fetch(`${process.env.BACKEND_INTERNAL_URL}/form/${id}`, {
       headers: {
         ...(cookieHeader ? { Cookie: cookieHeader } : {}),
       },
@@ -37,7 +37,7 @@ export async function DELETE(
   const cookieHeader = request.headers.get('cookie');
 
   try {
-    const res = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_INTERNAL_URL}/form/${id}`, {
+    const res = await fetch(`${process.env.BACKEND_INTERNAL_URL}/form/${id}`, {
       method: 'DELETE',
       headers: {
         ...(cookieHeader ? { Cookie: cookieHeader } : {}),

@@ -4,7 +4,7 @@ export async function POST(request: Request) {
   try {
     const { username, password } = await request.json();
 
-    const backendUrl = process.env.NEXT_PUBLIC_BACKEND_INTERNAL_URL || 'http://localhost:8080';
+    const backendUrl = process.env.BACKEND_INTERNAL_URL;
     const backendRes = await fetch(`${backendUrl}/admin/login`, {
       method: 'POST',
       headers: {
@@ -15,12 +15,12 @@ export async function POST(request: Request) {
 
     if (backendRes.ok) {
       const response = NextResponse.json({ success: true, user: { name: username } });
-      
+
       const setCookies = backendRes.headers.getSetCookie();
       for (const cookie of setCookies) {
         response.headers.append('Set-Cookie', cookie);
       }
-      
+
       return response;
     }
 

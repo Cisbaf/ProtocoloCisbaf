@@ -7,7 +7,7 @@ export async function GET(
   const { cep } = await params;
 
   try {
-    const res = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_INTERNAL_URL}/form/cep/${cep}`);
+    const res = await fetch(`${process.env.BACKEND_INTERNAL_URL}/form/cep/${cep}`);
 
     if (res.status === 404) {
       return NextResponse.json({ error: 'CEP não encontrado' }, { status: 404 });
