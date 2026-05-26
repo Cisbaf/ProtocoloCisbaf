@@ -24,6 +24,7 @@ import {
   Eye,
   RefreshCw,
   Search,
+  Trash,
   User,
   XCircle,
 } from 'lucide-react';
@@ -69,7 +70,7 @@ export default function Inspector() {
 
   const updateStatus = async (id: string, approved: boolean, motivo?: string) => {
     try {
-      setUpdatingId(id); // Trava apenas a linha deste ID
+      setUpdatingId(id);
 
       const res = await fetch(`/api/requerimentos/${id}/status`, {
         method: 'PUT',
@@ -86,7 +87,6 @@ export default function Inspector() {
 
       toaster.create({ title: 'Sucesso', type: 'success' });
 
-      // Atualiza o requerimento localmente para não precisar recarregar a tabela
       setRequerimentos(prev =>
         prev.map(req => req.id === id ? { ...req, confirmacao: approved } : req)
       );
@@ -95,7 +95,39 @@ export default function Inspector() {
       const errorMessage = err instanceof Error ? err.message : 'Erro interno';
       toaster.create({ title: 'Erro', description: errorMessage, type: 'error' });
     } finally {
-      setUpdatingId(null); // Libera a interface
+      setUpdatingId(null);
+    }
+  };
+
+  const deleteForm = async (id: string) => {
+    try {
+      setUpdatingId(id);
+
+      const res = await fetch(`/api/requerimentos/${id}`, {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+      });
+
+      if (!res.ok) {
+        throw new Error("Erro ao deletar o requerimento");
+      }
+
+      toaster.create({
+        title: 'Requerimento excluído com sucesso!',
+        type: 'success'
+      });
+
+      setRequerimentos(prev => prev.filter(req => req.id !== id));
+
+    } catch (err: unknown) {
+      const errorMessage = err instanceof Error ? err.message : 'Erro interno';
+      toaster.create({
+        title: 'Erro',
+        description: errorMessage,
+        type: 'error'
+      });
+    } finally {
+      setUpdatingId(null);
     }
   };
 
@@ -115,7 +147,6 @@ export default function Inspector() {
       link.click();
 
       link.remove();
-
       URL.revokeObjectURL(url);
 
       toaster.create({ title: 'Sucesso', description: 'Arquivo baixado com sucesso', type: 'success' });
@@ -155,13 +186,11 @@ export default function Inspector() {
   });
 
   const sorted = [...filtered].sort((a, b) => {
-    // 1. Urgentes Pendentes primeiro
     const aUrgent = a.prioridade && a.prioridade !== "" && a.prioridade !== "false" && a.confirmacao === null;
     const bUrgent = b.prioridade && b.prioridade !== "" && b.prioridade !== "false" && b.confirmacao === null;
     if (aUrgent && !bUrgent) return -1;
     if (!aUrgent && bUrgent) return 1;
 
-    // 2. Pendentes normais depois
     const aPending = a.confirmacao === null;
     const bPending = b.confirmacao === null;
     if (aPending && !bPending) return -1;
@@ -203,12 +232,12 @@ export default function Inspector() {
                   <Badge bg="blue.500" color="white" px={4} py={1} borderRadius="full" fontWeight="black" fontSize="xs" letterSpacing="widest">
                     PAINEL ADMIN
                   </Badge>
-                  <Heading size={{ base: "2xl", md: "4xl" }} fontWeight="black" letterSpacing="tight">
+                  <Heading size={{ base: "xl", md: "4xl" }} fontWeight="black" letterSpacing="tight">
                     Gestão de Requerimentos
                   </Heading>
-                  <HStack gap={4} mt={4}>
+                  <HStack gap={4} mt={4} flexWrap="wrap" justify="center">
                     <Button
-                      size="sm"
+                      size={{ base: "md", md: "sm" }}
                       bg="white"
                       color="slate.900"
                       onClick={fetchRequerimentos}
@@ -220,7 +249,7 @@ export default function Inspector() {
                       <RefreshCw size={16} style={{ marginRight: '6px' }} /> Sincronizar
                     </Button>
                     <Button
-                      size="sm"
+                      size={{ base: "md", md: "sm" }}
                       bg="red.500"
                       color="white"
                       _hover={{ bg: "red.600" }}
@@ -235,10 +264,10 @@ export default function Inspector() {
               </Center>
             </Card.Header>
 
-            <Card.Body p={{ base: 4, md: 10 }} mt={-12} bg="white" borderRadius={{ base: "2xl", md: "4xl" }} shadow="2xl">
+            <Card.Body p={{ base: 4, md: 10 }} mt={{ base: -8, md: -12 }} bg="white" borderRadius={{ base: "2xl", md: "4xl" }} shadow="2xl">
               <VStack gap={6} align="stretch">
-                <Box bg="gray.50" p={6} borderRadius="2xl" border="1px solid" borderColor="gray.200">
-                  <SimpleGrid columns={{ base: 1, md: 2, lg: 4 }} gap={4}>
+                <Box bg="gray.50" p={{ base: 4, md: 6 }} borderRadius="2xl" border="1px solid" borderColor="gray.200">
+                  <SimpleGrid columns={{ base: 1, md: 2, lg: bases.length > 1 ? 4 : 3 }} gap={4}>
                     <VStack align="start" gap={1}>
                       <Text fontSize="xs" fontWeight="black" color="gray.500">NOME OU CPF</Text>
                       <Box position="relative" w="full">
@@ -263,26 +292,28 @@ export default function Inspector() {
                       </Box>
                     </VStack>
 
-                    <VStack align="start" gap={1}>
-                      <Text fontSize="xs" fontWeight="black" color="gray.500">BASE / UNIDADE</Text>
-                      <select
-                        value={baseFilter}
-                        onChange={(e) => setBaseFilter(e.target.value)}
-                        style={{
-                          width: '100%',
-                          padding: '10px',
-                          borderRadius: '12px',
-                          border: '1px solid #E2E8F0',
-                          fontSize: '14px',
-                          fontWeight: '600',
-                          outline: 'none',
-                          background: 'white'
-                        }}
-                      >
-                        <option value="all">Todas as Bases</option>
-                        {bases.map(b => <option key={b} value={b}>{b}</option>)}
-                      </select>
-                    </VStack>
+                    {bases.length > 1 && (
+                      <VStack align="start" gap={1}>
+                        <Text fontSize="xs" fontWeight="black" color="gray.500">BASE / UNIDADE</Text>
+                        <select
+                          value={baseFilter}
+                          onChange={(e) => setBaseFilter(e.target.value)}
+                          style={{
+                            width: '100%',
+                            padding: '10px',
+                            borderRadius: '12px',
+                            border: '1px solid #E2E8F0',
+                            fontSize: '14px',
+                            fontWeight: '600',
+                            outline: 'none',
+                            background: 'white'
+                          }}
+                        >
+                          <option value="all">Todas as Bases</option>
+                          {bases.map(b => <option key={b} value={b}>{b}</option>)}
+                        </select>
+                      </VStack>
+                    )}
 
                     <VStack align="start" gap={1}>
                       <Text fontSize="xs" fontWeight="black" color="gray.500">ASSUNTO</Text>
@@ -341,72 +372,141 @@ export default function Inspector() {
                     <Text fontSize="xl" fontWeight="black" color="gray.400">NADA ENCONTRADO</Text>
                   </Center>
                 ) : (
-                  <Box overflowX="auto" borderRadius="2xl" border="1px solid" borderColor="gray.100">
-                    <Table.Root variant="line" size="lg">
-                      <Table.Header bg="gray.50">
-                        <Table.Row>
-                          <Table.ColumnHeader fontWeight="black" color="slate.900" py={6} px={6}>ID <ArrowUpDown size={12} style={{ display: 'inline', marginLeft: '4px' }} /></Table.ColumnHeader>
-                          <Table.ColumnHeader fontWeight="black" color="slate.900">COLABORADOR</Table.ColumnHeader>
-                          <Table.ColumnHeader fontWeight="black" color="slate.900">ASSUNTO</Table.ColumnHeader>
-                          <Table.ColumnHeader fontWeight="black" color="slate.900">PRIORIDADE</Table.ColumnHeader>
-                          <Table.ColumnHeader fontWeight="black" color="slate.900">STATUS</Table.ColumnHeader>
-                          <Table.ColumnHeader fontWeight="black" color="slate.900" textAlign="right" px={6}>AÇÕES</Table.ColumnHeader>
-                        </Table.Row>
-                      </Table.Header>
-                      <Table.Body>
-                        {sorted.map((r) => (
-                          <Table.Row key={r.id} _hover={{ bg: "blue.50" }} transition="all 0.2s" bg={(r.prioridade && r.prioridade !== "" && r.prioridade !== "false" && r.confirmacao === null) ? "red.50" : undefined}>
-                            <Table.Cell px={6}>
-                              <Text fontWeight="black" color="blue.600" fontSize="sm">{r.id}</Text>
-                            </Table.Cell>
-                            <Table.Cell>
-                              <HStack gap={3}>
-                                <Box bg="slate.100" p={2} borderRadius="xl" color="slate.600">
-                                  <User size={20} />
-                                </Box>
-                                <VStack align="start" gap={0}>
-                                  <Text fontWeight="black" color="slate.800">{r.usuario?.nome}</Text>
-                                  <HStack gap={2}>
-                                    <Text fontSize="xs" fontWeight="bold" color="gray.500">{r.usuario?.cargo?.toUpperCase()}</Text>
-                                    <Badge size="sm" variant="subtle">{r.usuario?.matricula}</Badge>
-                                  </HStack>
-                                  <Text fontSize="xs" color="gray.400">{r.unidade}</Text>
-                                </VStack>
+                  <>
+                    {/* ── VISUALIZAÇÃO MOBILE (CARDS) ── */}
+                    <VStack display={{ base: "flex", md: "none" }} gap={4} align="stretch">
+                      {sorted.map((r) => (
+                        <Box
+                          key={r.id}
+                          p={4}
+                          borderRadius="xl"
+                          border="1px solid"
+                          borderColor={(r.prioridade && r.prioridade !== "" && r.prioridade !== "false" && r.confirmacao === null) ? "red.200" : "gray.200"}
+                          bg={(r.prioridade && r.prioridade !== "" && r.prioridade !== "false" && r.confirmacao === null) ? "red.50" : "white"}
+                          shadow="sm"
+                        >
+                          <HStack justify="space-between" mb={3}>
+                            <Text fontWeight="black" color="blue.600" fontSize="xs">ID: {r.id}</Text>
+                            {renderStatus(r.confirmacao)}
+                          </HStack>
+
+                          <HStack gap={3} mb={3}>
+                            <Box bg="slate.100" p={2} borderRadius="xl" color="slate.600">
+                              <User size={20} />
+                            </Box>
+                            <VStack align="start" gap={0}>
+                              <Text fontWeight="black" color="slate.800" fontSize="md">{r.usuario?.nome}</Text>
+                              <HStack gap={2} flexWrap="wrap">
+                                <Text fontSize="xs" fontWeight="bold" color="gray.500">{r.usuario?.cargo?.toUpperCase()}</Text>
+                                <Badge size="sm" variant="subtle">{r.usuario?.matricula}</Badge>
                               </HStack>
-                            </Table.Cell>
-                            <Table.Cell>
-                              <VStack align="start" gap={1}>
-                                <Badge size="sm" colorPalette="blue">{r.assunto}</Badge>
-                                {r.beneficio && <Badge size="sm" colorPalette="purple">{r.beneficio}</Badge>}
-                                <Text fontSize="xs" color="gray.500" lineClamp={2} title={r.descricao}>
-                                  {r.descricao}
-                                </Text>
-                              </VStack>
-                            </Table.Cell>
-                            <Table.Cell>
-                              {r.prioridade && r.prioridade !== "" && r.prioridade !== "false" ? (
+                            </VStack>
+                          </HStack>
+
+                          <VStack align="start" gap={2} mb={4}>
+                            <HStack flexWrap="wrap" gap={2}>
+                              <Badge size="sm" colorPalette="blue">{r.assunto}</Badge>
+                              {r.beneficio && <Badge size="sm" colorPalette="purple">{r.beneficio}</Badge>}
+                              {r.prioridade && r.prioridade !== "" && r.prioridade !== "false" && (
                                 <Badge colorPalette="red" variant="solid" borderRadius="full">
                                   {r.prioridade === "true" ? "ALTA" : r.prioridade.toUpperCase().replace("_", " ")}
                                 </Badge>
-                              ) : (
-                                <Badge colorPalette="gray" variant="subtle" borderRadius="full">NORMAL</Badge>
                               )}
-                            </Table.Cell>
-                            <Table.Cell>
-                              {renderStatus(r.confirmacao)}
-                            </Table.Cell>
-                            <Table.Cell textAlign="right" px={6}>
-                              <HStack gap={2} justify="flex-end">
-                                <Button size="sm" variant="ghost" colorPalette="blue" borderRadius="lg" onClick={() => setSelectedReq(r)} disabled={updatingId === r.id}><Eye size={18} /></Button>
-                                <Button size="sm" colorPalette="green" borderRadius="lg" onClick={() => r.id && updateStatus(r.id, true)} disabled={r.confirmacao === true || updatingId === r.id} loading={updatingId === r.id ? true : undefined} shadow="sm"><CheckCircle size={18} /></Button>
-                                <Button size="sm" colorPalette="red" borderRadius="lg" onClick={() => { setReqToRefuseId(r.id || null); setIsRefuseModalOpen(true); }} disabled={r.confirmacao === false || updatingId === r.id} shadow="sm"><XCircle size={18} /></Button>
-                              </HStack>
-                            </Table.Cell>
+                            </HStack>
+                            <Text fontSize="sm" color="gray.500" lineClamp={2}>
+                              {r.descricao}
+                            </Text>
+                          </VStack>
+
+                          <HStack gap={2} pt={4} borderTop="1px solid" borderColor="gray.100" justify="space-between">
+                            <Button size="sm" colorPalette="blue" borderRadius="lg" onClick={() => setSelectedReq(r)} disabled={updatingId === r.id} flex={1}>
+                              <Eye size={18} />
+                            </Button>
+                            <Button size="sm" colorPalette="green" borderRadius="lg" onClick={() => r.id && updateStatus(r.id, true)} disabled={r.confirmacao === true || updatingId === r.id} loading={updatingId === r.id ? true : undefined} flex={1}>
+                              <CheckCircle size={18} />
+                            </Button>
+                            <Button size="sm" colorPalette="red" borderRadius="lg" onClick={() => { setReqToRefuseId(r.id || null); setIsRefuseModalOpen(true); }} disabled={r.confirmacao === false || updatingId === r.id} flex={1}>
+                              <XCircle size={18} />
+                            </Button>
+                            <Button size="sm" colorPalette="gray" borderRadius="lg" onClick={() => r.id && deleteForm(r.id)} disabled={updatingId !== null && updatingId !== r.id} loading={updatingId === r.id} flex={1}>
+                              <Trash size={18} />
+                            </Button>
+                          </HStack>
+                        </Box>
+                      ))}
+                    </VStack>
+
+                    {/* ── VISUALIZAÇÃO DESKTOP (TABELA) ── */}
+                    <Box display={{ base: "none", md: "block" }} overflowX="auto" borderRadius="2xl" border="1px solid" borderColor="gray.100">
+                      <Table.Root variant="line" size="lg">
+                        <Table.Header bg="gray.50">
+                          <Table.Row>
+                            <Table.ColumnHeader fontWeight="black" color="slate.900" py={6} px={6}>ID <ArrowUpDown size={12} style={{ display: 'inline', marginLeft: '4px' }} /></Table.ColumnHeader>
+                            <Table.ColumnHeader fontWeight="black" color="slate.900">COLABORADOR</Table.ColumnHeader>
+                            <Table.ColumnHeader fontWeight="black" color="slate.900">ASSUNTO</Table.ColumnHeader>
+                            <Table.ColumnHeader fontWeight="black" color="slate.900">PRIORIDADE</Table.ColumnHeader>
+                            <Table.ColumnHeader fontWeight="black" color="slate.900">STATUS</Table.ColumnHeader>
+                            <Table.ColumnHeader fontWeight="black" color="slate.900" textAlign="right" px={6}>AÇÕES</Table.ColumnHeader>
                           </Table.Row>
-                        ))}
-                      </Table.Body>
-                    </Table.Root>
-                  </Box>
+                        </Table.Header>
+                        <Table.Body>
+                          {sorted.map((r) => (
+                            <Table.Row key={r.id} _hover={{ bg: "blue.50" }} transition="all 0.2s" bg={(r.prioridade && r.prioridade !== "" && r.prioridade !== "false" && r.confirmacao === null) ? "red.50" : undefined}>
+                              <Table.Cell px={6}>
+                                <Text fontWeight="black" color="blue.600" fontSize="sm">{r.id}</Text>
+                              </Table.Cell>
+                              <Table.Cell>
+                                <HStack gap={3}>
+                                  <Box bg="slate.100" p={2} borderRadius="xl" color="slate.600">
+                                    <User size={20} />
+                                  </Box>
+                                  <VStack align="start" gap={0}>
+                                    <Text fontWeight="black" color="slate.800">{r.usuario?.nome}</Text>
+                                    <HStack gap={2}>
+                                      <Text fontSize="xs" fontWeight="bold" color="gray.500">{r.usuario?.cargo?.toUpperCase()}</Text>
+                                      <Badge size="sm" variant="subtle">{r.usuario?.matricula}</Badge>
+                                    </HStack>
+                                    <Text fontSize="xs" color="gray.400">{r.unidade}</Text>
+                                  </VStack>
+                                </HStack>
+                              </Table.Cell>
+                              <Table.Cell>
+                                <VStack align="start" gap={1}>
+                                  <Badge size="sm" colorPalette="blue">{r.assunto}</Badge>
+                                  {r.beneficio && <Badge size="sm" colorPalette="purple">{r.beneficio}</Badge>}
+                                  <Text fontSize="xs" color="gray.500" lineClamp={2} title={r.descricao}>
+                                    {r.descricao}
+                                  </Text>
+                                </VStack>
+                              </Table.Cell>
+                              <Table.Cell>
+                                {r.prioridade && r.prioridade !== "" && r.prioridade !== "false" ? (
+                                  <Badge colorPalette="red" variant="solid" borderRadius="full">
+                                    {r.prioridade === "true" ? "ALTA" : r.prioridade.toUpperCase().replace("_", " ")}
+                                  </Badge>
+                                ) : (
+                                  <Badge colorPalette="gray" variant="subtle" borderRadius="full">NORMAL</Badge>
+                                )}
+                              </Table.Cell>
+                              <Table.Cell>
+                                {renderStatus(r.confirmacao)}
+                              </Table.Cell>
+                              <Table.Cell textAlign="right" px={6}>
+                                <HStack gap={2} justify="flex-end">
+                                  <Button size="sm" colorPalette="blue" borderRadius="lg" onClick={() => setSelectedReq(r)} disabled={updatingId === r.id}><Eye size={18} /></Button>
+                                  <Button size="sm" colorPalette="green" borderRadius="lg" onClick={() => r.id && updateStatus(r.id, true)} disabled={r.confirmacao === true || updatingId === r.id} loading={updatingId === r.id ? true : undefined} shadow="sm"><CheckCircle size={18} /></Button>
+                                  <Button size="sm" colorPalette="red" borderRadius="lg" onClick={() => { setReqToRefuseId(r.id || null); setIsRefuseModalOpen(true); }} disabled={r.confirmacao === false || updatingId === r.id} shadow="sm"><XCircle size={18} /></Button>
+                                  <Button size="sm" colorPalette="gray" borderRadius="lg" onClick={() => r.id && deleteForm(r.id)} disabled={updatingId !== null && updatingId !== r.id} loading={updatingId === r.id} shadow="sm">
+                                    <Trash size={18} />
+                                  </Button>
+                                </HStack>
+                              </Table.Cell>
+                            </Table.Row>
+                          ))}
+                        </Table.Body>
+                      </Table.Root>
+                    </Box>
+                  </>
                 )}
               </VStack>
             </Card.Body>
@@ -450,7 +550,7 @@ export default function Inspector() {
           <Box
             bg="white"
             w="full"
-            maxW="md"
+            maxW={{ base: "95%", md: "md" }}
             borderRadius="2xl"
             shadow="2xl"
             p={6}
@@ -478,11 +578,12 @@ export default function Inspector() {
                   resize: 'vertical'
                 }}
               />
-              <HStack gap={3} mt={2}>
-                <Button flex={1} variant="ghost" onClick={() => { setIsRefuseModalOpen(false); setRefusalReason(""); }}>
+              <HStack gap={3} mt={2} flexDir={{ base: "column", sm: "row" }}>
+                <Button w={{ base: "full", sm: "auto" }} flex={1} variant="ghost" onClick={() => { setIsRefuseModalOpen(false); setRefusalReason(""); }}>
                   CANCELAR
                 </Button>
                 <Button
+                  w={{ base: "full", sm: "auto" }}
                   flex={2}
                   colorPalette="red"
                   disabled={!refusalReason.trim()}
@@ -505,4 +606,3 @@ export default function Inspector() {
     </>
   );
 }
-

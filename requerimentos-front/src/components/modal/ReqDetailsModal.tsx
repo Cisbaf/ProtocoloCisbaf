@@ -9,6 +9,7 @@ import {
     Heading,
     Separator,
     SimpleGrid,
+    Stack,
     Text,
     VStack
 } from '@chakra-ui/react';
@@ -53,6 +54,33 @@ export default function ReqDetailsModal({
 }: ReqDetailsModalProps) {
     if (!req) return null;
 
+    function formDataCriacao() {
+        const dataOriginal = req?.dataCriacao;
+
+        if (!dataOriginal) return "—";
+
+        try {
+            const dataObj = new Date(dataOriginal);
+
+            if (isNaN(dataObj.getTime())) return dataOriginal;
+
+            const dataFormatada = dataObj.toLocaleDateString('pt-BR', {
+                day: '2-digit',
+                month: '2-digit',
+                year: 'numeric'
+            });
+
+            const horaFormatada = dataObj.toLocaleTimeString('pt-BR', {
+                hour: '2-digit',
+                minute: '2-digit'
+            });
+
+            return `${dataFormatada} às ${horaFormatada}`;
+        } catch (e) {
+            return dataOriginal;
+        }
+    }
+
     return (
         <Box
             position="fixed"
@@ -66,26 +94,30 @@ export default function ReqDetailsModal({
             justifyContent="center"
             alignItems="center"
             backdropFilter="blur(8px)"
-            p={4}
+            p={{ base: 4, md: 6 }} // Aumentei o padding base para não grudar na borda
             onClick={onClose}
         >
             <Box
                 bg="white"
-                w="full"
+                w="100%"
                 maxW="4xl"
-                maxH="90vh"
-                borderRadius="3xl"
+                // Reduzi o maxH no mobile (85vh) para evitar que o teclado ou a barra do navegador cortem o topo do modal
+                maxH={{ base: "85vh", md: "90vh" }}
+                borderRadius={{ base: "xl", md: "3xl" }} // Borda um pouco menor no mobile para ganhar espaço útil
                 shadow="dark-lg"
                 overflow="hidden"
                 onClick={(e) => e.stopPropagation()}
                 display="flex"
                 flexDir="column"
             >
-                <Box p={6} bg="slate.900" color="white" display="flex" justifyContent="space-between" alignItems="center">
+                {/* ── CABEÇALHO DO MODAL ── */}
+                <Box p={{ base: 4, md: 6 }} bg="slate.900" color="white" display="flex" justifyContent="space-between" alignItems="center">
                     <VStack align="start" gap={0}>
                         <HStack gap={2}>
                             <Badge colorPalette="blue" variant="solid">REQ</Badge>
-                            <Text fontWeight="black" fontSize="lg">{req.id}</Text>
+                            <Text fontWeight="black" fontSize={{ base: "md", md: "lg" }} wordBreak="break-all">
+                                {req.id}
+                            </Text>
                         </HStack>
                         <Text fontSize="xs" opacity={0.7}>Detalhes completos da solicitação</Text>
                     </VStack>
@@ -94,15 +126,30 @@ export default function ReqDetailsModal({
                     </Button>
                 </Box>
 
-                <Box p={8} overflowY="auto" flex={1}>
-                    <VStack gap={8} align="stretch">
-                        {/* Status Section */}
-                        <HStack justify="space-between" p={4} bg="gray.50" borderRadius="2xl" border="1px solid" borderColor="gray.200">
+                {/* ── CORPO DO MODAL ── */}
+                <Box p={{ base: 4, md: 8 }} overflowY="auto" flex={1}>
+                    <VStack gap={{ base: 6, md: 8 }} align="stretch">
+
+                        {/* Status Section - Trocado HStack por Stack responsivo */}
+                        <Stack
+                            direction={{ base: "column", sm: "row" }}
+                            justify="space-between"
+                            p={4}
+                            bg="gray.50"
+                            borderRadius="2xl"
+                            border="1px solid"
+                            borderColor="gray.200"
+                            gap={4}
+                        >
                             <VStack align="start" gap={1}>
                                 <Text fontSize="xs" fontWeight="black" color="gray.500">STATUS ATUAL</Text>
                                 {renderStatus(req.confirmacao)}
                             </VStack>
-                            <VStack align="end" gap={1}>
+                            <VStack align="start" gap={1}>
+                                <Text fontSize="xs" fontWeight="black" color="gray.500">DATA DE CRIAÇÃO</Text>
+                                <Text fontWeight="bold" color="slate.700" fontSize="sm">{formDataCriacao()}</Text>
+                            </VStack>
+                            <VStack align="start" gap={1}>
                                 <Text fontSize="xs" fontWeight="black" color="gray.500">PRIORIDADE</Text>
                                 {req.prioridade ? (
                                     <Badge colorPalette="red" variant="solid">ALTA</Badge>
@@ -110,9 +157,9 @@ export default function ReqDetailsModal({
                                     <Badge colorPalette="gray" variant="subtle">NORMAL</Badge>
                                 )}
                             </VStack>
-                        </HStack>
+                        </Stack>
 
-                        <SimpleGrid columns={{ base: 1, md: 2 }} gap={8}>
+                        <SimpleGrid columns={{ base: 1, md: 2 }} gap={{ base: 6, md: 8 }}>
                             {/* Colaborador Info */}
                             <VStack align="stretch" gap={4}>
                                 <Heading size="md" display="flex" alignItems="center" gap={2} color="slate.800">
@@ -134,16 +181,15 @@ export default function ReqDetailsModal({
                                     <Mail size={20} color="#3B82F6" /> Contato
                                 </Heading>
                                 <DetailItem label="E-mail" value={req.usuario?.email} icon={<Mail size={14} />} />
-                                {req.usuario.emailAlt ? (
+                                {req.usuario.emailAlt && (
                                     <DetailItem label="E-mail Alternativo" value={req.usuario.emailAlt} icon={<MailPlus size={14} />} />
-                                ) : null}
+                                )}
                                 <DetailItem label="Celular" value={req.usuario?.celular} icon={<Smartphone size={14} />} />
-                                {req.usuario.telefone ? (
+                                {req.usuario.telefone && (
                                     <DetailItem label="Telefone" value={req.usuario?.telefone} icon={<Phone size={14} />} />
+                                )}
 
-                                ) : (null)}
-
-                                <Heading size="md" display="flex" alignItems="center" gap={2} mt={3} color="slate.800">
+                                <Heading size="md" display="flex" alignItems="center" gap={2} mt={{ base: 2, md: 3 }} color="slate.800">
                                     <MapPin size={20} color="#3B82F6" /> Endereço
                                 </Heading>
                                 <DetailItem label="CEP" value={req.usuario?.endereco?.cep} />
@@ -163,7 +209,7 @@ export default function ReqDetailsModal({
                             <Heading size="md" display="flex" alignItems="center" gap={2} color="slate.800">
                                 <FileText size={20} color="#3B82F6" /> Solicitação
                             </Heading>
-                            <HStack gap={4}>
+                            <Stack direction={{ base: "column", sm: "row" }} gap={4}>
                                 <VStack align="start" gap={1} flex={1}>
                                     <Text fontSize="xs" fontWeight="black" color="gray.400">ASSUNTO</Text>
                                     <Badge size="lg" colorPalette="blue">{req.assunto}</Badge>
@@ -174,30 +220,32 @@ export default function ReqDetailsModal({
                                         <Badge size="lg" colorPalette="purple">{req.beneficio}</Badge>
                                     </VStack>
                                 )}
-                            </HStack>
+                            </Stack>
                             <VStack align="start" gap={1}>
                                 <Text fontSize="xs" fontWeight="black" color="gray.400">DESCRIÇÃO</Text>
                                 <Box p={4} bg="gray.50" borderRadius="xl" w="full" border="1px solid" borderColor="gray.100">
-                                    <Text color="slate.700" whiteSpace="pre-wrap">{req.descricao}</Text>
+                                    <Text color="slate.700" whiteSpace="pre-wrap" fontSize={{ base: "sm", md: "md" }}>{req.descricao}</Text>
                                 </Box>
                             </VStack>
                             {req.confirmacao === false && req.motivo && (
                                 <VStack align="start" gap={1}>
                                     <Text fontSize="xs" fontWeight="black" color="red.400">MOTIVO DA RECUSA</Text>
                                     <Box p={4} bg="red.50" borderRadius="xl" w="full" border="1px solid" borderColor="red.100">
-                                        <Text color="red.700">{req.motivo}</Text>
+                                        <Text color="red.700" fontSize={{ base: "sm", md: "md" }}>{req.motivo}</Text>
                                     </Box>
                                 </VStack>
                             )}
                         </VStack>
                     </VStack>
+
                     {req.arquivoPath && (
-                        <VStack align="start" gap={1} mt={2}>
+                        <VStack align="start" gap={1} mt={6}>
                             <Text fontSize="xs" fontWeight="black" color="gray.400">ARQUIVO ANEXADO</Text>
                             <Button
                                 variant="outline"
                                 colorPalette="blue"
                                 borderRadius="lg"
+                                w={{ base: "full", sm: "auto" }}
                                 onClick={() => onDownload(req.arquivoPath!)}
                             >
                                 <Download size={18} style={{ marginRight: '8px' }} />
@@ -207,12 +255,36 @@ export default function ReqDetailsModal({
                     )}
                 </Box>
 
-
-                <Box p={6} borderTop="1px solid" borderColor="gray.100" display="flex" gap={4}>
-                    <Button flex={1} colorPalette="green" borderRadius="xl" size="lg" onClick={() => onApprove(req.id!)} disabled={req.confirmacao === true}>
+                {/* ── BOTÕES DE AÇÃO ── */}
+                <Box
+                    p={{ base: 4, md: 6 }}
+                    borderTop="1px solid"
+                    borderColor="gray.100"
+                    display="flex"
+                    flexDir={{ base: "column", sm: "row" }}
+                    gap={4}
+                >
+                    <Button
+                        flex={1}
+                        w={{ base: "full", sm: "auto" }}
+                        colorPalette="green"
+                        borderRadius="xl"
+                        size="lg"
+                        onClick={() => onApprove(req.id!)}
+                        disabled={req.confirmacao === true}
+                    >
                         <CheckCircle size={20} style={{ marginRight: '8px' }} /> APROVAR
                     </Button>
-                    <Button flex={1} colorPalette="red" variant="outline" borderRadius="xl" size="lg" onClick={() => onReject(req.id!)} disabled={req.confirmacao === false}>
+                    <Button
+                        flex={1}
+                        w={{ base: "full", sm: "auto" }}
+                        colorPalette="red"
+                        variant="outline"
+                        borderRadius="xl"
+                        size="lg"
+                        onClick={() => onReject(req.id!)}
+                        disabled={req.confirmacao === false}
+                    >
                         <XCircle size={20} style={{ marginRight: '8px' }} /> REPROVAR
                     </Button>
                 </Box>
@@ -221,14 +293,15 @@ export default function ReqDetailsModal({
     );
 }
 
-// O DetailItem fica isolado aqui para ser usado apenas pelo modal
 function DetailItem({ label, value, icon }: { label: string; value: string | number | undefined; icon?: React.ReactNode }) {
     return (
         <VStack align="start" gap={0}>
             <Text fontSize="xs" fontWeight="black" color="gray.400" textTransform="uppercase">{label}</Text>
             <HStack gap={2}>
                 {icon && <Box color="blue.500">{icon}</Box>}
-                <Text fontWeight="bold" color="slate.700">{value || '—'}</Text>
+                <Text fontWeight="bold" color="slate.700" fontSize={{ base: "sm", md: "md" }} wordBreak="break-word">
+                    {value || '—'}
+                </Text>
             </HStack>
         </VStack>
     );

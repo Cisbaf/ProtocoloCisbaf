@@ -37,11 +37,11 @@ export interface Formulario {
   motivo?: string;        // preenchido pelo RH na recusa
   arquivoPath?: string;   // preenchido pelo backend após upload
   unidade: string;
+  dataCriacao: string;
   usuario: Usuario;
 }
 
 // ─── Payload do submit ────────────────────────────────────────────────────────
-// O que o frontend monta e envia via FormData para /api/requerimentos
 export interface RequerimentoPayload {
   usuario: Usuario;
   assunto: string;
@@ -51,8 +51,6 @@ export interface RequerimentoPayload {
 }
 
 // ─── Valores do formulário (react-hook-form) ──────────────────────────────────
-// Campos "achatados" para facilitar o bind dos inputs.
-// O mapper toRequerimentoPayload() converte isso para RequerimentoPayload.
 export interface FormValues {
   // Identificação
   cpf: string;

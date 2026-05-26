@@ -100,7 +100,6 @@ export default function RequerimentoForm() {
   // ── Submit ────────────────────────────────────────────────────────────────
   const onSubmit = async (data: FormValues) => {
     try {
-
       let dataNascimentoFormatada = data.dataNascimento;
       if (dataNascimentoFormatada && dataNascimentoFormatada.includes('-')) {
         const [year, month, day] = dataNascimentoFormatada.split('-');
@@ -121,7 +120,6 @@ export default function RequerimentoForm() {
           matricula: data.matricula,
           cargo: data.cargo,
           cor: data.cor,
-          unidade: data.unidade,
           endereco: {
             cep: data.cep,
             endereco: data.logradouro,
@@ -192,11 +190,11 @@ export default function RequerimentoForm() {
         estado: string;
       } = await res.json();
 
-      setValue('logradouro', json.logradouro ?? '');
+      setValue('logradouro', json.logradouro ?? '', { shouldValidate: true });
       setValue('complemento', json.complemento ?? '');
-      setValue('bairro', json.bairro ?? '');
-      setValue('localidade', json.localidade ?? '');
-      setValue('uf', json.uf ?? '');
+      setValue('bairro', json.bairro ?? '', { shouldValidate: true });
+      setValue('localidade', json.localidade ?? '', { shouldValidate: true });
+      setValue('uf', json.uf ?? '', { shouldValidate: true });
     } catch {
       toaster.create({
         title: 'CEP inválido',
@@ -222,36 +220,35 @@ export default function RequerimentoForm() {
 
       const user = await res.json();
       if (user.dataNascimento) {
-
         if (user.dataNascimento.includes('/')) {
           const [day, month, year] = user.dataNascimento.split('/');
-          setValue('dataNascimento', `${year}-${month}-${day}`);
+          setValue('dataNascimento', `${year}-${month}-${day}`, { shouldValidate: true });
         } else {
-          setValue('dataNascimento', user.dataNascimento);
+          setValue('dataNascimento', user.dataNascimento, { shouldValidate: true });
         }
       }
 
-      if (user.nome) setValue('nome', user.nome);
-      if (user.rg) setValue('rg', user.rg);
-      if (user.sexo) setValue('sexo', user.sexo);
-      if (user.email) setValue('email', user.email);
+      if (user.nome) setValue('nome', user.nome, { shouldValidate: true });
+      if (user.rg) setValue('rg', user.rg, { shouldValidate: true });
+      if (user.sexo) setValue('sexo', user.sexo, { shouldValidate: true });
+      if (user.email) setValue('email', user.email, { shouldValidate: true });
       if (user.telefone) setValue('telefone', user.telefone);
       if (user.celular) setValue('celular', user.celular);
       if (user.emailAlt) setValue('emailAlt', user.emailAlt);
-      if (user.matricula) setValue('matricula', user.matricula);
-      if (user.cargo) setValue('cargo', user.cargo);
-      if (user.cor) setValue('cor', user.cor);
-      if (user.unidade) setValue('unidade', user.unidade);
+      if (user.matricula) setValue('matricula', user.matricula, { shouldValidate: true });
+      if (user.cargo) setValue('cargo', user.cargo, { shouldValidate: true });
+      if (user.cor) setValue('cor', user.cor, { shouldValidate: true });
+      if (user.unidade) setValue('unidade', user.unidade, { shouldValidate: true });
 
       if (user.endereco) {
         const e = user.endereco;
-        if (e.cep) setValue('cep', e.cep);
-        if (e.endereco) setValue('logradouro', e.endereco);
-        if (e.numero) setValue('numero', e.numero);
+        if (e.cep) setValue('cep', e.cep, { shouldValidate: true });
+        if (e.endereco) setValue('logradouro', e.endereco, { shouldValidate: true });
+        if (e.numero) setValue('numero', e.numero, { shouldValidate: true });
         if (e.complemento) setValue('complemento', e.complemento);
-        if (e.bairro) setValue('bairro', e.bairro);
-        if (e.cidade) setValue('localidade', e.cidade);
-        if (e.estado) setValue('uf', e.estado);
+        if (e.bairro) setValue('bairro', e.bairro, { shouldValidate: true });
+        if (e.cidade) setValue('localidade', e.cidade, { shouldValidate: true });
+        if (e.estado) setValue('uf', e.estado, { shouldValidate: true });
       }
 
       toaster.create({
@@ -316,7 +313,7 @@ export default function RequerimentoForm() {
       { label: 'Unidade IV - Base SAMU Nilópolis', value: 'NILOPOLIS' },
       { label: 'Unidade V - UPA Jardim Íris', value: 'IRIS' },
     ]
-  })
+  });
 
   // ─── Render ───────────────────────────────────────────────────────────────
   return (
@@ -379,7 +376,7 @@ export default function RequerimentoForm() {
                     />
 
                     <SimpleGrid columns={{ base: 1, md: 2, lg: 3 }} gap={6}>
-                      {/* CPF (Apenas números, máximo 11) */}
+                      {/* CPF */}
                       <Field.Root required invalid={!!errors.cpf}>
                         <Field.Label {...labelStyle}>
                           <CreditCard size={14} /> CPF
@@ -389,9 +386,8 @@ export default function RequerimentoForm() {
                         </Field.Label>
                         <Input
                           {...register('cpf', {
-                            required: 'CPF obrigatório',
+                            required: 'O campo CPF é obrigatório',
                             onChange: (e) => {
-                              // Arranca qualquer coisa que não seja número
                               e.target.value = e.target.value.replace(/\D/g, '');
                             },
                             onBlur: (e) => fetchUsuario(e.target.value),
@@ -411,7 +407,7 @@ export default function RequerimentoForm() {
                           <User size={14} /> NOME COMPLETO
                         </Field.Label>
                         <Input
-                          {...register('nome', { required: 'Nome obrigatório' })}
+                          {...register('nome', { required: 'O campo Nome Completo é obrigatório' })}
                           {...inputStyle}
                           placeholder="Seu nome completo"
                           maxLength={70}
@@ -426,9 +422,8 @@ export default function RequerimentoForm() {
                         <Field.Label {...labelStyle}>DOCUMENTO RG</Field.Label>
                         <Input
                           {...register('rg', {
-                            required: 'RG obrigatório',
+                            required: 'O campo Documento RG é obrigatório',
                             onChange: (e) => {
-                              // Arranca qualquer coisa que não seja número
                               e.target.value = e.target.value.replace(/\D/g, '');
                             },
                           })}
@@ -442,23 +437,25 @@ export default function RequerimentoForm() {
                       </Field.Root>
 
                       {/* Data de Nascimento */}
-                      <Field.Root required>
+                      <Field.Root required invalid={!!errors.dataNascimento}>
                         <Field.Label {...labelStyle}>
                           <Calendar size={14} /> DATA DE NASCIMENTO
                         </Field.Label>
                         <Input
                           type="date"
-                          {...register('dataNascimento', { required: true })}
+                          {...register('dataNascimento', { required: 'O campo Data de Nascimento é obrigatório' })}
                           {...inputStyle}
                         />
+                        <Field.ErrorText style={{ color: '#DC2626', fontSize: '12px' }}>
+                          {errors.dataNascimento?.message}
+                        </Field.ErrorText>
                       </Field.Root>
 
                       {/* Sexo */}
-                      <Field.Root>
+                      <Field.Root required invalid={!!errors.sexo}>
                         <Field.Label {...labelStyle}>SEXO</Field.Label>
-                        <Controller
-                          control={control}
-                          name="sexo"
+                        <Controller control={control} name="sexo"
+                          rules={{ required: "Selecione o sexo" }}
                           render={({ field }) => (
                             <Select.Root
                               collection={sexos}
@@ -479,14 +476,18 @@ export default function RequerimentoForm() {
                             </Select.Root>
                           )}
                         />
+                        <Field.ErrorText style={{ color: '#DC2626', fontSize: '12px' }}>
+                          {errors.sexo?.message}
+                        </Field.ErrorText>
                       </Field.Root>
 
                       {/* Cor */}
-                      <Field.Root>
+                      <Field.Root required invalid={!!errors.cor}>
                         <Field.Label {...labelStyle}>COR / ETNIA</Field.Label>
                         <Controller
                           control={control}
                           name="cor"
+                          rules={{ required: "Selecione a cor/etnia" }}
                           render={({ field }) => (
                             <Select.Root
                               collection={cores}
@@ -507,6 +508,9 @@ export default function RequerimentoForm() {
                             </Select.Root>
                           )}
                         />
+                        <Field.ErrorText style={{ color: '#DC2626', fontSize: '12px' }}>
+                          {errors.cor?.message}
+                        </Field.ErrorText>
                       </Field.Root>
                     </SimpleGrid>
                   </VStack>
@@ -530,15 +534,18 @@ export default function RequerimentoForm() {
                         </Field.Label>
                         <Input
                           type="email"
-                          {...register('email', { required: true })}
+                          {...register('email', { required: 'O campo E-mail Principal é obrigatório' })}
                           {...inputStyle}
                           placeholder="seu@email.com"
                           maxLength={30}
                         />
+                        <Field.ErrorText style={{ color: '#DC2626', fontSize: '12px' }}>
+                          {errors.email?.message}
+                        </Field.ErrorText>
                       </Field.Root>
 
                       {/* E-mail Alternativo */}
-                      <Field.Root>
+                      <Field.Root invalid={!!errors.emailAlt}>
                         <Field.Label {...labelStyle}>E-MAIL SECUNDÁRIO</Field.Label>
                         <Input
                           type="email"
@@ -549,8 +556,8 @@ export default function RequerimentoForm() {
                         />
                       </Field.Root>
 
-                      {/* Celular (Apenas números, máximo 11) */}
-                      <Field.Root>
+                      {/* Celular */}
+                      <Field.Root invalid={!!errors.celular}>
                         <Field.Label {...labelStyle}>
                           <Smartphone size={14} /> CELULAR
                         </Field.Label>
@@ -566,8 +573,8 @@ export default function RequerimentoForm() {
                         />
                       </Field.Root>
 
-                      {/* Telefone (Apenas números, máximo 10) */}
-                      <Field.Root>
+                      {/* Telefone */}
+                      <Field.Root invalid={!!errors.telefone}>
                         <Field.Label {...labelStyle}>TELEFONE FIXO</Field.Label>
                         <Input
                           {...register('telefone', {
@@ -603,8 +610,8 @@ export default function RequerimentoForm() {
                       </Flex>
 
                       <SimpleGrid columns={{ base: 1, md: 4 }} gap={5}>
-                        {/* CEP (Apenas números, máximo 8) */}
-                        <Field.Root required>
+                        {/* CEP */}
+                        <Field.Root required invalid={!!errors.cep}>
                           <Field.Label {...labelStyle}>
                             CEP
                             {isFetchingCep && (
@@ -613,7 +620,7 @@ export default function RequerimentoForm() {
                           </Field.Label>
                           <Input
                             {...register('cep', {
-                              required: true,
+                              required: 'O campo CEP é obrigatório',
                               onChange: (e) => {
                                 e.target.value = e.target.value.replace(/\D/g, '');
                               },
@@ -624,29 +631,33 @@ export default function RequerimentoForm() {
                             h="50px"
                             placeholder="Apenas números"
                           />
+                          <Field.ErrorText style={{ color: '#DC2626', fontSize: '12px' }}>
+                            {errors.cep?.message}
+                          </Field.ErrorText>
                         </Field.Root>
 
                         {/* Logradouro */}
                         <Box gridColumn={{ md: 'span 2' }}>
-                          <Field.Root required>
+                          <Field.Root required invalid={!!errors.logradouro}>
                             <Field.Label {...labelStyle}>LOGRADOURO</Field.Label>
                             <Input
-                              {...register('logradouro', { required: true })}
+                              {...register('logradouro', { required: 'O campo Logradouro é obrigatório' })}
                               {...inputStyle}
                               h="50px"
                               maxLength={50}
-
                             />
-
+                            <Field.ErrorText style={{ color: '#DC2626', fontSize: '12px' }}>
+                              {errors.logradouro?.message}
+                            </Field.ErrorText>
                           </Field.Root>
                         </Box>
 
                         {/* Número */}
-                        <Field.Root required>
+                        <Field.Root required invalid={!!errors.numero}>
                           <Field.Label {...labelStyle}>NÚMERO</Field.Label>
                           <Input
                             {...register('numero', {
-                              required: true,
+                              required: 'O campo Número é obrigatório',
                               onChange: (e) => {
                                 e.target.value = e.target.value.replace(/\D/g, '');
                               }
@@ -655,10 +666,13 @@ export default function RequerimentoForm() {
                             h="50px"
                             maxLength={8}
                           />
+                          <Field.ErrorText style={{ color: '#DC2626', fontSize: '12px' }}>
+                            {errors.numero?.message}
+                          </Field.ErrorText>
                         </Field.Root>
 
                         {/* Complemento */}
-                        <Field.Root>
+                        <Field.Root invalid={!!errors.complemento}>
                           <Field.Label {...labelStyle}>COMPLEMENTO</Field.Label>
                           <Input
                             {...register('complemento')}
@@ -670,35 +684,39 @@ export default function RequerimentoForm() {
                         </Field.Root>
 
                         {/* Bairro */}
-                        <Field.Root required>
+                        <Field.Root required invalid={!!errors.bairro}>
                           <Field.Label {...labelStyle}>BAIRRO</Field.Label>
                           <Input
-                            {...register('bairro', { required: true })}
+                            {...register('bairro', { required: 'O campo Bairro é obrigatório' })}
                             {...inputStyle}
                             h="50px"
                             maxLength={30}
-
                           />
+                          <Field.ErrorText style={{ color: '#DC2626', fontSize: '12px' }}>
+                            {errors.bairro?.message}
+                          </Field.ErrorText>
                         </Field.Root>
 
                         {/* Cidade */}
-                        <Field.Root required>
+                        <Field.Root required invalid={!!errors.localidade}>
                           <Field.Label {...labelStyle}>CIDADE</Field.Label>
                           <Input
-                            {...register('localidade', { required: true })}
+                            {...register('localidade', { required: 'O campo Cidade é obrigatório' })}
                             {...inputStyle}
                             h="50px"
                             maxLength={30}
-
                           />
+                          <Field.ErrorText style={{ color: '#DC2626', fontSize: '12px' }}>
+                            {errors.localidade?.message}
+                          </Field.ErrorText>
                         </Field.Root>
 
-                        {/* UF (Apenas Letras, máximo 2, Maiúsculo) */}
-                        <Field.Root required>
+                        {/* UF */}
+                        <Field.Root required invalid={!!errors.uf}>
                           <Field.Label {...labelStyle}>UF</Field.Label>
                           <Input
                             {...register('uf', {
-                              required: true,
+                              required: 'O campo UF é obrigatório',
                               onChange: (e) => {
                                 e.target.value = e.target.value.replace(/[^A-Za-z]/g, '').toUpperCase();
                               }
@@ -708,6 +726,9 @@ export default function RequerimentoForm() {
                             maxLength={2}
                             placeholder="RJ"
                           />
+                          <Field.ErrorText style={{ color: '#DC2626', fontSize: '12px' }}>
+                            {errors.uf?.message}
+                          </Field.ErrorText>
                         </Field.Root>
                       </SimpleGrid>
                     </Box>
@@ -725,12 +746,12 @@ export default function RequerimentoForm() {
                     />
 
                     <SimpleGrid columns={{ base: 1, md: 3 }} gap={6}>
-                      {/* MATRÍCULA (Apenas números, limite arbitrário de 10) */}
+                      {/* MATRÍCULA */}
                       <Field.Root required invalid={!!errors.matricula}>
                         <Field.Label {...labelStyle}>MATRÍCULA</Field.Label>
                         <Input
                           {...register('matricula', {
-                            required: true,
+                            required: 'O campo Matrícula é obrigatório',
                             onChange: (e) => {
                               e.target.value = e.target.value.replace(/\D/g, '');
                             }
@@ -739,22 +760,30 @@ export default function RequerimentoForm() {
                           {...inputStyle}
                           placeholder="Apenas números"
                         />
+                        <Field.ErrorText style={{ color: '#DC2626', fontSize: '12px' }}>
+                          {errors.matricula?.message}
+                        </Field.ErrorText>
                       </Field.Root>
 
+                      {/* Cargo */}
                       <Field.Root required invalid={!!errors.cargo}>
                         <Field.Label {...labelStyle}>CARGO</Field.Label>
                         <Input
-                          {...register('cargo', { required: true })}
+                          {...register('cargo', { required: 'O campo Cargo é obrigatório' })}
                           {...inputStyle}
                           placeholder="Seu cargo"
                           maxLength={50}
-
                         />
+                        <Field.ErrorText style={{ color: '#DC2626', fontSize: '12px' }}>
+                          {errors.cargo?.message}
+                        </Field.ErrorText>
                       </Field.Root>
 
+                      {/* Unidade */}
                       <Field.Root required invalid={!!errors.unidade}>
                         <Field.Label {...labelStyle}>UNIDADE</Field.Label>
                         <Controller control={control} name="unidade"
+                          rules={{ required: "Selecione a unidade" }}
                           render={({ field }) => (
                             <Select.Root collection={unidades} value={field.value ? [field.value] : []} onValueChange={(change) => field.onChange(change.value[0])}>
                               <Select.Trigger {...inputStyle}>
@@ -771,6 +800,9 @@ export default function RequerimentoForm() {
                             </Select.Root>
                           )}>
                         </Controller>
+                        <Field.ErrorText style={{ color: '#DC2626', fontSize: '12px' }}>
+                          {errors.unidade?.message}
+                        </Field.ErrorText>
                       </Field.Root>
                     </SimpleGrid>
 
@@ -796,31 +828,34 @@ export default function RequerimentoForm() {
                         >
                           <Info size={18} color={COLORS.btnBg} /> ASSUNTO DO REQUERIMENTO
                         </Field.Label>
-                        <Select.Root
-                          collection={assuntos}
-                          onValueChange={(details) =>
-                            setValue('assunto', details.value[0], { shouldValidate: true })
-                          }
-                          w={450}
-                        >
-                          <Select.Trigger {...inputStyle} >
-                            <Select.ValueText placeholder="Selecione um assunto" />
-                            <Select.Indicator />
-                          </Select.Trigger>
-                          <Select.Content>
-                            {assuntos.items.map((item) => (
-                              <Select.Item key={item.value} item={item}>
-                                {item.label}
-                              </Select.Item>
-                            ))}
-                          </Select.Content>
-                        </Select.Root>
+                        <Controller control={control} name="assunto"
+                          rules={{ required: "Selecione o assunto" }}
+                          render={({ field }) => (
+                            <Select.Root
+                              collection={assuntos}
+                              value={field.value ? [field.value] : []}
+                              onValueChange={(details) =>
+                                setValue('assunto', details.value[0], { shouldValidate: true })
+                              }
+                            >
+                              <Select.Trigger {...inputStyle} >
+                                <Select.ValueText placeholder="Selecione um assunto" />
+                                <Select.Indicator />
+                              </Select.Trigger>
+                              <Select.Content>
+                                {assuntos.items.map((item) => (
+                                  <Select.Item key={item.value} item={item}>
+                                    {item.label}
+                                  </Select.Item>
+                                ))}
+                              </Select.Content>
+                            </Select.Root>)} />
                         <Field.ErrorText style={{ color: '#DC2626', fontSize: '12px' }}>
-                          Campo obrigatório
+                          {errors.assunto?.message}
                         </Field.ErrorText>
                       </Field.Root>
 
-                      {/* Benefício – exibido apenas quando assunto === 'beneficios' (valor do select) */}
+                      {/* Benefício */}
                       {watchAssunto === 'beneficios' && (
                         <Field.Root required invalid={!!errors.beneficio}>
                           <Field.Label
@@ -833,33 +868,36 @@ export default function RequerimentoForm() {
                           >
                             <CreditCard size={18} color={COLORS.btnBg} /> TIPO DE BENEFÍCIO
                           </Field.Label>
-                          <Select.Root
-                            collection={beneficios}
-                            onValueChange={(details) =>
-                              setValue('beneficio', details.value[0], { shouldValidate: true })
-                            }
-                            w={450}
-                          >
-                            <Select.Trigger {...inputStyle}>
-                              <Select.ValueText placeholder="Selecione o benefício" />
-                              <Select.Indicator />
-                            </Select.Trigger>
-                            <Select.Content>
-                              {beneficios.items.map((item) => (
-                                <Select.Item key={item.value} item={item}>
-                                  {item.label}
-                                </Select.Item>
-                              ))}
-                            </Select.Content>
-                          </Select.Root>
+                          <Controller control={control} name="beneficio"
+                            rules={{ required: "Selecione o tipo de benefício" }}
+                            render={({ field }) => (
+                              <Select.Root
+                                collection={beneficios}
+                                value={field.value ? [field.value] : []}
+                                onValueChange={(details) =>
+                                  setValue('beneficio', details.value[0], { shouldValidate: true })
+                                }
+                              >
+                                <Select.Trigger {...inputStyle}>
+                                  <Select.ValueText placeholder="Selecione o benefício" />
+                                  <Select.Indicator />
+                                </Select.Trigger>
+                                <Select.Content>
+                                  {beneficios.items.map((item) => (
+                                    <Select.Item key={item.value} item={item}>
+                                      {item.label}
+                                    </Select.Item>
+                                  ))}
+                                </Select.Content>
+                              </Select.Root>)} />
                           <Field.ErrorText style={{ color: '#DC2626', fontSize: '12px' }}>
-                            Campo obrigatório
+                            {errors.beneficio?.message}
                           </Field.ErrorText>
                         </Field.Root>
                       )}
 
                       {/* Descrição */}
-                      <Field.Root invalid={!!errors.descricao} required>
+                      <Field.Root required invalid={!!errors.descricao}>
                         <Field.Label
                           fontWeight="700"
                           fontSize="sm"
@@ -868,7 +906,7 @@ export default function RequerimentoForm() {
                           DESCRIÇÃO DETALHADA
                         </Field.Label>
                         <Textarea
-                          {...register('descricao', { required: true })}
+                          {...register('descricao', { required: 'O campo Descrição Detalhada é obrigatório' })}
                           bg="white"
                           borderRadius="xl"
                           border="2px solid"
@@ -888,12 +926,12 @@ export default function RequerimentoForm() {
                           }}
                         />
                         <Field.ErrorText style={{ color: '#DC2626', fontSize: '12px' }}>
-                          Campo obrigatório
+                          {errors.descricao?.message}
                         </Field.ErrorText>
                       </Field.Root>
 
                       {/* Arquivo */}
-                      <Field.Root>
+                      <Field.Root invalid={!!errors.arquivo}>
                         <Field.Label
                           fontWeight="700"
                           fontSize="sm"
