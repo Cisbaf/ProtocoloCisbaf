@@ -1,6 +1,5 @@
 package com.requerimentosback.form.controller;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.requerimentosback.form.model.CepResponse;
 import com.requerimentosback.form.model.Formulario;
@@ -42,7 +41,7 @@ public class FormularioController {
     }
 
     @GetMapping("/admin")
-    public List<Formulario> findAllAdmin(Principal  principal) {
+    public List<Formulario> findAllAdmin(Principal principal) {
         return service.findByAdmin(principal);
     }
 
@@ -61,15 +60,12 @@ public class FormularioController {
     @GetMapping("/arquivos/download/{nomeArquivo:.+}")
     public ResponseEntity<Resource> baixarArquivo(@PathVariable String nomeArquivo) {
         try {
-            // 1. Decodifica a URL (Transforma os %20 de volta em espaços e ajusta o 'ç')
             log.info("Baixando arquivo {}", nomeArquivo);
             String nomeDecodificado = URLDecoder.decode(nomeArquivo, StandardCharsets.UTF_8);
             log.info("Baixando arquivo {}", nomeDecodificado);
 
-            // 2. Monta o caminho do arquivo
             Path caminhoArquivo = Paths.get(raiz.toString()).resolve(nomeDecodificado).normalize();
 
-            // 🚨 DEBUG: Isso vai aparecer no console do seu Spring Boot!
             System.out.println("Tentando ler o arquivo no caminho: " + caminhoArquivo.toAbsolutePath());
 
             Resource resource = new UrlResource(caminhoArquivo.toUri());
@@ -97,15 +93,36 @@ public class FormularioController {
     }
 
     @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-    public ResponseEntity<Formulario> save(
+    public ResponseEntity<?> save(
             @RequestPart("formulario") String formularioJson,
-            @RequestPart(value = "arquivo", required = false) MultipartFile arquivo) throws JsonProcessingException {
+            @RequestPart(value = "arquivo", required = false) MultipartFile arquivo) {
 
-        // Converte a String JSON que veio do front pro objeto Formulario
-        ObjectMapper mapper = new ObjectMapper();
-        Formulario formulario = mapper.readValue(formularioJson, Formulario.class);
+        try {
+            ObjectMapper mapper = new ObjectMapper();
+            Formulario formulario = mapper.readValue(formularioJson, Formulario.class);
 
-        return ResponseEntity.ok(service.save(formulario, arquivo));
+            return ResponseEntity.ok(service.save(formulario, arquivo));
+
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body(java.util.Map.of("error", e.getMessage()));
+
+        } catch (org.springframework.dao.DataIntegrityViolationException e) {
+            e.getMostSpecificCause();
+            String msg = e.getMostSpecificCause().getMessage();
+            return ResponseEntity.badRequest().body(java.util.Map.of("error", "Erro de integridade (banco de dados): " + msg));
+
+        } catch (Exception e) {
+            Throwable rootCause = e;
+
+            while (rootCause != null) {
+                if (rootCause instanceof jakarta.validation.ConstraintViolationException constraintEx) {
+                    throw constraintEx;
+                }
+                rootCause = rootCause.getCause();
+            }
+
+            return ResponseEntity.internalServerError().body(java.util.Map.of("error", "Erro interno no servidor: " + e.getMessage()));
+        }
     }
 
     @PutMapping("/{id}")

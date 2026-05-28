@@ -51,6 +51,7 @@ public class FormularioService {
                 .findById(usuarioRequest.getCpf())
                 .map(usuarioExistente -> {
                     usuarioExistente.setNome(usuarioRequest.getNome());
+                    usuarioExistente.setSobrenome(usuarioRequest.getSobrenome());
                     usuarioExistente.setRg(usuarioRequest.getRg());
                     usuarioExistente.setDataNascimento(usuarioRequest.getDataNascimento());
                     usuarioExistente.setSexo(usuarioRequest.getSexo());
@@ -68,7 +69,8 @@ public class FormularioService {
 
         formulario.setUsuario(usuario);
         formulario.setDataCriacao(new Date());
-        formulario = repository.save(formulario);
+
+        formulario = repository.saveAndFlush(formulario);
 
         emailService.enviarEmailNovoFormulario(formulario);
 
