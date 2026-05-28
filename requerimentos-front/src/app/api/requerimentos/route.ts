@@ -37,7 +37,13 @@ export async function POST(request: Request) {
 
     if (!res.ok) {
       const errText = await res.text();
-      throw new Error(`Erro no backend: ${errText}`);
+      let errData;
+      try {
+        errData = JSON.parse(errText);
+      } catch (e) {
+        errData = errText;
+      }
+      return NextResponse.json({ error: errData }, { status: res.status });
     }
 
     const data = await res.json();

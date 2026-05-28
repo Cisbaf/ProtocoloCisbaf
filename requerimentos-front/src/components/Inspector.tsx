@@ -100,6 +100,10 @@ export default function Inspector() {
   };
 
   const deleteForm = async (id: string) => {
+    if (!window.confirm("Tem certeza que deseja apagar este requerimento? Esta ação não pode ser desfeita.")) {
+      return;
+    }
+
     try {
       setUpdatingId(id);
 
@@ -172,7 +176,8 @@ export default function Inspector() {
     const matchesName = nameFilter === "" ||
       r.usuario?.nome.toLowerCase().includes(nameFilter.toLowerCase()) ||
       r.usuario?.cpf.includes(nameFilter) ||
-      r.usuario?.matricula.includes(nameFilter);
+      r.usuario?.matricula.includes(nameFilter) ||
+      r.usuario?.sobrenome.toLowerCase().includes(nameFilter);
 
     const matchesBase = baseFilter === "all" || r.unidade === baseFilter;
     const matchesAssunto = assuntoFilter === "all" || r.assunto === assuntoFilter;
@@ -395,7 +400,7 @@ export default function Inspector() {
                               <User size={20} />
                             </Box>
                             <VStack align="start" gap={0}>
-                              <Text fontWeight="black" color="slate.800" fontSize="md">{r.usuario?.nome}</Text>
+                              <Text fontWeight="black" color="slate.800" fontSize="md">{r.usuario?.nome + " " + r.usuario?.sobrenome}</Text>
                               <HStack gap={2} flexWrap="wrap">
                                 <Text fontSize="xs" fontWeight="bold" color="gray.500">{r.usuario?.cargo?.toUpperCase()}</Text>
                                 <Badge size="sm" variant="subtle">{r.usuario?.matricula}</Badge>
@@ -461,7 +466,7 @@ export default function Inspector() {
                                     <User size={20} />
                                   </Box>
                                   <VStack align="start" gap={0}>
-                                    <Text fontWeight="black" color="slate.800">{r.usuario?.nome}</Text>
+                                    <Text fontWeight="black" color="slate.800">{r.usuario?.nome + " " + r.usuario?.sobrenome}</Text>
                                     <HStack gap={2}>
                                       <Text fontSize="xs" fontWeight="bold" color="gray.500">{r.usuario?.cargo?.toUpperCase()}</Text>
                                       <Badge size="sm" variant="subtle">{r.usuario?.matricula}</Badge>

@@ -165,7 +165,7 @@ export default function ReqDetailsModal({
                                 <Heading size="md" display="flex" alignItems="center" gap={2} color="slate.800">
                                     <User size={20} color="#3B82F6" /> Identificação
                                 </Heading>
-                                <DetailItem label="Nome Completo" value={req.usuario?.nome} />
+                                <DetailItem label="Nome Completo" value={req.usuario?.nome + " " + req.usuario?.sobrenome} />
                                 <DetailItem label="Data Nascimento" value={req.usuario?.dataNascimento} icon={<Calendar size={14} />} />
                                 <DetailItem label="CPF" value={req.usuario?.cpf} icon={<CreditCard size={14} />} />
                                 <DetailItem label="RG" value={req.usuario?.rg} icon={<IdCard size={14} />} />

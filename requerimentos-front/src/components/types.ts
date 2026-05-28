@@ -13,6 +13,7 @@ export interface Endereco {
 export interface Usuario {
   cpf: string;
   nome: string;
+  sobrenome: string;
   rg: string;
   dataNascimento: string; // yyyy-MM-dd (@JsonFormat)
   sexo?: string;
@@ -55,6 +56,7 @@ export interface FormValues {
   // Identificação
   cpf: string;
   nome: string;
+  sobrenome: string
   rg: string;
   dataNascimento: string;
   sexo?: string;

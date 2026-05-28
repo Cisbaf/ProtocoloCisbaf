@@ -39,10 +39,11 @@ import {
   Check,
   ClipboardCheck
 } from 'lucide-react';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useForm, Controller, useWatch } from 'react-hook-form';
 import Header from './Header';
 import { inputStyle, labelStyle, COLORS } from '@/components/formStyles';
+
 
 // ─── Sub-componente: cabeçalho de seção ──────────────────────────────────────
 function SectionHeader({
@@ -90,10 +91,50 @@ export default function RequerimentoForm() {
     reset,
     setValue,
     control,
+    setError,
     formState: { isSubmitting, errors },
   } = useForm<FormValues>({
     defaultValues: { prioridade: "" },
   });
+
+
+  useEffect(() => {
+    if (submittedId) {
+      const copyToClipboard = async (text: string) => {
+        // Tenta usar a API moderna primeiro (funciona em HTTPS e localhost)
+        if (navigator?.clipboard && window.isSecureContext) {
+          await navigator.clipboard.writeText(text);
+        } else {
+          // Fallback para HTTP (ex: acessando pelo IP da rede local)
+          const textArea = document.createElement("textarea");
+          textArea.value = text;
+
+          // Esconde o textarea para não piscar na tela
+          textArea.style.position = "absolute";
+          textArea.style.left = "-999999px";
+
+          document.body.prepend(textArea);
+          textArea.select();
+
+          try {
+            document.execCommand('copy');
+          } catch (error) {
+            console.error("Falha no fallback de cópia:", error);
+          } finally {
+            textArea.remove();
+          }
+        }
+      };
+
+      // Executa a função e muda o estado do botão
+      copyToClipboard(submittedId)
+        .then(() => {
+          setCopied(true);
+          setTimeout(() => setCopied(false), 3000);
+        })
+        .catch((err) => console.error("Erro ao copiar automaticamente:", err));
+    }
+  }, [submittedId]);
 
   const watchAssunto = useWatch({ control, name: 'assunto' });
 
@@ -110,6 +151,7 @@ export default function RequerimentoForm() {
         usuario: {
           cpf: data.cpf,
           nome: data.nome,
+          sobrenome: data.sobrenome,
           rg: data.rg,
           dataNascimento: dataNascimentoFormatada,
           sexo: data.sexo,
@@ -133,6 +175,8 @@ export default function RequerimentoForm() {
         assunto: data.assunto,
         beneficio: data.beneficio,
         descricao: data.descricao,
+        unidade: data.unidade,
+
         prioridade: data.prioridade_tramitacao_tipo || "",
       };
 
@@ -148,7 +192,10 @@ export default function RequerimentoForm() {
         method: 'POST',
         body: formData,
       });
-      if (!res.ok) throw new Error('Erro ao enviar requerimento');
+      if (!res.ok) {
+        const errData = await res.json();
+        throw errData;
+      }
 
       const result = await res.json();
 
@@ -156,14 +203,49 @@ export default function RequerimentoForm() {
       reset();
       setResetKey((prev) => prev + 1);
 
-      setTimeout(() => {
-        setSubmittedId(null);
-      }, 15000);
+    } catch (error: any) {
 
-    } catch (error: unknown) {
-      const errorMessage = error instanceof Error ? error.message : 'Ocorreu um erro ao enviar.';
+      // Tenta achar o array de erros, seja ele a própria resposta ou dentro de error.error
+      const listaDeErros = Array.isArray(error)
+        ? error
+        : (error && Array.isArray(error.error) ? error.error : null);
+
+      // 1. Se encontrou a lista de erros de validação
+      if (listaDeErros) {
+        listaDeErros.forEach((e: any) => {
+          if (e.campo && e.mensagem) {
+            // O react-hook-form liga o "e.campo" direto com o seu <Field.Root invalid={...}>
+            setError(e.campo as keyof FormValues, {
+              type: 'server',
+              message: e.mensagem
+            });
+          }
+        });
+
+        toaster.create({
+          title: 'Dados inválidos',
+          description: 'Verifique as marcações em vermelho no formulário.',
+          type: 'error',
+        });
+
+        return; // Para aqui e não mostra o erro 500 genérico
+      }
+
+      // 2. Fallback: Erros gerais (500, servidor fora, etc)
+      let errorMessage = 'Ocorreu um erro ao enviar.';
+
+      if (error && typeof error === 'object') {
+        if (error.message) {
+          errorMessage = error.message;
+        } else if (error.error && typeof error.error === 'string') {
+          errorMessage = error.error;
+        }
+      } else if (typeof error === 'string') {
+        errorMessage = error;
+      }
+
       toaster.create({
-        title: 'Erro',
+        title: 'Erro no servidor',
         description: errorMessage,
         type: 'error',
       });
@@ -229,6 +311,7 @@ export default function RequerimentoForm() {
       }
 
       if (user.nome) setValue('nome', user.nome, { shouldValidate: true });
+      if (user.sobrenome) setValue('sobrenome', user.sobrenome, { shouldValidate: true })
       if (user.rg) setValue('rg', user.rg, { shouldValidate: true });
       if (user.sexo) setValue('sexo', user.sexo, { shouldValidate: true });
       if (user.email) setValue('email', user.email, { shouldValidate: true });
@@ -404,18 +487,35 @@ export default function RequerimentoForm() {
                       {/* Nome */}
                       <Field.Root required invalid={!!errors.nome}>
                         <Field.Label {...labelStyle}>
-                          <User size={14} /> NOME COMPLETO
+                          <User size={14} />PRIMEIRO NOME
                         </Field.Label>
                         <Input
-                          {...register('nome', { required: 'O campo Nome Completo é obrigatório' })}
+                          {...register('nome', { required: 'O campo Primeiro Nome é obrigatório' })}
                           {...inputStyle}
-                          placeholder="Seu nome completo"
+                          placeholder="Seu primeiro nome"
                           maxLength={70}
                         />
                         <Field.ErrorText style={{ color: '#DC2626', fontSize: '12px' }}>
                           {errors.nome?.message}
                         </Field.ErrorText>
                       </Field.Root>
+
+                      {/* Sobrenome Nome */}
+                      <Field.Root required invalid={!!errors.sobrenome}>
+                        <Field.Label {...labelStyle}>
+                          <User size={14} /> SOBRENOME
+                        </Field.Label>
+                        <Input
+                          {...register('sobrenome', { required: 'O campo Sobrenome é obrigatório' })}
+                          {...inputStyle}
+                          placeholder="Seu sobrenome"
+                          maxLength={70}
+                        />
+                        <Field.ErrorText style={{ color: '#DC2626', fontSize: '12px' }}>
+                          {errors.sobrenome?.message}
+                        </Field.ErrorText>
+                      </Field.Root>
+
 
                       {/* RG */}
                       <Field.Root required invalid={!!errors.rg}>
@@ -537,7 +637,7 @@ export default function RequerimentoForm() {
                           {...register('email', { required: 'O campo E-mail Principal é obrigatório' })}
                           {...inputStyle}
                           placeholder="seu@email.com"
-                          maxLength={30}
+                          maxLength={70}
                         />
                         <Field.ErrorText style={{ color: '#DC2626', fontSize: '12px' }}>
                           {errors.email?.message}
@@ -552,8 +652,11 @@ export default function RequerimentoForm() {
                           {...register('emailAlt')}
                           {...inputStyle}
                           placeholder="outro@email.com"
-                          maxLength={30}
+                          maxLength={70}
                         />
+                        <Field.ErrorText style={{ color: '#DC2626', fontSize: '12px' }}>
+                          {errors.emailAlt?.message}
+                        </Field.ErrorText>
                       </Field.Root>
 
                       {/* Celular */}
@@ -571,6 +674,9 @@ export default function RequerimentoForm() {
                           {...inputStyle}
                           placeholder="Apenas números"
                         />
+                        <Field.ErrorText style={{ color: '#DC2626', fontSize: '12px' }}>
+                          {errors.celular?.message}
+                        </Field.ErrorText>
                       </Field.Root>
 
                       {/* Telefone */}
@@ -586,6 +692,9 @@ export default function RequerimentoForm() {
                           {...inputStyle}
                           placeholder="Apenas números"
                         />
+                        <Field.ErrorText style={{ color: '#DC2626', fontSize: '12px' }}>
+                          {errors.telefone?.message}
+                        </Field.ErrorText>
                       </Field.Root>
                     </SimpleGrid>
 
@@ -681,6 +790,9 @@ export default function RequerimentoForm() {
                             placeholder="Apto, Bloco…"
                             maxLength={30}
                           />
+                          <Field.ErrorText style={{ color: '#DC2626', fontSize: '12px' }}>
+                            {errors.complemento?.message}
+                          </Field.ErrorText>
                         </Field.Root>
 
                         {/* Bairro */}
@@ -960,6 +1072,9 @@ export default function RequerimentoForm() {
                             style={{ color: COLORS.labelGray }}
                           />
                         </Flex>
+                        <Field.ErrorText style={{ color: '#DC2626', fontSize: '12px' }}>
+                          {errors.arquivo?.message as string}
+                        </Field.ErrorText>
                       </Field.Root>
 
                       {/* Prioridade */}
@@ -1131,9 +1246,7 @@ export default function RequerimentoForm() {
             </Box>
 
             <VStack gap={4}>
-              <Text fontSize="sm" fontWeight="bold" fontStyle="italic" color="green.100">
-                Esta tela se fechará automaticamente em instantes...
-              </Text>
+
               <Button
                 variant="ghost"
                 color="white"
