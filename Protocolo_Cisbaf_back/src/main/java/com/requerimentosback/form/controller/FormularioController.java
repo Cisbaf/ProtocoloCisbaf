@@ -7,6 +7,7 @@ import com.requerimentosback.form.service.CepClient;
 import com.requerimentosback.form.service.FormularioService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.Resource;
 import org.springframework.core.io.UrlResource;
 import org.springframework.http.HttpHeaders;
@@ -32,8 +33,9 @@ public class FormularioController {
 
     private final FormularioService service;
     private final CepClient cepClient;
-    private final Path raiz = Paths.get("uploads");
 
+    @Value("${app.upload.dir:./uploads}")
+    private String diretorioUpload;
 
     @GetMapping
     public List<Formulario> findAll() {
@@ -64,7 +66,8 @@ public class FormularioController {
             String nomeDecodificado = URLDecoder.decode(nomeArquivo, StandardCharsets.UTF_8);
             log.info("Baixando arquivo {}", nomeDecodificado);
 
-            Path caminhoArquivo = Paths.get(raiz.toString()).resolve(nomeDecodificado).normalize();
+            Path raiz = Paths.get(diretorioUpload).toAbsolutePath().normalize();
+            Path caminhoArquivo = raiz.resolve(nomeDecodificado).normalize();
 
             System.out.println("Tentando ler o arquivo no caminho: " + caminhoArquivo.toAbsolutePath());
 

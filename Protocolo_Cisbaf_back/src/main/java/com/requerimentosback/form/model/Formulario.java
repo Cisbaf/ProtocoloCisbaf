@@ -20,6 +20,8 @@ public class Formulario {
     @Column(nullable = false, updatable = false, length = 30)
     private String id;
 
+    private Date dataCriacao;
+
     @Column(nullable = false, length = 100)
     private String assunto;
 
@@ -34,14 +36,12 @@ public class Formulario {
 
     private String prioridade;
 
+    private String arquivoPath;
+
     @Builder.Default
     private Boolean confirmacao = null;
 
     private String motivo;
-
-    private String arquivoPath;
-
-    private Date dataCriacao;
 
     @ManyToOne(cascade = CascadeType.PERSIST)
     @JoinColumn(name = "userId")
