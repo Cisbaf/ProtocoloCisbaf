@@ -47,16 +47,16 @@ export default function Login() {
   };
 
   return (
-    <Box bg="gray.100" minH="100vh" display="flex" alignItems="center" justifyContent="center" py={12}>
+    <Box bg={{ base: "gray.100", _dark: "slate.950" }} minH="100vh" display="flex" alignItems="center" justifyContent="center" py={12}>
       <Container maxW="500px">
-        <Card.Root variant="elevated" boxShadow="2xl" borderRadius="3xl" overflow="hidden" border="2px solid" borderColor="gray.200">
+        <Card.Root variant="elevated" boxShadow="2xl" borderRadius="3xl" overflow="hidden" border="2px solid" borderColor={{ base: "gray.200", _dark: "slate.700" }} bg={{ base: "white", _dark: "slate.900" }}>
           <Card.Body p={10}>
             <VStack gap={8} align="stretch">
               <VStack align="center" gap={2}>
-                <Heading size="2xl" fontWeight="black" color="blue.800">
+                <Heading size="2xl" fontWeight="black" color={{ base: "blue.800", _dark: "blue.400" }}>
                   Acesso Restrito
                 </Heading>
-                <Text color="gray.500" fontWeight="medium">
+                <Text color={{ base: "gray.500", _dark: "slate.400" }} fontWeight="medium">
                   Área Administrativa
                 </Text>
               </VStack>
@@ -74,7 +74,8 @@ export default function Login() {
                       placeholder="Seu usuário"
                       h="55px"
                       borderRadius="xl"
-                      bg="gray.50"
+                      bg={{ base: "gray.50", _dark: "slate.800" }}
+                      _focus={{ borderColor: { base: "blue.500", _dark: "blue.400" }, bg: { base: "white", _dark: "slate.900" } }}
                     />
                   </Field.Root>
 
@@ -88,7 +89,8 @@ export default function Login() {
                       placeholder="Sua senha"
                       h="55px"
                       borderRadius="xl"
-                      bg="gray.50"
+                      bg={{ base: "gray.50", _dark: "slate.800" }}
+                      _focus={{ borderColor: { base: "blue.500", _dark: "blue.400" }, bg: { base: "white", _dark: "slate.900" } }}
                     />
                   </Field.Root>
 
@@ -110,7 +112,7 @@ export default function Login() {
               </form>
 
               <Center>
-                <Button variant="ghost" size="sm" color="gray.500" onClick={() => router.push('/')}>
+                <Button variant="ghost" size="sm" color={{ base: "gray.500", _dark: "slate.400" }} onClick={() => router.push('/')}>
                   Voltar para o formulário público
                 </Button>
               </Center>

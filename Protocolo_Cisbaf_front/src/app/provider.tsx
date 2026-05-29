@@ -50,7 +50,7 @@ import EmotionRegistry from './emotion-registry';
 export function Provider({ children }: { children: React.ReactNode }) {
   return (
     <EmotionRegistry>
-      <ColorModeProvider forcedTheme="light">
+      <ColorModeProvider defaultTheme="light">
         <ChakraProvider value={system}>
           {children}
         </ChakraProvider>

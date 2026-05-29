@@ -22,6 +22,7 @@ import {
   VStack,
   Select,
   HStack,
+  Portal,
 } from '@chakra-ui/react';
 
 import {
@@ -54,8 +55,8 @@ function SectionHeader({
 }: {
   step: string;
   title: string;
-  badgeBg: string;
-  badgeColor: string;
+  badgeBg: any;
+  badgeColor: any;
 }) {
   return (
     <Center flexDir="column" gap={2}>
@@ -66,11 +67,12 @@ function SectionHeader({
         fontSize="10px"
         fontWeight="800"
         letterSpacing="widest"
-        style={{ background: badgeBg, color: badgeColor }}
+        bg={badgeBg}
+        color={badgeColor}
       >
         {step}
       </Badge>
-      <Heading size="xl" fontWeight="800" style={{ color: COLORS.headingDark }}>
+      <Heading size="xl" fontWeight="800" color={COLORS.headingDark}>
         {title}
       </Heading>
     </Center>
@@ -354,10 +356,11 @@ export default function RequerimentoForm() {
   // ── Collections de select ─────────────────────────────────────────────────
   const assuntos = createListCollection({
     items: [
-      { label: 'Benefícios (Refeição e Transporte)', value: 'beneficios' },
-      { label: 'Desligamento', value: 'desligamento' },
-      { label: 'Folha de Pagamento', value: 'folha' },
-      { label: 'Outros Assuntos (Administrativos)', value: 'outros' },
+      { label: 'Atestado', value: 'Atestado' },
+      { label: 'Benefícios (Refeição e Transporte)', value: 'Benefício' },
+      { label: 'Desligamento', value: 'Desligamento' },
+      { label: 'Folha de Pagamento', value: 'Folha de Pagamento' },
+      { label: 'Outros Assuntos (Administrativos)', value: 'Assuntos Administrativos' },
     ],
   });
 
@@ -383,8 +386,8 @@ export default function RequerimentoForm() {
 
   const beneficios = createListCollection({
     items: [
-      { label: 'Refeição', value: 'refeição' },
-      { label: 'Transporte', value: 'transporte' },
+      { label: 'Refeição', value: 'Refeição' },
+      { label: 'Transporte', value: 'Transporte' },
     ],
   });
 
@@ -398,12 +401,26 @@ export default function RequerimentoForm() {
     ]
   });
 
+  const prioridade = createListCollection({
+    items: [
+      { label: '- Não me enquadro / Nenhuma das opções -', value: '' },
+      { label: 'Sou pessoa com deficiência (PcD)', value: 'pcd' },
+      { label: 'Sou pessoa com autismo (TEA)', value: 'tea' },
+      { label: 'Sou idoso(a) (60 anos ou mais)', value: 'idoso_60' },
+      { label: 'Sou idoso(a) (80 anos ou mais)', value: 'idoso_80' },
+      { label: 'Sou gestante', value: 'gestante' },
+      { label: 'Sou pessoa obesa', value: 'obeso' },
+      { label: 'Possuo mobilidade reduzida', value: 'mobilidade_reduzida' },
+      { label: 'Sou doador(a) de sangue', value: 'doador_sangue' }
+    ]
+  })
+
   // ─── Render ───────────────────────────────────────────────────────────────
   return (
     <>
       <Header />
 
-      <Box minH="100vh" py={{ base: 6, md: 16 }} style={{ background: COLORS.bodyBg }}>
+      <Box minH="100vh" py={{ base: 6, md: 16 }} bg={COLORS.bodyBg}>
         <Container maxW="container.xl" px={{ base: 3, md: 8 }}>
           <Card.Root
             variant="elevated"
@@ -412,7 +429,7 @@ export default function RequerimentoForm() {
             overflow="hidden"
             border="1.5px solid"
             borderColor="gray.200"
-            style={{ background: COLORS.cardBg }}
+            bg={COLORS.cardBg}
           >
             {/* ── Cabeçalho ── */}
             <Card.Header
@@ -420,7 +437,7 @@ export default function RequerimentoForm() {
               pb={{ base: 8, md: 12 }}
               px={{ base: 4, md: 8 }}
               textAlign="center"
-              style={{ background: COLORS.cardBg }}
+              bg={COLORS.cardBg}
             >
               <Center>
                 <VStack gap={3} maxW="2xl">
@@ -428,26 +445,31 @@ export default function RequerimentoForm() {
                     size={{ base: '2xl', md: '4xl' }}
                     fontWeight="900"
                     letterSpacing="tight"
-                    style={{ color: COLORS.headingDark }}
+                    color={COLORS.headingDark}
                   >
                     Central de Requerimentos
                   </Heading>
                   <Text
                     fontSize={{ base: 'md', md: 'lg' }}
                     fontWeight="500"
-                    style={{ color: COLORS.subtext }}
+                    color={COLORS.subtext}
                   >
                     Preencha os campos abaixo para solicitar um requerimento
                   </Text>
+                  <Text fontSize="xs" color={COLORS.subtext} alignSelf={'center'}>
+                    Campos com * são obrigatórios.
+                  </Text>
+
                 </VStack>
               </Center>
             </Card.Header>
 
-            <Separator style={{ borderColor: COLORS.border }} />
+            <Separator borderColor={COLORS.border} />
 
-            <Card.Body p={{ base: 5, md: 14 }} style={{ background: COLORS.cardBg }}>
+            <Card.Body p={{ base: 5, md: 14 }} bg={COLORS.cardBg}>
               <form onSubmit={handleSubmit(onSubmit)}>
                 <VStack gap={{ base: 12, md: 18 }} align="stretch">
+
 
                   {/* ══ PASSO 01 – Identificação ══ */}
                   <VStack gap={8} align="stretch">
@@ -462,7 +484,7 @@ export default function RequerimentoForm() {
                       {/* CPF */}
                       <Field.Root required invalid={!!errors.cpf}>
                         <Field.Label {...labelStyle}>
-                          <CreditCard size={14} /> CPF
+                          <Box color="currentColor"><CreditCard size={14} /></Box> CPF*
                           {isFetchingUser && (
                             <Spinner size="xs" color={COLORS.btnBg} ml={1} />
                           )}
@@ -487,7 +509,7 @@ export default function RequerimentoForm() {
                       {/* Nome */}
                       <Field.Root required invalid={!!errors.nome}>
                         <Field.Label {...labelStyle}>
-                          <User size={14} />PRIMEIRO NOME
+                          <Box color="currentColor"><User size={14} /></Box> PRIMEIRO NOME*
                         </Field.Label>
                         <Input
                           {...register('nome', { required: 'O campo Primeiro Nome é obrigatório' })}
@@ -503,7 +525,7 @@ export default function RequerimentoForm() {
                       {/* Sobrenome Nome */}
                       <Field.Root required invalid={!!errors.sobrenome}>
                         <Field.Label {...labelStyle}>
-                          <User size={14} /> SOBRENOME
+                          <Box color="currentColor"><User size={14} /></Box> SOBRENOME*
                         </Field.Label>
                         <Input
                           {...register('sobrenome', { required: 'O campo Sobrenome é obrigatório' })}
@@ -519,7 +541,7 @@ export default function RequerimentoForm() {
 
                       {/* RG */}
                       <Field.Root required invalid={!!errors.rg}>
-                        <Field.Label {...labelStyle}>DOCUMENTO RG</Field.Label>
+                        <Field.Label {...labelStyle}>DOCUMENTO RG*</Field.Label>
                         <Input
                           {...register('rg', {
                             required: 'O campo Documento RG é obrigatório',
@@ -539,7 +561,7 @@ export default function RequerimentoForm() {
                       {/* Data de Nascimento */}
                       <Field.Root required invalid={!!errors.dataNascimento}>
                         <Field.Label {...labelStyle}>
-                          <Calendar size={14} /> DATA DE NASCIMENTO
+                          <Box color="currentColor"><Calendar size={14} /></Box> DATA DE NASCIMENTO*
                         </Field.Label>
                         <Input
                           type="date"
@@ -553,7 +575,7 @@ export default function RequerimentoForm() {
 
                       {/* Sexo */}
                       <Field.Root required invalid={!!errors.sexo}>
-                        <Field.Label {...labelStyle}>SEXO</Field.Label>
+                        <Field.Label {...labelStyle}>SEXO*</Field.Label>
                         <Controller control={control} name="sexo"
                           rules={{ required: "Selecione o sexo" }}
                           render={({ field }) => (
@@ -562,17 +584,23 @@ export default function RequerimentoForm() {
                               value={field.value ? [field.value] : []}
                               onValueChange={(details) => field.onChange(details.value[0])}
                             >
+
                               <Select.Trigger {...inputStyle}>
                                 <Select.ValueText placeholder="Selecione..." />
                                 <Select.Indicator />
                               </Select.Trigger>
-                              <Select.Content>
-                                {sexos.items.map((item) => (
-                                  <Select.Item key={item.value} item={item}>
-                                    {item.label}
-                                  </Select.Item>
-                                ))}
-                              </Select.Content>
+                              <Portal>
+                                <Select.Positioner>
+                                  <Select.Content color={COLORS.headingDark}>
+                                    {sexos.items.map((item) => (
+                                      <Select.Item key={item.value} item={item}>
+                                        {item.label}
+                                      </Select.Item>
+                                    ))}
+
+                                  </Select.Content>
+                                </Select.Positioner>
+                              </Portal>
                             </Select.Root>
                           )}
                         />
@@ -583,7 +611,7 @@ export default function RequerimentoForm() {
 
                       {/* Cor */}
                       <Field.Root required invalid={!!errors.cor}>
-                        <Field.Label {...labelStyle}>COR / ETNIA</Field.Label>
+                        <Field.Label {...labelStyle}>COR / ETNIA*</Field.Label>
                         <Controller
                           control={control}
                           name="cor"
@@ -598,13 +626,18 @@ export default function RequerimentoForm() {
                                 <Select.ValueText placeholder="Selecione..." />
                                 <Select.Indicator />
                               </Select.Trigger>
-                              <Select.Content>
-                                {cores.items.map((item) => (
-                                  <Select.Item key={item.value} item={item}>
-                                    {item.label}
-                                  </Select.Item>
-                                ))}
-                              </Select.Content>
+                              <Portal>
+                                <Select.Positioner>
+                                  <Select.Content color={COLORS.headingDark}>
+                                    {cores.items.map((item) => (
+                                      <Select.Item key={item.value} item={item}>
+                                        {item.label}
+                                      </Select.Item>
+                                    ))}
+
+                                  </Select.Content>
+                                </Select.Positioner>
+                              </Portal>
                             </Select.Root>
                           )}
                         />
@@ -615,7 +648,7 @@ export default function RequerimentoForm() {
                     </SimpleGrid>
                   </VStack>
 
-                  <Separator style={{ borderColor: COLORS.border }} />
+                  <Separator borderColor={COLORS.border} />
 
                   {/* ══ PASSO 02 – Contato e Endereço ══ */}
                   <VStack gap={8} align="stretch">
@@ -630,7 +663,7 @@ export default function RequerimentoForm() {
                       {/* E-mail */}
                       <Field.Root required invalid={!!errors.email}>
                         <Field.Label {...labelStyle}>
-                          <Mail size={14} /> E-MAIL PRINCIPAL
+                          <Box color="currentColor"><Mail size={14} /></Box> E-MAIL PRINCIPAL*
                         </Field.Label>
                         <Input
                           type="email"
@@ -662,7 +695,7 @@ export default function RequerimentoForm() {
                       {/* Celular */}
                       <Field.Root invalid={!!errors.celular}>
                         <Field.Label {...labelStyle}>
-                          <Smartphone size={14} /> CELULAR
+                          <Box color="currentColor"><Smartphone size={14} /></Box> CELULAR*
                         </Field.Label>
                         <Input
                           {...register('celular', {
@@ -704,15 +737,15 @@ export default function RequerimentoForm() {
                       borderRadius="2xl"
                       border="1.5px solid"
                       borderColor="gray.200"
-                      style={{ background: '#F8FAFC' }}
+                      bg={{ base: '#F8FAFC', _dark: 'slate.900' }}
                     >
-                      <Flex align="center" gap={2} mb={5}>
-                        <MapPin size={16} color={COLORS.step2Text} />
+                      <Flex align="center" gap={2} mb={5} color={COLORS.step2Text}>
+                        <MapPin size={16} />
                         <Text
                           fontSize="sm"
                           fontWeight="700"
                           letterSpacing="wider"
-                          style={{ color: COLORS.labelGray }}
+                          color={COLORS.labelGray}
                         >
                           ENDEREÇO
                         </Text>
@@ -722,7 +755,7 @@ export default function RequerimentoForm() {
                         {/* CEP */}
                         <Field.Root required invalid={!!errors.cep}>
                           <Field.Label {...labelStyle}>
-                            CEP
+                            CEP*
                             {isFetchingCep && (
                               <Spinner size="xs" color={COLORS.btnBg} ml={1} />
                             )}
@@ -748,7 +781,7 @@ export default function RequerimentoForm() {
                         {/* Logradouro */}
                         <Box gridColumn={{ md: 'span 2' }}>
                           <Field.Root required invalid={!!errors.logradouro}>
-                            <Field.Label {...labelStyle}>LOGRADOURO</Field.Label>
+                            <Field.Label {...labelStyle}>LOGRADOURO*</Field.Label>
                             <Input
                               {...register('logradouro', { required: 'O campo Logradouro é obrigatório' })}
                               {...inputStyle}
@@ -763,7 +796,7 @@ export default function RequerimentoForm() {
 
                         {/* Número */}
                         <Field.Root required invalid={!!errors.numero}>
-                          <Field.Label {...labelStyle}>NÚMERO</Field.Label>
+                          <Field.Label {...labelStyle}>NÚMERO*</Field.Label>
                           <Input
                             {...register('numero', {
                               required: 'O campo Número é obrigatório',
@@ -797,7 +830,7 @@ export default function RequerimentoForm() {
 
                         {/* Bairro */}
                         <Field.Root required invalid={!!errors.bairro}>
-                          <Field.Label {...labelStyle}>BAIRRO</Field.Label>
+                          <Field.Label {...labelStyle}>BAIRRO*</Field.Label>
                           <Input
                             {...register('bairro', { required: 'O campo Bairro é obrigatório' })}
                             {...inputStyle}
@@ -811,7 +844,7 @@ export default function RequerimentoForm() {
 
                         {/* Cidade */}
                         <Field.Root required invalid={!!errors.localidade}>
-                          <Field.Label {...labelStyle}>CIDADE</Field.Label>
+                          <Field.Label {...labelStyle}>CIDADE*</Field.Label>
                           <Input
                             {...register('localidade', { required: 'O campo Cidade é obrigatório' })}
                             {...inputStyle}
@@ -825,7 +858,7 @@ export default function RequerimentoForm() {
 
                         {/* UF */}
                         <Field.Root required invalid={!!errors.uf}>
-                          <Field.Label {...labelStyle}>UF</Field.Label>
+                          <Field.Label {...labelStyle}>UF*</Field.Label>
                           <Input
                             {...register('uf', {
                               required: 'O campo UF é obrigatório',
@@ -846,7 +879,7 @@ export default function RequerimentoForm() {
                     </Box>
                   </VStack>
 
-                  <Separator style={{ borderColor: COLORS.border }} />
+                  <Separator borderColor={COLORS.border} />
 
                   {/* ══ PASSO 03 – Dados do Requerimento ══ */}
                   <VStack gap={8} align="stretch">
@@ -860,7 +893,7 @@ export default function RequerimentoForm() {
                     <SimpleGrid columns={{ base: 1, md: 3 }} gap={6}>
                       {/* MATRÍCULA */}
                       <Field.Root required invalid={!!errors.matricula}>
-                        <Field.Label {...labelStyle}>MATRÍCULA</Field.Label>
+                        <Field.Label {...labelStyle}>MATRÍCULA*</Field.Label>
                         <Input
                           {...register('matricula', {
                             required: 'O campo Matrícula é obrigatório',
@@ -879,7 +912,7 @@ export default function RequerimentoForm() {
 
                       {/* Cargo */}
                       <Field.Root required invalid={!!errors.cargo}>
-                        <Field.Label {...labelStyle}>CARGO</Field.Label>
+                        <Field.Label {...labelStyle}>CARGO*</Field.Label>
                         <Input
                           {...register('cargo', { required: 'O campo Cargo é obrigatório' })}
                           {...inputStyle}
@@ -893,7 +926,7 @@ export default function RequerimentoForm() {
 
                       {/* Unidade */}
                       <Field.Root required invalid={!!errors.unidade}>
-                        <Field.Label {...labelStyle}>UNIDADE</Field.Label>
+                        <Field.Label {...labelStyle}>UNIDADE*</Field.Label>
                         <Controller control={control} name="unidade"
                           rules={{ required: "Selecione a unidade" }}
                           render={({ field }) => (
@@ -902,13 +935,18 @@ export default function RequerimentoForm() {
                                 <Select.ValueText placeholder='Selecione uma unidade...' />
                                 <Select.Indicator />
                               </Select.Trigger>
-                              <Select.Content>
-                                {unidades.items.map((item) => (
-                                  <Select.Item key={item.value} item={item}>
-                                    {item.label}
-                                  </Select.Item>
-                                ))}
-                              </Select.Content>
+                              <Portal>
+                                <Select.Positioner>
+                                  <Select.Content color={COLORS.headingDark}>
+                                    {unidades.items.map((item) => (
+                                      <Select.Item key={item.value} item={item}>
+                                        {item.label}
+                                      </Select.Item>
+                                    ))}
+
+                                  </Select.Content>
+                                </Select.Positioner>
+                              </Portal>
                             </Select.Root>
                           )}>
                         </Controller>
@@ -926,7 +964,7 @@ export default function RequerimentoForm() {
                       borderRadius="2xl"
                       border="2px dashed"
                       borderColor="blue.200"
-                      style={{ background: COLORS.reqAreaBg }}
+                      bg={COLORS.reqAreaBg}
                     >
                       {/* Assunto */}
                       <Field.Root required invalid={!!errors.assunto}>
@@ -936,9 +974,9 @@ export default function RequerimentoForm() {
                           display="flex"
                           alignItems="center"
                           gap={2}
-                          style={{ color: COLORS.headingDark }}
+                          color={COLORS.headingDark}
                         >
-                          <Info size={18} color={COLORS.btnBg} /> ASSUNTO DO REQUERIMENTO
+                          <Info size={18} color={COLORS.btnBg} /> ASSUNTO DO REQUERIMENTO*
                         </Field.Label>
                         <Controller control={control} name="assunto"
                           rules={{ required: "Selecione o assunto" }}
@@ -954,13 +992,18 @@ export default function RequerimentoForm() {
                                 <Select.ValueText placeholder="Selecione um assunto" />
                                 <Select.Indicator />
                               </Select.Trigger>
-                              <Select.Content>
-                                {assuntos.items.map((item) => (
-                                  <Select.Item key={item.value} item={item}>
-                                    {item.label}
-                                  </Select.Item>
-                                ))}
-                              </Select.Content>
+                              <Portal>
+                                <Select.Positioner>
+                                  <Select.Content color={COLORS.headingDark}>
+                                    {assuntos.items.map((item) => (
+                                      <Select.Item key={item.value} item={item}>
+                                        {item.label}
+                                      </Select.Item>
+                                    ))}
+
+                                  </Select.Content>
+                                </Select.Positioner>
+                              </Portal>
                             </Select.Root>)} />
                         <Field.ErrorText style={{ color: '#DC2626', fontSize: '12px' }}>
                           {errors.assunto?.message}
@@ -968,7 +1011,7 @@ export default function RequerimentoForm() {
                       </Field.Root>
 
                       {/* Benefício */}
-                      {watchAssunto === 'beneficios' && (
+                      {watchAssunto === 'Benefício' && (
                         <Field.Root required invalid={!!errors.beneficio}>
                           <Field.Label
                             fontWeight="700"
@@ -976,9 +1019,9 @@ export default function RequerimentoForm() {
                             display="flex"
                             alignItems="center"
                             gap={2}
-                            style={{ color: COLORS.headingDark }}
+                            color={COLORS.headingDark}
                           >
-                            <CreditCard size={18} color={COLORS.btnBg} /> TIPO DE BENEFÍCIO
+                            <CreditCard size={18} color={COLORS.btnBg} /> TIPO DE BENEFÍCIO*
                           </Field.Label>
                           <Controller control={control} name="beneficio"
                             rules={{ required: "Selecione o tipo de benefício" }}
@@ -994,13 +1037,18 @@ export default function RequerimentoForm() {
                                   <Select.ValueText placeholder="Selecione o benefício" />
                                   <Select.Indicator />
                                 </Select.Trigger>
-                                <Select.Content>
-                                  {beneficios.items.map((item) => (
-                                    <Select.Item key={item.value} item={item}>
-                                      {item.label}
-                                    </Select.Item>
-                                  ))}
-                                </Select.Content>
+                                <Portal>
+                                  <Select.Positioner>
+                                    <Select.Content color={COLORS.headingDark}>
+                                      {beneficios.items.map((item) => (
+                                        <Select.Item key={item.value} item={item}>
+                                          {item.label}
+                                        </Select.Item>
+                                      ))}
+
+                                    </Select.Content>
+                                  </Select.Positioner>
+                                </Portal>
                               </Select.Root>)} />
                           <Field.ErrorText style={{ color: '#DC2626', fontSize: '12px' }}>
                             {errors.beneficio?.message}
@@ -1013,13 +1061,13 @@ export default function RequerimentoForm() {
                         <Field.Label
                           fontWeight="700"
                           fontSize="sm"
-                          style={{ color: COLORS.headingDark }}
+                          color={COLORS.headingDark}
                         >
-                          DESCRIÇÃO DETALHADA
+                          DESCRIÇÃO DETALHADA*
                         </Field.Label>
                         <Textarea
                           {...register('descricao', { required: 'O campo Descrição Detalhada é obrigatório' })}
-                          bg="white"
+                          {...inputStyle}
                           borderRadius="xl"
                           border="2px solid"
                           borderColor={COLORS.reqBorder}
@@ -1050,14 +1098,14 @@ export default function RequerimentoForm() {
                           display="flex"
                           alignItems="center"
                           gap={2}
-                          style={{ color: COLORS.headingDark }}
+                          color={COLORS.headingDark}
                         >
                           <Upload size={16} color={COLORS.btnBg} /> ANEXAR DOCUMENTAÇÃO (PDF / JPG)
                         </Field.Label>
                         <Flex
                           align="center"
                           p={3}
-                          bg="white"
+                          {...inputStyle}
                           borderRadius="xl"
                           border="2px solid"
                           borderColor={COLORS.reqBorder}
@@ -1069,7 +1117,7 @@ export default function RequerimentoForm() {
                             border="none"
                             p={1}
                             cursor="pointer"
-                            style={{ color: COLORS.labelGray }}
+                            color={COLORS.labelGray}
                           />
                         </Flex>
                         <Field.ErrorText style={{ color: '#DC2626', fontSize: '12px' }}>
@@ -1078,7 +1126,7 @@ export default function RequerimentoForm() {
                       </Field.Root>
 
                       {/* Prioridade */}
-                      <Box p={5} bg="blue.50" borderRadius="xl" border="2px solid" borderColor="blue.100">
+                      <Box p={5} bg={{ base: 'white', _dark: '#0F172A' }} borderRadius="xl" border="2px solid" borderColor="blue.100" >
                         <VStack align="stretch" gap={4}>
                           <HStack gap={3} align="flex-start">
                             <Box bg="blue.600" p={2} borderRadius="xl" color="white" mt={0.5}>
@@ -1098,37 +1146,23 @@ export default function RequerimentoForm() {
                             name="prioridade_tramitacao_tipo"
                             control={control}
                             render={({ field }) => (
-                              <select
-                                id="prioridade_tramitacao_tipo"
-                                value={field.value}
-                                onChange={(e) => field.onChange(e.target.value)}
-                                style={{
-                                  width: '100%',
-                                  padding: '14px 16px',
-                                  borderRadius: '14px',
-                                  border: '2px solid #E2E8F0',
-                                  backgroundColor: 'white',
-                                  fontSize: '14px',
-                                  fontWeight: '600',
-                                  color: '#1E293B',
-                                  outline: 'none',
-                                  boxShadow: '0 2px 4px rgba(0, 0, 0, 0.02)',
-                                  cursor: 'pointer',
-                                  transition: 'all 0.2s'
-                                }}
-                                onFocus={(e) => (e.target.style.borderColor = '#3182CE')}
-                                onBlur={(e) => (e.target.style.borderColor = '#E2E8F0')}
-                              >
-                                <option value="">- Não me enquadro / Nenhuma das opções -</option>
-                                <option value="pcd">Sou pessoa com deficiência (PcD)</option>
-                                <option value="tea">Sou pessoa com autismo (TEA)</option>
-                                <option value="idoso_60">Sou idoso(a) (60 anos ou mais)</option>
-                                <option value="idoso_80">Sou idoso(a) (80 anos ou mais)</option>
-                                <option value="gestante">Sou gestante</option>
-                                <option value="obeso">Sou pessoa obesa</option>
-                                <option value="mobilidade_reduzida">Possuo mobilidade reduzida</option>
-                                <option value="doador_sangue">Sou doador(a) de sangue</option>
-                              </select>
+                              <Select.Root collection={prioridade} value={field.value ? [field.value] : []} onValueChange={(change) => field.onChange(change.value[0])}>
+                                <Select.Trigger {...inputStyle}>
+                                  <Select.ValueText placeholder='- Não me enquadro / Nenhuma das opções -' />
+                                  <Select.Indicator />
+                                </Select.Trigger>
+                                <Portal>
+                                  <Select.Positioner>
+                                    <Select.Content color={COLORS.headingDark}>
+                                      {prioridade.items.map((item) => (
+                                        <Select.Item key={item.value} item={item}>
+                                          {item.label}
+                                        </Select.Item>
+                                      ))}
+                                    </Select.Content>
+                                  </Select.Positioner>
+                                </Portal>
+                              </Select.Root>
                             )}
                           />
                         </VStack>
@@ -1163,111 +1197,116 @@ export default function RequerimentoForm() {
                       <Send size={22} style={{ marginRight: '12px' }} />
                       ENVIAR REQUERIMENTO
                     </Button>
-                  </Center>
 
+                  </Center>
+                  <Text fontSize="xs" color="black.600" alignSelf={'center'}>
+                    O número do protocolo será enviado por e-mail. Recomendamos anotar ou copiar os números exibidos na tela para sua referência.
+                  </Text>
                 </VStack>
               </form>
             </Card.Body>
           </Card.Root>
-        </Container>
-      </Box>
+        </Container >
+      </Box >
 
       {/* ── Overlay de Sucesso ── */}
-      {submittedId && (
-        <Box
-          position="fixed"
-          top={0}
-          left={0}
-          right={0}
-          bottom={0}
-          bg="green.600"
-          zIndex={5000}
-          display="flex"
-          justifyContent="center"
-          alignItems="center"
-          p={4}
-          textAlign="center"
-          color="white"
-          animation="fade-in 0.5s ease-out"
-        >
-          <VStack gap={8} maxW="2xl">
-            <Box bg="white" color="green.600" p={6} borderRadius="full" shadow="2xl">
-              <ClipboardCheck size={80} />
-            </Box>
+      {
+        submittedId && (
+          <Box
+            position="fixed"
+            top={0}
+            left={0}
+            right={0}
+            bottom={0}
+            bg="green.600"
+            zIndex={5000}
+            display="flex"
+            justifyContent="center"
+            alignItems="center"
+            p={4}
+            textAlign="center"
+            color="white"
+            animation="fade-in 0.5s ease-out"
+          >
+            <VStack gap={8} maxW="2xl">
+              <Box bg="white" color="green.600" p={6} borderRadius="full" shadow="2xl">
+                <ClipboardCheck size={80} />
+              </Box>
 
-            <VStack gap={2}>
-              <Heading size="4xl" fontWeight="900" letterSpacing="tighter">
-                ENVIADO COM SUCESSO!
-              </Heading>
-              <Text fontSize="xl" fontWeight="600" opacity={0.9}>
-                Sua solicitação foi registrada no sistema.
-              </Text>
+              <VStack gap={2}>
+                <Heading size="4xl" fontWeight="900" letterSpacing="tighter">
+                  ENVIADO COM SUCESSO!
+                </Heading>
+                <Text fontSize="xl" fontWeight="600" opacity={0.9}>
+                  Sua solicitação foi registrada no sistema.
+                </Text>
+              </VStack>
+
+              <Box
+                bg="blackAlpha.300"
+                p={10}
+                borderRadius="3xl"
+                border="2px dashed"
+                borderColor="whiteAlpha.400"
+                w="full"
+                position="relative"
+              >
+                <Text fontSize="xs" fontWeight="black" mb={2} letterSpacing="widest" opacity={0.8}>
+                  NÚMERO DO PROTOCOLO (ANOTE ESTE CÓDIGO)
+                </Text>
+                <Heading size="3xl" fontWeight="black" letterSpacing="wider" mb={6}>
+                  {submittedId}
+                </Heading>
+
+                <Button
+                  size="xl"
+                  bg="white"
+                  color="green.600"
+                  px={10}
+                  h="60px"
+                  borderRadius="2xl"
+                  fontWeight="black"
+                  onClick={() => {
+                    if (submittedId) {
+                      navigator.clipboard.writeText(submittedId);
+                      setCopied(true);
+                      setTimeout(() => setCopied(false), 2000);
+                    }
+                  }}
+                  _hover={{ transform: "scale(1.05)", bg: "gray.50" }}
+                >
+                  {copied ? (
+                    <HStack gap={2}><Check size={20} /> COPIADO!</HStack>
+                  ) : (
+                    <HStack gap={2}><Copy size={20} /> COPIAR PROTOCOLO</HStack>
+                  )}
+                </Button>
+              </Box>
+
+              <VStack gap={4}>
+
+                <Button
+                  variant="ghost"
+                  color="white"
+                  borderRadius="full"
+                  onClick={() => setSubmittedId(null)}
+                  _hover={{ bg: "whiteAlpha.200" }}
+                >
+                  FECHAR AGORA
+                </Button>
+              </VStack>
             </VStack>
 
-            <Box
-              bg="blackAlpha.300"
-              p={10}
-              borderRadius="3xl"
-              border="2px dashed"
-              borderColor="whiteAlpha.400"
-              w="full"
-              position="relative"
-            >
-              <Text fontSize="xs" fontWeight="black" mb={2} letterSpacing="widest" opacity={0.8}>
-                NÚMERO DO PROTOCOLO (ANOTE ESTE CÓDIGO)
-              </Text>
-              <Heading size="3xl" fontWeight="black" letterSpacing="wider" mb={6}>
-                {submittedId}
-              </Heading>
-
-              <Button
-                size="xl"
-                bg="white"
-                color="green.600"
-                px={10}
-                h="60px"
-                borderRadius="2xl"
-                fontWeight="black"
-                onClick={() => {
-                  if (submittedId) {
-                    navigator.clipboard.writeText(submittedId);
-                    setCopied(true);
-                    setTimeout(() => setCopied(false), 2000);
-                  }
-                }}
-                _hover={{ transform: "scale(1.05)", bg: "gray.50" }}
-              >
-                {copied ? (
-                  <HStack gap={2}><Check size={20} /> COPIADO!</HStack>
-                ) : (
-                  <HStack gap={2}><Copy size={20} /> COPIAR PROTOCOLO</HStack>
-                )}
-              </Button>
-            </Box>
-
-            <VStack gap={4}>
-
-              <Button
-                variant="ghost"
-                color="white"
-                borderRadius="full"
-                onClick={() => setSubmittedId(null)}
-                _hover={{ bg: "whiteAlpha.200" }}
-              >
-                FECHAR AGORA
-              </Button>
-            </VStack>
-          </VStack>
-
-          <style dangerouslySetInnerHTML={{
-            __html: `
+            <style dangerouslySetInnerHTML={{
+              __html: `
             @keyframes fade-in {
               from { opacity: 0; transform: scale(1.1); }
               to { opacity: 1; transform: scale(1); }
             }
           `}} />
-        </Box>
-      )}
+          </Box>
+        )
+      }
     </>
   );
 }

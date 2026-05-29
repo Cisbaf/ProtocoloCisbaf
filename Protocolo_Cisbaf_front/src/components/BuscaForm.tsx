@@ -77,6 +77,7 @@ export default function BuscaForm() {
             if (!res.ok) throw new Error('Requerimento não encontrado');
             const json = await res.json();
             setData(json);
+            console.log(json)
         } catch (err: unknown) {
             setError(err instanceof Error ? err.message : 'Erro interno');
         } finally {
@@ -85,13 +86,14 @@ export default function BuscaForm() {
     };
 
     // confirmacao: null = aguardando RH | true = aceito | false = recusado
-    function renderStatusBadge(confirmacao: boolean | null) {
-        if (confirmacao === true) return (
+    function renderStatusBadge(confirmacao: boolean | string | null | undefined) {
+        console.log("Confiramação: " + confirmacao)
+        if (confirmacao === true || confirmacao === "true") return (
             <Badge bg="green.600" color="white" px={3} py={1} borderRadius="full" fontWeight="bold" display="flex" alignItems="center" gap={1}>
                 <CheckCircle size={14} /> ACEITO
             </Badge>
         );
-        if (confirmacao === false) return (
+        if (confirmacao === false || confirmacao === "false") return (
             <Badge bg="red.600" color="white" px={3} py={1} borderRadius="full" fontWeight="bold" display="flex" alignItems="center" gap={1}>
                 <XCircle size={14} /> RECUSADO
             </Badge>
@@ -107,7 +109,7 @@ export default function BuscaForm() {
         <>
             <Header />
 
-            <Box bg="gray.100" minH="100vh" py={{ base: 4, md: 16 }}>
+            <Box bg={{ base: "gray.100", _dark: "slate.950" }} minH="100vh" py={{ base: 4, md: 16 }}>
                 <Container maxW="container.md" px={{ base: 2, md: 8 }}>
                     <Card.Root
                         variant="elevated"
@@ -115,8 +117,8 @@ export default function BuscaForm() {
                         borderRadius={{ base: "xl", md: "3xl" }}
                         overflow="hidden"
                         border="2px solid"
-                        borderColor="gray.300"
-                        bg="white"
+                        borderColor={{ base: "gray.300", _dark: "slate.700" }}
+                        bg={{ base: "white", _dark: "slate.900" }}
                     >
                         {/* ── Cabeçalho ── */}
                         <Card.Header
@@ -134,14 +136,14 @@ export default function BuscaForm() {
                                     >
                                         Rastrear Solicitação
                                     </Heading>
-                                    <Text color="gray.600" fontSize={{ base: "md", md: "lg" }}>
+                                    <Text color={{ base: "gray.600", _dark: "slate.400" }} fontSize={{ base: "md", md: "lg" }}>
                                         Informe o código único da sua solicitação para consultar o status atual do processamento.
                                     </Text>
 
                                     <Box w="full" mt={4}>
                                         <VStack gap={4}>
                                             <Field.Root required>
-                                                <Field.Label fontWeight="bold" color="blue.800">
+                                                <Field.Label fontWeight="bold" color={{ base: "blue.800", _dark: "blue.400" }}>
                                                     CÓDIGO DA SOLICITAÇÃO
                                                 </Field.Label>
                                                 <Input
@@ -150,12 +152,12 @@ export default function BuscaForm() {
                                                     placeholder="Ex: 2000000000000000"
                                                     size="lg"
                                                     borderRadius="full"
-                                                    bg="gray.50"
+                                                    bg={{ base: "gray.50", _dark: "slate.800" }}
                                                     border="2px solid"
-                                                    borderColor="gray.200"
+                                                    borderColor={{ base: "gray.200", _dark: "slate.700" }}
                                                     textAlign="center"
                                                     fontWeight="medium"
-                                                    _focus={{ borderColor: "blue.500", bg: "white" }}
+                                                    _focus={{ borderColor: { base: "blue.500", _dark: "blue.400" }, bg: { base: "white", _dark: "slate.900" } }}
                                                     onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
                                                 />
                                             </Field.Root>
@@ -177,26 +179,26 @@ export default function BuscaForm() {
                             </Center>
                         </Card.Header>
 
-                        <Card.Body p={{ base: 4, md: 10 }} mt={-10} bg="white" borderRadius={{ base: "2xl", md: "4xl" }}>
+                        <Card.Body p={{ base: 4, md: 10 }} mt={-10} bg={{ base: "white", _dark: "slate.900" }} borderRadius={{ base: "2xl", md: "4xl" }}>
                             {/* ── Loading ── */}
                             {loading ? (
                                 <Center py={20}>
                                     <VStack gap={4}>
-                                        <Spinner size="xl" color="blue.800" />
-                                        <Text fontWeight="bold" color="blue.800">Buscando informações...</Text>
+                                        <Spinner size="xl" color={{ base: "blue.800", _dark: "blue.400" }} />
+                                        <Text fontWeight="bold" color={{ base: "blue.800", _dark: "blue.400" }}>Buscando informações...</Text>
                                     </VStack>
                                 </Center>
 
                             ) : error ? (
                                 <Box
-                                    bg="red.50"
+                                    bg={{ base: "red.50", _dark: "red.900/20" }}
                                     p={5}
                                     borderRadius="2xl"
                                     border="1.5px solid"
-                                    borderColor="red.100"
+                                    borderColor={{ base: "red.100", _dark: "red.900/50" }}
                                     textAlign="center"
                                 >
-                                    <Text color="red.600" fontWeight="bold">{error}</Text>
+                                    <Text color={{ base: "red.600", _dark: "red.400" }} fontWeight="bold">{error}</Text>
                                 </Box>
 
                             ) : data ? (
@@ -207,13 +209,13 @@ export default function BuscaForm() {
                                         align={{ base: "start", md: "center" }}
                                         gap={4}
                                         p={6}
-                                        bg="gray.50"
+                                        bg={{ base: "gray.50", _dark: "slate.800" }}
                                         borderRadius="2xl"
                                         border="2px solid"
-                                        borderColor="gray.100"
+                                        borderColor={{ base: "gray.100", _dark: "slate.700" }}
                                     >
                                         <VStack align="start" gap={0}>
-                                            <Text fontSize="xs" fontWeight="black" color="blue.800" textTransform="uppercase">
+                                            <Text fontSize="xs" fontWeight="black" color={{ base: "blue.800", _dark: "blue.400" }} textTransform="uppercase">
                                                 Código da Solicitação
                                             </Text>
                                             <Heading size="md" fontWeight="black" display="flex" alignItems="center" gap={2}>
@@ -228,19 +230,19 @@ export default function BuscaForm() {
                                                     {data.prioridade === "true" ? "ALTA" : data.prioridade.toUpperCase().replace("_", " ")}
                                                 </Badge>
                                             )}
-                                            {renderStatusBadge(data.confirmacao || null)}
+                                            {renderStatusBadge(data.confirmacao)}
                                         </HStack>
                                     </Flex>
                                     {data.confirmacao === false && data.motivo && (
                                         <>
-                                            <Box p={5} bg="red.50" borderRadius="2xl" border="1.5px solid" borderColor="red.100">
+                                            <Box p={5} bg={{ base: "red.50", _dark: "red.900/20" }} borderRadius="2xl" border="1.5px solid" borderColor={{ base: "red.100", _dark: "red.900/50" }}>
                                                 <Flex align="center" gap={2} mb={3}>
                                                     <XCircle size={16} color="red" />
-                                                    <Text fontSize="xs" fontWeight="black" color="red.500" textTransform="uppercase">
+                                                    <Text fontSize="xs" fontWeight="black" color={{ base: "red.500", _dark: "red.400" }} textTransform="uppercase">
                                                         Motivo da Recusa
                                                     </Text>
                                                 </Flex>
-                                                <Text fontSize="sm" color="red.700">{data.motivo}</Text>
+                                                <Text fontSize="sm" color={{ base: "red.700", _dark: "red.200" }}>{data.motivo}</Text>
                                             </Box>
                                         </>
                                     )}
@@ -262,14 +264,14 @@ export default function BuscaForm() {
                                     {data.descricao && (
                                         <>
                                             <Separator />
-                                            <Box p={5} bg="gray.50" borderRadius="2xl" border="1.5px solid" borderColor="gray.100">
+                                            <Box p={5} bg={{ base: "gray.50", _dark: "slate.800" }} borderRadius="2xl" border="1.5px solid" borderColor={{ base: "gray.100", _dark: "slate.700" }}>
                                                 <Flex align="center" gap={2} mb={3}>
                                                     <AlignLeft size={16} color="gray" />
-                                                    <Text fontSize="xs" fontWeight="black" color="gray.500" textTransform="uppercase">
+                                                    <Text fontSize="xs" fontWeight="black" color={{ base: "gray.500", _dark: "slate.400" }} textTransform="uppercase">
                                                         Descrição
                                                     </Text>
                                                 </Flex>
-                                                <Text fontSize="md" color="gray.700">{data.descricao}</Text>
+                                                <Text fontSize="md" color={{ base: "gray.700", _dark: "slate.300" }}>{data.descricao}</Text>
                                             </Box>
                                         </>
                                     )}
@@ -278,17 +280,17 @@ export default function BuscaForm() {
                                     {data.arquivoPath && (
                                         <>
                                             <Separator />
-                                            <Box p={5} bg="blue.50" borderRadius="2xl" border="1.5px solid" borderColor="blue.100">
+                                            <Box p={5} bg={{ base: "blue.50", _dark: "blue.900/20" }} borderRadius="2xl" border="1.5px solid" borderColor={{ base: "blue.100", _dark: "blue.900/50" }}>
                                                 <Flex align="center" justify="space-between" flexDir={{ base: "column", sm: "row" }} gap={4}>
                                                     <Flex align="center" gap={3}>
-                                                        <Center boxSize="40px" bg="blue.100" borderRadius="lg" color="blue.800">
+                                                        <Center boxSize="40px" bg={{ base: "blue.100", _dark: "blue.900/50" }} borderRadius="lg" color={{ base: "blue.800", _dark: "blue.400" }}>
                                                             <Download size={20} />
                                                         </Center>
                                                         <VStack align="start" gap={0}>
-                                                            <Text fontSize="xs" fontWeight="black" color="blue.500" textTransform="uppercase">
+                                                            <Text fontSize="xs" fontWeight="black" color={{ base: "blue.500", _dark: "blue.400" }} textTransform="uppercase">
                                                                 Documento Anexo
                                                             </Text>
-                                                            <Text fontWeight="bold" color="slate.800" maxW={{ base: "200px", sm: "300px" }} truncate title={decodeURIComponent(data.arquivoPath)}>
+                                                            <Text fontWeight="bold" color={{ base: "slate.800", _dark: "slate.200" }} maxW={{ base: "200px", sm: "300px" }} truncate title={decodeURIComponent(data.arquivoPath)}>
                                                                 {decodeURIComponent(data.arquivoPath.split('/').pop() || data.arquivoPath)}
                                                             </Text>
                                                         </VStack>
@@ -312,9 +314,9 @@ export default function BuscaForm() {
                             ) : (
                                 /* ── Empty state ── */
                                 <Center py={20} flexDir="column" gap={4}>
-                                    <Search size={48} color="gray.400" />
-                                    <Text fontSize="xl" fontWeight="bold" color="gray.500">Aguardando busca...</Text>
-                                    <Text color="gray.400" textAlign="center">
+                                    <Search size={48} color="gray" opacity={0.5} />
+                                    <Text fontSize="xl" fontWeight="bold" color={{ base: "gray.500", _dark: "slate.400" }}>Aguardando busca...</Text>
+                                    <Text color={{ base: "gray.400", _dark: "slate.500" }} textAlign="center">
                                         Insira o código da solicitação acima para visualizar os detalhes
                                     </Text>
                                 </Center>
@@ -331,21 +333,21 @@ export default function BuscaForm() {
 function DetailCard({ icon, label, value }: { icon: React.ReactNode; label: string; value: string }) {
     return (
         <Flex
-            bg="white"
+            bg={{ base: "white", _dark: "slate.900" }}
             p={4}
             borderRadius="xl"
             border="1px solid"
-            borderColor="gray.100"
+            borderColor={{ base: "gray.100", _dark: "slate.800" }}
             boxShadow="sm"
             align="center"
             gap={3}
         >
-            <Center boxSize="40px" bg="blue.50" borderRadius="lg" color="blue.800" flexShrink={0}>
+            <Center boxSize="40px" bg={{ base: "blue.50", _dark: "blue.900/20" }} borderRadius="lg" color={{ base: "blue.800", _dark: "blue.400" }} flexShrink={0}>
                 {icon}
             </Center>
             <VStack align="start" gap={0}>
-                <Text fontSize="sm" fontWeight="bold" color="gray.800">{label}</Text>
-                <Text fontWeight="black">{value ?? '—'}</Text>
+                <Text fontSize="sm" fontWeight="bold" color={{ base: "gray.800", _dark: "slate.300" }}>{label}</Text>
+                <Text fontWeight="black" color={{ _dark: "slate.100" }}>{value ?? '—'}</Text>
             </VStack>
         </Flex>
     );

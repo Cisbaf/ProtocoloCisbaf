@@ -69,6 +69,12 @@ export default function Inspector() {
   useEffect(() => { fetchRequerimentos(); }, []);
 
   const updateStatus = async (id: string, approved: boolean, motivo?: string) => {
+    if (approved) {
+      if (!window.confirm("Tem certeza que deseja aprovar este requerimento?")) {
+        return;
+      }
+    }
+
     try {
       setUpdatingId(id);
 
@@ -213,7 +219,7 @@ export default function Inspector() {
   return (
     <>
       <Header />
-      <Box bg="gray.100" minH="100vh" py={{ base: 4, md: 12 }}>
+      <Box bg={{ base: "gray.100", _dark: "slate.950" }} minH="100vh" py={{ base: 4, md: 12 }}>
         <Container maxW="container.xl" px={{ base: 2, md: 8 }}>
           <Card.Root
             variant="elevated"
@@ -221,15 +227,15 @@ export default function Inspector() {
             borderRadius={{ base: "xl", md: "3xl" }}
             overflow="hidden"
             border="2px solid"
-            borderColor="gray.300"
-            bg="white"
+            borderColor={{ base: "gray.300", _dark: "slate.700" }}
+            bg={{ base: "white", _dark: "slate.900" }}
           >
             <Card.Header
               pt={{ base: 8, md: 12 }}
               pb={{ base: 12, md: 20 }}
               px={{ base: 4, md: 8 }}
               textAlign="center"
-              bg="slate.900"
+              bg={{ base: "slate.900", _dark: "slate.950" }}
               color="white"
             >
               <Center>
@@ -269,99 +275,111 @@ export default function Inspector() {
               </Center>
             </Card.Header>
 
-            <Card.Body p={{ base: 4, md: 10 }} mt={{ base: -8, md: -12 }} bg="white" borderRadius={{ base: "2xl", md: "4xl" }} shadow="2xl">
+            <Card.Body p={{ base: 4, md: 10 }} mt={{ base: -8, md: -12 }} bg={{ base: "white", _dark: "slate.900" }} borderRadius={{ base: "2xl", md: "4xl" }} shadow="2xl">
               <VStack gap={6} align="stretch">
-                <Box bg="gray.50" p={{ base: 4, md: 6 }} borderRadius="2xl" border="1px solid" borderColor="gray.200">
+                <Box bg={{ base: "gray.50", _dark: "slate.800" }} p={{ base: 4, md: 6 }} borderRadius="2xl" border="1px solid" borderColor={{ base: "gray.200", _dark: "slate.700" }}>
                   <SimpleGrid columns={{ base: 1, md: 2, lg: bases.length > 1 ? 4 : 3 }} gap={4}>
                     <VStack align="start" gap={1}>
-                      <Text fontSize="xs" fontWeight="black" color="gray.500">NOME OU CPF</Text>
+                      <Text fontSize="xs" fontWeight="black" color={{ base: "gray.500", _dark: "slate.400" }}>NOME OU CPF</Text>
                       <Box position="relative" w="full">
-                        <Box position="absolute" left={3} top="50%" transform="translateY(-50%)" zIndex={10} color="gray.400">
+                        <Box position="absolute" left={3} top="50%" transform="translateY(-50%)" zIndex={10} color={{ base: "gray.400", _dark: "slate.500" }}>
                           <Search size={16} />
                         </Box>
-                        <input
-                          placeholder="Buscar..."
-                          value={nameFilter}
-                          onChange={(e) => setNameFilter(e.target.value)}
-                          style={{
-                            width: '100%',
-                            padding: '10px 10px 10px 36px',
-                            borderRadius: '12px',
-                            border: '1px solid #E2E8F0',
-                            fontSize: '14px',
-                            fontWeight: '600',
-                            outline: 'none',
-                            background: 'white'
-                          }}
+                        <Box
+                          as="input"
+                          {...({
+                            placeholder: "Buscar...",
+                            value: nameFilter,
+                            onChange: (e: any) => setNameFilter(e.target.value)
+                          } as any)}
+                          w="full"
+                          p="10px 10px 10px 36px"
+                          borderRadius="12px"
+                          border="1px solid"
+                          borderColor={{ base: "gray.200", _dark: "slate.600" }}
+                          fontSize="14px"
+                          fontWeight="600"
+                          outline="none"
+                          bg={{ base: "white", _dark: "slate.900" }}
+                          color={{ base: "black", _dark: "white" }}
                         />
                       </Box>
                     </VStack>
 
                     {bases.length > 1 && (
                       <VStack align="start" gap={1}>
-                        <Text fontSize="xs" fontWeight="black" color="gray.500">BASE / UNIDADE</Text>
-                        <select
-                          value={baseFilter}
-                          onChange={(e) => setBaseFilter(e.target.value)}
-                          style={{
-                            width: '100%',
-                            padding: '10px',
-                            borderRadius: '12px',
-                            border: '1px solid #E2E8F0',
-                            fontSize: '14px',
-                            fontWeight: '600',
-                            outline: 'none',
-                            background: 'white'
-                          }}
+                        <Text fontSize="xs" fontWeight="black" color={{ base: "gray.500", _dark: "slate.400" }}>BASE / UNIDADE</Text>
+                        <Box
+                          as="select"
+                          {...({
+                            value: baseFilter,
+                            onChange: (e: any) => setBaseFilter(e.target.value)
+                          } as any)}
+                          w="full"
+                          p="10px"
+                          borderRadius="12px"
+                          border="1px solid"
+                          borderColor={{ base: "gray.200", _dark: "slate.600" }}
+                          fontSize="14px"
+                          fontWeight="600"
+                          outline="none"
+                          bg={{ base: "white", _dark: "slate.900" }}
+                          color={{ base: "black", _dark: "white" }}
                         >
                           <option value="all">Todas as Bases</option>
                           {bases.map(b => <option key={b} value={b}>{b}</option>)}
-                        </select>
+                        </Box>
                       </VStack>
                     )}
 
                     <VStack align="start" gap={1}>
-                      <Text fontSize="xs" fontWeight="black" color="gray.500">ASSUNTO</Text>
-                      <select
-                        value={assuntoFilter}
-                        onChange={(e) => setAssuntoFilter(e.target.value)}
-                        style={{
-                          width: '100%',
-                          padding: '10px',
-                          borderRadius: '12px',
-                          border: '1px solid #E2E8F0',
-                          fontSize: '14px',
-                          fontWeight: '600',
-                          outline: 'none',
-                          background: 'white'
-                        }}
+                      <Text fontSize="xs" fontWeight="black" color={{ base: "gray.500", _dark: "slate.400" }}>ASSUNTO</Text>
+                      <Box
+                        as="select"
+                        {...({
+                          value: assuntoFilter,
+                          onChange: (e: any) => setAssuntoFilter(e.target.value)
+                        } as any)}
+                        w="full"
+                        p="10px"
+                        borderRadius="12px"
+                        border="1px solid"
+                        borderColor={{ base: "gray.200", _dark: "slate.600" }}
+                        fontSize="14px"
+                        fontWeight="600"
+                        outline="none"
+                        bg={{ base: "white", _dark: "slate.900" }}
+                        color={{ base: "black", _dark: "white" }}
                       >
                         <option value="all">Todos os Assuntos</option>
                         {assuntosUnicos.map(a => <option key={a} value={a}>{a}</option>)}
-                      </select>
+                      </Box>
                     </VStack>
 
                     <VStack align="start" gap={1}>
-                      <Text fontSize="xs" fontWeight="black" color="gray.500">STATUS</Text>
-                      <select
-                        value={statusFilter}
-                        onChange={(e) => setStatusFilter(e.target.value as "all" | "pending" | "approved" | "rejected")}
-                        style={{
-                          width: '100%',
-                          padding: '10px',
-                          borderRadius: '12px',
-                          border: '1px solid #E2E8F0',
-                          fontSize: '14px',
-                          fontWeight: '600',
-                          outline: 'none',
-                          background: 'white'
-                        }}
+                      <Text fontSize="xs" fontWeight="black" color={{ base: "gray.500", _dark: "slate.400" }}>STATUS</Text>
+                      <Box
+                        as="select"
+                        {...({
+                          value: statusFilter,
+                          onChange: (e: any) => setStatusFilter(e.target.value)
+                        } as any)}
+                        w="full"
+                        p="10px"
+                        borderRadius="12px"
+                        border="1px solid"
+                        borderColor={{ base: "gray.200", _dark: "slate.600" }}
+                        fontSize="14px"
+                        fontWeight="600"
+                        outline="none"
+                        bg={{ base: "white", _dark: "slate.900" }}
+                        color={{ base: "black", _dark: "white" }}
                       >
                         <option value="all">Todos os Status</option>
                         <option value="pending">Pendentes</option>
                         <option value="approved">Aprovados</option>
                         <option value="rejected">Recusados</option>
-                      </select>
+                      </Box>
                     </VStack>
                   </SimpleGrid>
                 </Box>
@@ -386,23 +404,23 @@ export default function Inspector() {
                           p={4}
                           borderRadius="xl"
                           border="1px solid"
-                          borderColor={(r.prioridade && r.prioridade !== "" && r.prioridade !== "false" && r.confirmacao === null) ? "red.200" : "gray.200"}
-                          bg={(r.prioridade && r.prioridade !== "" && r.prioridade !== "false" && r.confirmacao === null) ? "red.50" : "white"}
+                          borderColor={(r.prioridade && r.prioridade !== "" && r.prioridade !== "false" && r.confirmacao === null) ? { base: "red.200", _dark: "red.800" } : { base: "gray.200", _dark: "slate.700" }}
+                          bg={(r.prioridade && r.prioridade !== "" && r.prioridade !== "false" && r.confirmacao === null) ? { base: "red.50", _dark: "red.900/20" } : { base: "white", _dark: "slate.900" }}
                           shadow="sm"
                         >
                           <HStack justify="space-between" mb={3}>
-                            <Text fontWeight="black" color="blue.600" fontSize="xs">ID: {r.id}</Text>
+                            <Text fontWeight="black" color={{ base: "blue.600", _dark: "blue.400" }} fontSize="xs">ID: {r.id}</Text>
                             {renderStatus(r.confirmacao)}
                           </HStack>
 
                           <HStack gap={3} mb={3}>
-                            <Box bg="slate.100" p={2} borderRadius="xl" color="slate.600">
+                            <Box bg={{ base: "slate.100", _dark: "slate.800" }} p={2} borderRadius="xl" color={{ base: "slate.600", _dark: "slate.400" }}>
                               <User size={20} />
                             </Box>
                             <VStack align="start" gap={0}>
-                              <Text fontWeight="black" color="slate.800" fontSize="md">{r.usuario?.nome + " " + r.usuario?.sobrenome}</Text>
+                              <Text fontWeight="black" color={{ base: "slate.800", _dark: "slate.200" }} fontSize="md">{r.usuario?.nome + " " + r.usuario?.sobrenome}</Text>
                               <HStack gap={2} flexWrap="wrap">
-                                <Text fontSize="xs" fontWeight="bold" color="gray.500">{r.usuario?.cargo?.toUpperCase()}</Text>
+                                <Text fontSize="xs" fontWeight="bold" color={{ base: "gray.500", _dark: "slate.400" }}>{r.usuario?.cargo?.toUpperCase()}</Text>
                                 <Badge size="sm" variant="subtle">{r.usuario?.matricula}</Badge>
                               </HStack>
                             </VStack>
@@ -442,36 +460,36 @@ export default function Inspector() {
                     </VStack>
 
                     {/* ── VISUALIZAÇÃO DESKTOP (TABELA) ── */}
-                    <Box display={{ base: "none", md: "block" }} overflowX="auto" borderRadius="2xl" border="1px solid" borderColor="gray.100">
+                    <Box display={{ base: "none", md: "block" }} overflowX="auto" borderRadius="2xl" border="1px solid" borderColor={{ base: "gray.100", _dark: "slate.700" }}>
                       <Table.Root variant="line" size="lg">
-                        <Table.Header bg="gray.50">
+                        <Table.Header bg={{ base: "gray.50", _dark: "slate.800" }}>
                           <Table.Row>
-                            <Table.ColumnHeader fontWeight="black" color="slate.900" py={6} px={6}>ID <ArrowUpDown size={12} style={{ display: 'inline', marginLeft: '4px' }} /></Table.ColumnHeader>
-                            <Table.ColumnHeader fontWeight="black" color="slate.900">COLABORADOR</Table.ColumnHeader>
-                            <Table.ColumnHeader fontWeight="black" color="slate.900">ASSUNTO</Table.ColumnHeader>
-                            <Table.ColumnHeader fontWeight="black" color="slate.900">PRIORIDADE</Table.ColumnHeader>
-                            <Table.ColumnHeader fontWeight="black" color="slate.900">STATUS</Table.ColumnHeader>
-                            <Table.ColumnHeader fontWeight="black" color="slate.900" textAlign="right" px={6}>AÇÕES</Table.ColumnHeader>
+                            <Table.ColumnHeader fontWeight="black" color={{ base: "slate.900", _dark: "slate.200" }} py={6} px={6}>ID <ArrowUpDown size={12} style={{ display: 'inline', marginLeft: '4px' }} /></Table.ColumnHeader>
+                            <Table.ColumnHeader fontWeight="black" color={{ base: "slate.900", _dark: "slate.200" }}>COLABORADOR</Table.ColumnHeader>
+                            <Table.ColumnHeader fontWeight="black" color={{ base: "slate.900", _dark: "slate.200" }}>ASSUNTO</Table.ColumnHeader>
+                            <Table.ColumnHeader fontWeight="black" color={{ base: "slate.900", _dark: "slate.200" }}>PRIORIDADE</Table.ColumnHeader>
+                            <Table.ColumnHeader fontWeight="black" color={{ base: "slate.900", _dark: "slate.200" }}>STATUS</Table.ColumnHeader>
+                            <Table.ColumnHeader fontWeight="black" color={{ base: "slate.900", _dark: "slate.200" }} textAlign="right" px={6}>AÇÕES</Table.ColumnHeader>
                           </Table.Row>
                         </Table.Header>
                         <Table.Body>
                           {sorted.map((r) => (
-                            <Table.Row key={r.id} _hover={{ bg: "blue.50" }} transition="all 0.2s" bg={(r.prioridade && r.prioridade !== "" && r.prioridade !== "false" && r.confirmacao === null) ? "red.50" : undefined}>
+                            <Table.Row key={r.id} _hover={{ bg: { base: "blue.50", _dark: "blue.900/20" } }} transition="all 0.2s" bg={(r.prioridade && r.prioridade !== "" && r.prioridade !== "false" && r.confirmacao === null) ? { base: "red.50", _dark: "red.900/20" } : undefined}>
                               <Table.Cell px={6}>
-                                <Text fontWeight="black" color="blue.600" fontSize="sm">{r.id}</Text>
+                                <Text fontWeight="black" color={{ base: "blue.600", _dark: "blue.400" }} fontSize="sm">{r.id}</Text>
                               </Table.Cell>
                               <Table.Cell>
                                 <HStack gap={3}>
-                                  <Box bg="slate.100" p={2} borderRadius="xl" color="slate.600">
+                                  <Box bg={{ base: "slate.100", _dark: "slate.800" }} p={2} borderRadius="xl" color={{ base: "slate.600", _dark: "slate.400" }}>
                                     <User size={20} />
                                   </Box>
                                   <VStack align="start" gap={0}>
-                                    <Text fontWeight="black" color="slate.800">{r.usuario?.nome + " " + r.usuario?.sobrenome}</Text>
+                                    <Text fontWeight="black" color={{ base: "slate.800", _dark: "slate.200" }}>{r.usuario?.nome + " " + r.usuario?.sobrenome}</Text>
                                     <HStack gap={2}>
-                                      <Text fontSize="xs" fontWeight="bold" color="gray.500">{r.usuario?.cargo?.toUpperCase()}</Text>
+                                      <Text fontSize="xs" fontWeight="bold" color={{ base: "gray.500", _dark: "slate.400" }}>{r.usuario?.cargo?.toUpperCase()}</Text>
                                       <Badge size="sm" variant="subtle">{r.usuario?.matricula}</Badge>
                                     </HStack>
-                                    <Text fontSize="xs" color="gray.400">{r.unidade}</Text>
+                                    <Text fontSize="xs" color={{ base: "gray.400", _dark: "slate.500" }}>{r.unidade}</Text>
                                   </VStack>
                                 </HStack>
                               </Table.Cell>
@@ -553,7 +571,7 @@ export default function Inspector() {
           p={4}
         >
           <Box
-            bg="white"
+            bg={{ base: "white", _dark: "slate.900" }}
             w="full"
             maxW={{ base: "95%", md: "md" }}
             borderRadius="2xl"
@@ -562,26 +580,31 @@ export default function Inspector() {
             onClick={(e) => e.stopPropagation()}
           >
             <VStack align="stretch" gap={4}>
-              <Heading size="md" color="red.600" display="flex" alignItems="center" gap={2}>
+              <Heading size="md" color={{ base: "red.600", _dark: "red.400" }} display="flex" alignItems="center" gap={2}>
                 <AlertCircle size={20} /> Motivo da Recusa
               </Heading>
-              <Text fontSize="sm" color="gray.600">
+              <Text fontSize="sm" color={{ base: "gray.600", _dark: "slate.400" }}>
                 Por favor, descreva o motivo pelo qual este requerimento está sendo indeferido.
               </Text>
-              <textarea
-                placeholder="Ex: Documentação incompleta..."
-                value={refusalReason}
-                onChange={(e) => setRefusalReason(e.target.value)}
-                style={{
-                  width: '100%',
-                  minHeight: '120px',
-                  padding: '12px',
-                  borderRadius: '12px',
-                  border: '2px solid #FED7D7',
-                  fontSize: '14px',
-                  outline: 'none',
-                  resize: 'vertical'
-                }}
+              {/* @ts-ignore */}
+              <Box
+                as="textarea"
+                {...({
+                  placeholder: "Ex: Documentação incompleta...",
+                  value: refusalReason,
+                  onChange: (e: any) => setRefusalReason(e.target.value)
+                } as any)}
+                w="full"
+                minH="120px"
+                p="12px"
+                borderRadius="12px"
+                border="2px solid"
+                borderColor={{ base: "red.100", _dark: "red.900/50" }}
+                bg={{ base: "white", _dark: "slate.800" }}
+                color={{ base: "black", _dark: "white" }}
+                fontSize="14px"
+                outline="none"
+                style={{ resize: 'vertical' }}
               />
               <HStack gap={3} mt={2} flexDir={{ base: "column", sm: "row" }}>
                 <Button w={{ base: "full", sm: "auto" }} flex={1} variant="ghost" onClick={() => { setIsRefuseModalOpen(false); setRefusalReason(""); }}>

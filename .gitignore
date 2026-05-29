@@ -5,3 +5,4 @@ private-folder-alias.json
 uploads
 RequerimentosRHBack/src/main/resources/application-dev.properties
 docker-compose.yml
+Protocolo_Cisbaf_back/src/main/resources/application-dev.properties

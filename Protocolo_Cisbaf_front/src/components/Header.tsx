@@ -4,6 +4,7 @@ import { Box, Container, Flex, Heading, Link, HStack, Text, VStack, Button } fro
 import { Users, LayoutDashboard, UserCircle, Ticket, Menu as MenuIcon, X } from "lucide-react";
 import NextLink from "next/link";
 import { useEffect, useState } from "react";
+import { ColorModeButton } from "@/components/ui/color-mode";
 
 export default function Header() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -31,13 +32,13 @@ export default function Header() {
       as="header"
       w="full"
       h="80px"
-      bg="rgba(255, 255, 255, 0.95)"
+      bg={{ base: "rgba(255, 255, 255, 0.95)", _dark: "rgba(15, 23, 42, 0.95)" }}
       backdropFilter="blur(12px)"
       position="sticky"
       top="0"
       zIndex="1000"
       borderBottom="1px solid"
-      borderColor="rgba(226, 232, 240, 0.5)"
+      borderColor={{ base: "rgba(226, 232, 240, 0.5)", _dark: "rgba(30, 41, 59, 0.5)" }}
     >
       <Container maxW="container.xl" h="full" px={{ base: 4, md: 8 }}>
         <Flex justify="space-between" align="center" h="full">
@@ -49,10 +50,10 @@ export default function Header() {
                 <Users size={24} />
               </Box>
               <VStack align="start" gap={0}>
-                <Heading size={{ base: "sm", md: "md" }} fontWeight="black" color="slate.900" letterSpacing="tight">
+                <Heading size={{ base: "sm", md: "md" }} fontWeight="black" color={{ base: "slate.900", _dark: "slate.100" }} letterSpacing="tight">
                   Protocolo Cisbaf
                 </Heading>
-                <Text fontSize={{ base: "2xs", md: "xs" }} fontWeight="bold" color="blue.600" textTransform="uppercase" letterSpacing="widest">
+                <Text fontSize={{ base: "2xs", md: "xs" }} fontWeight="bold" color={{ base: "blue.600", _dark: "blue.400" }} textTransform="uppercase" letterSpacing="widest">
                   Central de Requisições
                 </Text>
               </VStack>
@@ -61,34 +62,37 @@ export default function Header() {
 
           {/* ── MENU DESKTOP ── */}
           <HStack gap={6} display={{ base: "none", md: "flex" }}>
-            <Link as={NextLink} href="/track" fontSize="sm" fontWeight="bold" color="slate.600" _hover={{ color: "blue.600" }} display="flex" alignItems="center" gap={2}>
+            <Link as={NextLink} href="/track" fontSize="sm" fontWeight="bold" color={{ base: "slate.600", _dark: "slate.300" }} _hover={{ color: { base: "blue.600", _dark: "blue.400" } }} display="flex" alignItems="center" gap={2}>
               <Ticket size={18} /> Acompanhar Solicitação
             </Link>
             {isAuthenticated ? (
-              <Link as={NextLink} href="/admin" fontSize="sm" fontWeight="bold" color="slate.600" _hover={{ color: "blue.600" }} display="flex" alignItems="center" gap={2}>
+              <Link as={NextLink} href="/admin" fontSize="sm" fontWeight="bold" color={{ base: "slate.600", _dark: "slate.300" }} _hover={{ color: { base: "blue.600", _dark: "blue.400" } }} display="flex" alignItems="center" gap={2}>
                 <LayoutDashboard size={18} /> Painel Administrativo
               </Link>
             ) : (
-              <Link as={NextLink} href="/login" fontSize="sm" fontWeight="bold" color="slate.600" _hover={{ color: "blue.600" }} display="flex" alignItems="center" gap={2}>
+              <Link as={NextLink} href="/login" fontSize="sm" fontWeight="bold" color={{ base: "slate.600", _dark: "slate.300" }} _hover={{ color: { base: "blue.600", _dark: "blue.400" } }} display="flex" alignItems="center" gap={2}>
                 <UserCircle size={18} /> Acesso Restrito
               </Link>
             )}
+            <ColorModeButton />
           </HStack>
 
-          {/* ── BOTÃO MENU MOBILE ── */}
-          <Button
-            display={{ base: "flex", md: "none" }}
-            bg="transparent" // Trocado variant="ghost" por bg="transparent" para evitar bugs de clique
-            _hover={{ bg: "gray.100" }}
-            p={2}
-            borderRadius="md"
-            onClick={toggleMobileMenu}
-            aria-label="Abrir Menu"
-            color="slate.600"
-            cursor="pointer"
-          >
-            {isMobileMenuOpen ? <X size={28} /> : <MenuIcon size={28} />}
-          </Button>
+          {/* ── BOTÃO MENU MOBILE E MODO ESCURO ── */}
+          <HStack gap={2} display={{ base: "flex", md: "none" }}>
+            <ColorModeButton />
+            <Button
+              bg="transparent"
+              _hover={{ bg: { base: "gray.100", _dark: "slate.800" } }}
+              p={2}
+              borderRadius="md"
+              onClick={toggleMobileMenu}
+              aria-label="Abrir Menu"
+              color={{ base: "slate.600", _dark: "slate.300" }}
+              cursor="pointer"
+            >
+              {isMobileMenuOpen ? <X size={28} /> : <MenuIcon size={28} />}
+            </Button>
+          </HStack>
         </Flex>
       </Container>
 
@@ -99,13 +103,13 @@ export default function Header() {
           top="80px"
           left={0}
           w="full"
-          bg="white"
+          bg={{ base: "white", _dark: "slate.900" }}
           shadow="2xl"
           borderBottomRadius="2xl"
           display={{ md: "none" }}
           p={4}
           borderTop="1px solid"
-          borderColor="gray.100"
+          borderColor={{ base: "gray.100", _dark: "slate.800" }}
           zIndex={9999} // Z-index super alto para passar por cima de tudo na página
         >
           <VStack align="stretch" gap={3}>
@@ -114,8 +118,8 @@ export default function Header() {
               href="/track"
               fontSize="md"
               fontWeight="bold"
-              color="slate.700"
-              _hover={{ color: "blue.600", bg: "blue.50" }}
+              color={{ base: "slate.700", _dark: "slate.200" }}
+              _hover={{ color: { base: "blue.600", _dark: "blue.400" }, bg: { base: "blue.50", _dark: "slate.800" } }}
               display="flex"
               alignItems="center"
               gap={3}
@@ -132,8 +136,8 @@ export default function Header() {
                 href="/admin"
                 fontSize="md"
                 fontWeight="bold"
-                color="slate.700"
-                _hover={{ color: "blue.600", bg: "blue.50" }}
+                color={{ base: "slate.700", _dark: "slate.200" }}
+                _hover={{ color: { base: "blue.600", _dark: "blue.400" }, bg: { base: "blue.50", _dark: "slate.800" } }}
                 display="flex"
                 alignItems="center"
                 gap={3}
@@ -149,8 +153,8 @@ export default function Header() {
                 href="/login"
                 fontSize="md"
                 fontWeight="bold"
-                color="slate.700"
-                _hover={{ color: "blue.600", bg: "blue.50" }}
+                color={{ base: "slate.700", _dark: "slate.200" }}
+                _hover={{ color: { base: "blue.600", _dark: "blue.400" }, bg: { base: "blue.50", _dark: "slate.800" } }}
                 display="flex"
                 alignItems="center"
                 gap={3}
