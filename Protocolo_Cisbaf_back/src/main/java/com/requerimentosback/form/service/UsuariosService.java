@@ -22,7 +22,13 @@ public class UsuariosService {
         return repository.findById(cpf);
     }
 
+    public Optional<Usuarios> findByIdAndNomeAndSobrenome(String cpf, String nome, String sobrenome) {
+        return repository.findByCpfAndNomeAndSobrenome(cpf, nome.trim(), sobrenome.trim());
+
+    }
+
     public Usuarios save(Usuarios usuario) {
+
         return repository.save(usuario);
     }
 

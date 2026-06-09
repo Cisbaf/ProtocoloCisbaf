@@ -22,7 +22,16 @@ public class UsuariosController {
     }
 
     @GetMapping("/{cpf}")
-    public ResponseEntity<Usuarios> findById(@PathVariable String cpf) {
+    public ResponseEntity<Usuarios> findById(
+            @PathVariable String cpf,
+            @RequestParam(required = false) String nome,
+            @RequestParam(required = false) String sobrenome
+    ) {
+        if (nome != null && sobrenome != null) {
+            return service.findByIdAndNomeAndSobrenome(cpf, nome, sobrenome)
+                    .map(ResponseEntity::ok)
+                    .orElse(ResponseEntity.notFound().build());
+        }
         return service.findById(cpf)
                 .map(ResponseEntity::ok)
                 .orElse(ResponseEntity.notFound().build());

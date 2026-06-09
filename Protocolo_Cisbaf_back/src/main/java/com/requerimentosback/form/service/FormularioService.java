@@ -1,8 +1,10 @@
 package com.requerimentosback.form.service;
 
 import com.requerimentosback.admin.repository.AdminRepository;
+import com.requerimentosback.form.model.DadoGraficoDTO;
 import com.requerimentosback.form.model.Formulario;
 import com.requerimentosback.form.model.Usuarios;
+import com.requerimentosback.form.model.enuns.TipoGrafico;
 import com.requerimentosback.form.model.enuns.Unidades;
 import com.requerimentosback.form.repository.FormularioRepository;
 import com.requerimentosback.form.repository.UsuariosRepository;
@@ -116,5 +118,24 @@ public class FormularioService {
             return repository.findAll();
         }
         return repository.findByUnidade(baseName);
+    }
+
+    public List<DadoGraficoDTO> buscarDadosParaGrafico(TipoGrafico tipo, Date inicio, Date fim, Unidades unidade) {
+
+        // Se a unidade não foi enviada (ou é "all"), busca o geral
+        if (unidade == null) {
+            return switch (tipo) {
+                case RANKING_UNIDADES -> repository.obterVolumePorUnidade(inicio, fim);
+                case EVOLUCAO_DIARIA -> repository.obterEvolucaoTemporal(inicio, fim);
+                case VOLUME_CARGO -> repository.obterVolumePorCargo(inicio, fim);
+            };
+        }
+
+        // Se tem unidade, usa as queries filtradas
+        return switch (tipo) {
+            case RANKING_UNIDADES -> repository.obterVolumePorUnidadeFiltrado(inicio, fim, unidade);
+            case EVOLUCAO_DIARIA -> repository.obterEvolucaoTemporalFiltrado(inicio, fim, unidade);
+            case VOLUME_CARGO -> repository.obterVolumePorCargoFiltrado(inicio, fim, unidade);
+        };
     }
 }

@@ -57,6 +57,8 @@ public class SecurityConfig {
 
                         .requestMatchers(HttpMethod.GET, "/form/cep/{cep}").permitAll()
 
+                        .requestMatchers(HttpMethod.GET, "/form/graficos", "/form/graficos/**").permitAll()
+
                         .requestMatchers(HttpMethod.GET, "/form/arquivos/download/**").authenticated()
 
                         .requestMatchers(HttpMethod.POST, "/form").permitAll()
@@ -88,9 +90,12 @@ public class SecurityConfig {
                         // ==========================
 
                         .requestMatchers(
+                                "/v3/api-docs",        // <-- Adicione esta linha
                                 "/v3/api-docs/**",
                                 "/swagger-ui/**",
-                                "/swagger-ui.html"
+                                "/swagger-ui.html",
+                                "/swagger-resources/**", // <-- Boa prática adicionar esses também
+                                "/webjars/**"          // <-- Boa prática adicionar esses também
                         ).permitAll()
 
                 )

@@ -2,7 +2,10 @@ package com.requerimentosback.form.controller;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.requerimentosback.form.model.CepResponse;
+import com.requerimentosback.form.model.DadoGraficoDTO;
 import com.requerimentosback.form.model.Formulario;
+import com.requerimentosback.form.model.enuns.TipoGrafico;
+import com.requerimentosback.form.model.enuns.Unidades;
 import com.requerimentosback.form.service.CepClient;
 import com.requerimentosback.form.service.FormularioService;
 import lombok.RequiredArgsConstructor;
@@ -10,6 +13,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.Resource;
 import org.springframework.core.io.UrlResource;
+import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -22,6 +26,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.security.Principal;
+import java.util.Date;
 import java.util.List;
 
 @Slf4j
@@ -57,6 +62,21 @@ public class FormularioController {
     @GetMapping("/cep/{cep}")
     public ResponseEntity<CepResponse> findAddress(@PathVariable String cep) {
         return ResponseEntity.ok(cepClient.findAddress(cep));
+    }
+
+    @GetMapping("/graficos")
+    public ResponseEntity<List<DadoGraficoDTO>> obterDadosGrafico(
+            @RequestParam TipoGrafico tipo,
+            @RequestParam @DateTimeFormat(pattern = "yyyy-MM-dd") Date inicio,
+            @RequestParam @DateTimeFormat(pattern = "yyyy-MM-dd") Date fim,
+            @RequestParam(required = false) String unidade // Recebe como ‘String’ porque pode vir "all"
+    ) {
+        Unidades filtroUnidade = (unidade != null && !unidade.equals("all"))
+                ? Unidades.valueOf(unidade)
+                : null;
+
+        List<DadoGraficoDTO> dados = service.buscarDadosParaGrafico(tipo, inicio, fim, filtroUnidade);
+        return ResponseEntity.ok(dados);
     }
 
     @GetMapping("/arquivos/download/{nomeArquivo:.+}")
