@@ -1,3 +1,5 @@
+import { createListCollection } from "@chakra-ui/react";
+
 // ─── Endereço (@Embeddable) ───────────────────────────────────────────────────
 export interface Endereco {
   cep: string;
@@ -90,3 +92,64 @@ export interface FormValues {
   prioridade_tramitacao_tipo?: string;
   arquivo?: FileList;
 }
+
+export const assuntos = createListCollection({
+  items: [
+    { label: 'Atestado', value: 'Atestado' },
+    { label: 'Desligamento', value: 'Desligamento' },
+    { label: 'Folha de Pagamento', value: 'Folha de Pagamento' },
+    { label: 'Benefícios (Refeição e Transporte)', value: 'Benefício' },
+    { label: 'Outros Assuntos (Administrativos)', value: 'Assuntos Administrativos' },
+  ],
+});
+
+export const sexos = createListCollection({
+  items: [
+    { label: 'Masculino', value: 'MASCULINO' },
+    { label: 'Feminino', value: 'FEMININO' },
+    { label: 'Não-binário', value: 'NAO_BINARIO' },
+    { label: 'Prefiro não responder', value: 'NAO_INFORMADO' },
+  ],
+});
+
+export const cores = createListCollection({
+  items: [
+    { label: 'Branca', value: 'BRANCA' },
+    { label: 'Preta', value: 'PRETA' },
+    { label: 'Parda', value: 'PARDA' },
+    { label: 'Amarela', value: 'AMARELA' },
+    { label: 'Indígena', value: 'INDIGENA' },
+    { label: 'Prefiro não informar', value: 'NAO_INFORMADO' },
+  ],
+});
+
+export const beneficios = createListCollection({
+  items: [
+    { label: 'Refeição', value: 'Refeição' },
+    { label: 'Transporte', value: 'Transporte' },
+  ],
+});
+
+export const unidades = createListCollection({
+  items: [
+    { label: 'Unidade I - Sede CISBAF', value: 'CISBAF' },
+    { label: 'Unidade II - CRUR/BF', value: 'CRUR' },
+    { label: 'Unidade III - Base SAMU Queimados', value: 'QUEIMADOS' },
+    { label: 'Unidade IV - Base SAMU Nilópolis', value: 'NILOPOLIS' },
+    { label: 'Unidade V - UPA Jardim Íris', value: 'IRIS' },
+  ]
+});
+
+export const prioridade = createListCollection({
+  items: [
+    { label: '- Não me enquadro / Nenhuma das opções -', value: '' },
+    { label: 'Sou pessoa com deficiência (PcD)', value: 'pcd' },
+    { label: 'Sou pessoa com autismo (TEA)', value: 'tea' },
+    { label: 'Sou idoso(a) (60 anos ou mais)', value: 'idoso_60' },
+    { label: 'Sou idoso(a) (80 anos ou mais)', value: 'idoso_80' },
+    { label: 'Sou gestante', value: 'gestante' },
+    { label: 'Sou pessoa obesa', value: 'obeso' },
+    { label: 'Possuo mobilidade reduzida', value: 'mobilidade_reduzida' },
+    { label: 'Sou doador(a) de sangue', value: 'doador_sangue' }
+  ]
+})

@@ -271,7 +271,7 @@ export default function BuscaForm() {
                                                         Descrição
                                                     </Text>
                                                 </Flex>
-                                                <Text fontSize="md" color={{ base: "gray.700", _dark: "slate.300" }}>{data.descricao}</Text>
+                                                <Text fontSize="md" color={{ base: "gray.700", _dark: "slate.300" }} whiteSpace="pre-wrap" >{data.descricao}</Text>
                                             </Box>
                                         </>
                                     )}

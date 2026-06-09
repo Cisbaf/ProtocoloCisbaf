@@ -1,62 +1,25 @@
 'use client';
 
-import { FormValues } from '@/components/types';
+import { FormValues, sexos, assuntos, cores, beneficios, prioridade, unidades } from '@/components/types';
 import { toaster } from "@/components/ui/toaster";
 import {
-  Badge,
-  Box,
-  Button,
-  Card,
-  Center,
-  Container,
-  createListCollection,
-  Field,
-  Flex,
-  Heading,
-  Input,
-  Separator,
-  SimpleGrid,
-  Spinner,
-  Text,
-  Textarea,
-  VStack,
-  Select,
-  HStack,
-  Portal,
+  Badge, Box, Button, Card, Center, Container, Field, Flex, Heading, Input, Separator,
+  SimpleGrid, Spinner, Text, Textarea, VStack, Select, HStack, Portal,
 } from '@chakra-ui/react';
 
 import {
-  Calendar,
-  CreditCard,
-  Info,
-  Mail,
-  MapPin,
-  Send,
-  Smartphone,
-  Upload,
-  User,
-  Scale,
-  Copy,
-  Check,
-  ClipboardCheck
+  Calendar, CreditCard, Info, Mail, MapPin, Send,
+  Smartphone, Upload, User, Scale, Copy, Check, ClipboardCheck
 } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { useForm, Controller, useWatch } from 'react-hook-form';
 import Header from './Header';
-import { inputStyle, labelStyle, COLORS } from '@/components/formStyles';
+import { inputStyle, labelStyle, COLORS } from '@/components/ui/formStyles';
 
 
 // ─── Sub-componente: cabeçalho de seção ──────────────────────────────────────
-function SectionHeader({
-  step,
-  title,
-  badgeBg,
-  badgeColor,
-}: {
-  step: string;
-  title: string;
-  badgeBg: any;
-  badgeColor: any;
+function SectionHeader({ step, title, badgeBg, badgeColor, }: {
+  step: string; title: string; badgeBg: any; badgeColor: any;
 }) {
   return (
     <Center flexDir="column" gap={2}>
@@ -92,6 +55,7 @@ export default function RequerimentoForm() {
     register,
     reset,
     setValue,
+    getValues,
     control,
     setError,
     formState: { isSubmitting, errors },
@@ -151,32 +115,32 @@ export default function RequerimentoForm() {
 
       const payload = {
         usuario: {
-          cpf: data.cpf,
-          nome: data.nome,
-          sobrenome: data.sobrenome,
-          rg: data.rg,
+          cpf: data.cpf.trim(),
+          nome: data.nome.trim(),
+          sobrenome: data.sobrenome.trim(),
+          rg: data.rg.trim(),
           dataNascimento: dataNascimentoFormatada,
           sexo: data.sexo,
-          email: data.email,
+          email: data.email.trim(),
           telefone: data.telefone,
           celular: data.celular,
           emailAlt: data.emailAlt,
-          matricula: data.matricula,
-          cargo: data.cargo,
+          matricula: data.matricula.trim(),
+          cargo: data.cargo.trim(),
           cor: data.cor,
           endereco: {
             cep: data.cep,
-            endereco: data.logradouro,
+            endereco: data.logradouro.trim(),
             numero: data.numero,
             complemento: data.complemento,
-            bairro: data.bairro,
-            cidade: data.localidade,
-            estado: data.uf,
+            bairro: data.bairro.trim(),
+            cidade: data.localidade.trim(),
+            estado: data.uf.trim(),
           },
         },
-        assunto: data.assunto,
+        assunto: data.assunto.trim(),
         beneficio: data.beneficio,
-        descricao: data.descricao,
+        descricao: data.descricao.trim(),
         unidade: data.unidade,
 
         prioridade: data.prioridade_tramitacao_tipo || "",
@@ -291,18 +255,27 @@ export default function RequerimentoForm() {
   };
 
   // ── Busca de usuário por CPF ──────────────────────────────────────────────
-  const fetchUsuario = async (cpf: string) => {
+  const fetchUsuario = async (cpf: string, nome: string, sobrenome: string) => {
     cpf = cpf.replace(/\D/g, '');
     if (cpf.length !== 11) return;
 
     setIsFetchingUser(true);
     try {
-      const res = await fetch(`/api/usuarios/${cpf}`);
+      const res = await fetch(`/api/usuarios/${cpf}?nome=${encodeURIComponent(nome)}&sobrenome=${encodeURIComponent(sobrenome)}`);
       if (!res.ok) {
         return;
       }
 
       const user = await res.json();
+
+      // Validar se o nome e o sobrenome batem com o banco
+      if (
+        (user.nome || '').trim().toLowerCase() !== nome.toLowerCase() ||
+        (user.sobrenome || '').trim().toLowerCase() !== sobrenome.toLowerCase()
+      ) {
+        return;
+      }
+
       if (user.dataNascimento) {
         if (user.dataNascimento.includes('/')) {
           const [day, month, year] = user.dataNascimento.split('/');
@@ -353,68 +326,16 @@ export default function RequerimentoForm() {
     }
   };
 
-  // ── Collections de select ─────────────────────────────────────────────────
-  const assuntos = createListCollection({
-    items: [
-      { label: 'Atestado', value: 'Atestado' },
-      { label: 'Benefícios (Refeição e Transporte)', value: 'Benefício' },
-      { label: 'Desligamento', value: 'Desligamento' },
-      { label: 'Folha de Pagamento', value: 'Folha de Pagamento' },
-      { label: 'Outros Assuntos (Administrativos)', value: 'Assuntos Administrativos' },
-    ],
-  });
+  const triggerFetchUsuario = async () => {
+    const values = getValues();
+    const cpf = (values.cpf || '').replace(/\D/g, '');
+    const nome = (values.nome || '').trim();
+    const sobrenome = (values.sobrenome || '').trim();
 
-  const sexos = createListCollection({
-    items: [
-      { label: 'Masculino', value: 'MASCULINO' },
-      { label: 'Feminino', value: 'FEMININO' },
-      { label: 'Não-binário', value: 'NAO_BINARIO' },
-      { label: 'Prefiro não responder', value: 'NAO_INFORMADO' },
-    ],
-  });
-
-  const cores = createListCollection({
-    items: [
-      { label: 'Branca', value: 'BRANCA' },
-      { label: 'Preta', value: 'PRETA' },
-      { label: 'Parda', value: 'PARDA' },
-      { label: 'Amarela', value: 'AMARELA' },
-      { label: 'Indígena', value: 'INDIGENA' },
-      { label: 'Prefiro não informar', value: 'NAO_INFORMADO' },
-    ],
-  });
-
-  const beneficios = createListCollection({
-    items: [
-      { label: 'Refeição', value: 'Refeição' },
-      { label: 'Transporte', value: 'Transporte' },
-    ],
-  });
-
-  const unidades = createListCollection({
-    items: [
-      { label: 'Unidade I - Sede CISBAF', value: 'CISBAF' },
-      { label: 'Unidade II - CRUR/BF', value: 'CRUR' },
-      { label: 'Unidade III - Base SAMU Queimados', value: 'QUEIMADOS' },
-      { label: 'Unidade IV - Base SAMU Nilópolis', value: 'NILOPOLIS' },
-      { label: 'Unidade V - UPA Jardim Íris', value: 'IRIS' },
-    ]
-  });
-
-  const prioridade = createListCollection({
-    items: [
-      { label: '- Não me enquadro / Nenhuma das opções -', value: '' },
-      { label: 'Sou pessoa com deficiência (PcD)', value: 'pcd' },
-      { label: 'Sou pessoa com autismo (TEA)', value: 'tea' },
-      { label: 'Sou idoso(a) (60 anos ou mais)', value: 'idoso_60' },
-      { label: 'Sou idoso(a) (80 anos ou mais)', value: 'idoso_80' },
-      { label: 'Sou gestante', value: 'gestante' },
-      { label: 'Sou pessoa obesa', value: 'obeso' },
-      { label: 'Possuo mobilidade reduzida', value: 'mobilidade_reduzida' },
-      { label: 'Sou doador(a) de sangue', value: 'doador_sangue' }
-    ]
-  })
-
+    if (cpf.length === 11 && nome.length > 0 && sobrenome.length > 0) {
+      await fetchUsuario(cpf, nome, sobrenome);
+    }
+  };
   // ─── Render ───────────────────────────────────────────────────────────────
   return (
     <>
@@ -422,14 +343,8 @@ export default function RequerimentoForm() {
 
       <Box minH="100vh" py={{ base: 6, md: 16 }} bg={COLORS.bodyBg}>
         <Container maxW="container.xl" px={{ base: 3, md: 8 }}>
-          <Card.Root
-            variant="elevated"
-            boxShadow="2xl"
-            borderRadius={{ base: 'xl', md: '3xl' }}
-            overflow="hidden"
-            border="1.5px solid"
-            borderColor="gray.200"
-            bg={COLORS.cardBg}
+          <Card.Root variant="elevated" boxShadow="2xl" borderRadius={{ base: 'xl', md: '3xl' }}
+            overflow="hidden" border="1.5px solid" borderColor="gray.200" bg={COLORS.cardBg}
           >
             {/* ── Cabeçalho ── */}
             <Card.Header
@@ -437,7 +352,7 @@ export default function RequerimentoForm() {
               pb={{ base: 8, md: 12 }}
               px={{ base: 4, md: 8 }}
               textAlign="center"
-              bg={COLORS.cardBg}
+              bg={COLORS.reqAreaBg}
             >
               <Center>
                 <VStack gap={3} maxW="2xl">
@@ -495,7 +410,7 @@ export default function RequerimentoForm() {
                             onChange: (e) => {
                               e.target.value = e.target.value.replace(/\D/g, '');
                             },
-                            onBlur: (e) => fetchUsuario(e.target.value),
+                            onBlur: () => triggerFetchUsuario(),
                           })}
                           maxLength={11}
                           {...inputStyle}
@@ -512,7 +427,10 @@ export default function RequerimentoForm() {
                           <Box color="currentColor"><User size={14} /></Box> PRIMEIRO NOME*
                         </Field.Label>
                         <Input
-                          {...register('nome', { required: 'O campo Primeiro Nome é obrigatório' })}
+                          {...register('nome', {
+                            required: 'O campo Primeiro Nome é obrigatório',
+                            onBlur: () => triggerFetchUsuario(),
+                          })}
                           {...inputStyle}
                           placeholder="Seu primeiro nome"
                           maxLength={70}
@@ -528,7 +446,10 @@ export default function RequerimentoForm() {
                           <Box color="currentColor"><User size={14} /></Box> SOBRENOME*
                         </Field.Label>
                         <Input
-                          {...register('sobrenome', { required: 'O campo Sobrenome é obrigatório' })}
+                          {...register('sobrenome', {
+                            required: 'O campo Sobrenome é obrigatório',
+                            onBlur: () => triggerFetchUsuario(),
+                          })}
                           {...inputStyle}
                           placeholder="Seu sobrenome"
                           maxLength={70}
@@ -1091,7 +1012,7 @@ export default function RequerimentoForm() {
                       </Field.Root>
 
                       {/* Arquivo */}
-                      <Field.Root invalid={!!errors.arquivo}>
+                      <Field.Root invalid={!!errors.arquivo} >
                         <Field.Label
                           fontWeight="700"
                           fontSize="sm"

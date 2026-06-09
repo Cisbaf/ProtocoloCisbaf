@@ -2,50 +2,29 @@
 
 import { Formulario } from '@/components/types';
 import { toaster } from '@/components/ui/toaster';
-import {
-  Badge,
-  Box,
-  Button,
-  Card,
-  Center,
-  Container,
-  HStack,
-  Heading,
-  SimpleGrid,
-  Spinner,
-  Table,
-  Text,
-  VStack
-} from '@chakra-ui/react';
-import {
-  AlertCircle,
-  ArrowUpDown,
-  CheckCircle,
-  Eye,
-  RefreshCw,
-  Search,
-  Trash,
-  User,
-  XCircle,
-} from 'lucide-react';
+import { Badge, Box, Button, Card, Center, Container, HStack, Heading, SimpleGrid, Spinner, Table, Text, VStack } from '@chakra-ui/react';
+import { AlertCircle, ArrowUpDown, BarChartIcon, CheckCircle, Eye, RefreshCw, Search, Trash, User, XCircle, } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import Header from './Header';
 import ReqDetailsModal from './modal/ReqDetailsModal';
 import { useRouter } from 'next/navigation';
+import StatsModal from './modal/StatsModal';
 
 export default function Inspector() {
   const router = useRouter();
   const [requerimentos, setRequerimentos] = useState<Formulario[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
   const [nameFilter, setNameFilter] = useState("");
   const [baseFilter, setBaseFilter] = useState("all");
   const [assuntoFilter, setAssuntoFilter] = useState("all");
   const [statusFilter, setStatusFilter] = useState<"all" | "pending" | "approved" | "rejected">("all");
   const [selectedReq, setSelectedReq] = useState<Formulario | null>(null);
-  const [isRefuseModalOpen, setIsRefuseModalOpen] = useState(false);
   const [refusalReason, setRefusalReason] = useState("");
   const [reqToRefuseId, setReqToRefuseId] = useState<string | null>(null);
   const [updatingId, setUpdatingId] = useState<string | null>(null);
+
+  const [isRefuseModalOpen, setIsRefuseModalOpen] = useState(false);
+  const [isStatsModalOpen, setIsStatsModalOpen] = useState(false);
 
   const bases = Array.from(new Set(requerimentos.map(r => r.unidade).filter(Boolean)));
   const assuntosUnicos = Array.from(new Set(requerimentos.map(r => r.assunto).filter(Boolean)));
@@ -235,7 +214,7 @@ export default function Inspector() {
               pb={{ base: 12, md: 20 }}
               px={{ base: 4, md: 8 }}
               textAlign="center"
-              bg={{ base: "slate.900", _dark: "slate.950" }}
+              bg={{ base: "slate.900", _dark: "slate.700" }}
               color="white"
             >
               <Center>
@@ -252,8 +231,7 @@ export default function Inspector() {
                       bg="white"
                       color="slate.900"
                       onClick={fetchRequerimentos}
-                      loading={loading ? true : undefined}
-                      disabled={loading ? true : undefined}
+                      loading={loading}
                       borderRadius="full"
                       fontWeight="bold"
                     >
@@ -269,6 +247,17 @@ export default function Inspector() {
                       fontWeight="bold"
                     >
                       Sair
+                    </Button>
+                    <Button
+                      size={{ base: "md", md: "sm" }}
+                      bg="green.500"
+                      color="white"
+                      _hover={{ bg: "green.600" }}
+                      onClick={() => setIsStatsModalOpen(true)}
+                      borderRadius="full"
+                      fontWeight="bold"
+                    >
+                      <BarChartIcon size={16} style={{ marginRight: '6px' }} /> Relatórios
                     </Button>
                   </HStack>
                 </VStack>
@@ -516,10 +505,10 @@ export default function Inspector() {
                               </Table.Cell>
                               <Table.Cell textAlign="right" px={6}>
                                 <HStack gap={2} justify="flex-end">
-                                  <Button size="sm" colorPalette="blue" borderRadius="lg" onClick={() => setSelectedReq(r)} disabled={updatingId === r.id}><Eye size={18} /></Button>
-                                  <Button size="sm" colorPalette="green" borderRadius="lg" onClick={() => r.id && updateStatus(r.id, true)} disabled={r.confirmacao === true || updatingId === r.id} loading={updatingId === r.id ? true : undefined} shadow="sm"><CheckCircle size={18} /></Button>
-                                  <Button size="sm" colorPalette="red" borderRadius="lg" onClick={() => { setReqToRefuseId(r.id || null); setIsRefuseModalOpen(true); }} disabled={r.confirmacao === false || updatingId === r.id} shadow="sm"><XCircle size={18} /></Button>
-                                  <Button size="sm" colorPalette="gray" borderRadius="lg" onClick={() => r.id && deleteForm(r.id)} disabled={updatingId !== null && updatingId !== r.id} loading={updatingId === r.id} shadow="sm">
+                                  <Button size="sm" colorPalette="blue" borderRadius="lg" onClick={() => setSelectedReq(r)} disabled={!!updatingId}><Eye size={18} /></Button>
+                                  <Button size="sm" colorPalette="green" borderRadius="lg" onClick={() => r.id && updateStatus(r.id, true)} disabled={r.confirmacao === true || !!updatingId} loading={updatingId === r.id} shadow="sm"><CheckCircle size={18} /></Button>
+                                  <Button size="sm" colorPalette="red" borderRadius="lg" onClick={() => { setReqToRefuseId(r.id || null); setIsRefuseModalOpen(true); }} disabled={r.confirmacao === false || !!updatingId} loading={updatingId === r.id} shadow="sm"><XCircle size={18} /></Button>
+                                  <Button size="sm" colorPalette="gray" borderRadius="lg" onClick={() => r.id && deleteForm(r.id)} disabled={!!updatingId && updatingId !== r.id} loading={updatingId === r.id} shadow="sm">
                                     <Trash size={18} />
                                   </Button>
                                 </HStack>
@@ -627,10 +616,17 @@ export default function Inspector() {
                   CONFIRMAR RECUSA
                 </Button>
               </HStack>
+
             </VStack>
           </Box>
         </Box>
       )}
+      {/* ── Modal de Estatísticas e Gráficos ── */}
+      <StatsModal
+        isOpen={isStatsModalOpen}
+        onClose={() => setIsStatsModalOpen(false)}
+        bases={bases}
+      />
     </>
   );
 }

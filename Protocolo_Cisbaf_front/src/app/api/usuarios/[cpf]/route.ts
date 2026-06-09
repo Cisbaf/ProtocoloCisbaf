@@ -6,8 +6,14 @@ export async function GET(
 ) {
   const { cpf } = await params;
 
+  // Extract query parameters
+  const { searchParams } = new URL(request.url);
+  const nome = searchParams.get('nome') || '';
+  const sobrenome = searchParams.get('sobrenome') || '';
+
   try {
-    const res = await fetch(`${process.env.BACKEND_INTERNAL_URL}/user/${cpf}`, {});
+    const backendUrl = `${process.env.BACKEND_INTERNAL_URL}/user/${cpf}?nome=${encodeURIComponent(nome)}&sobrenome=${encodeURIComponent(sobrenome)}`;
+    const res = await fetch(backendUrl, {});
 
     if (res.status === 404) {
       return NextResponse.json({ error: 'Usuário não encontrado' }, { status: 404 });
