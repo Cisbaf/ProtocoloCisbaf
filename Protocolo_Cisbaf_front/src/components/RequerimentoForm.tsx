@@ -154,6 +154,8 @@ export default function RequerimentoForm() {
         formData.append('arquivo', new Blob([]), '');
       }
 
+      console.log("Data:", Object.fromEntries(formData));
+
       const res = await fetch('/api/requerimentos', {
         method: 'POST',
         body: formData,

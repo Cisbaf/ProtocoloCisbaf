@@ -34,12 +34,12 @@ public class AdminService implements UserDetailsService {
         if (request == null || request.username() == null) {
             return null;
         }
-        var exist = adminRepository.findByUsername(request.username()).isEmpty();
+        var exist = adminRepository.findByUsername(request.username().trim()).isEmpty();
         if (!exist) {
             throw new AuthenticationException("Usuário já cadastrado");
         }
 
-        String password = passwordEncoder.encode(request.password());
+        String password = passwordEncoder.encode(request.password().trim());
         var entity = adminMapper.toAdminEntity(request);
 
         entity.setPassword(password);

@@ -30,7 +30,7 @@ public class LoginService {
         if (login == null || login.username() == null) {
             return;
         }
-        Authentication authentication = authenticationManager.authenticate(new UsernamePasswordAuthenticationToken(login.username(), login.password()));
+        Authentication authentication = authenticationManager.authenticate(new UsernamePasswordAuthenticationToken(login.username().trim(), login.password().trim()));
 
         final var userDetails = (UserDetails) authentication.getPrincipal();
 

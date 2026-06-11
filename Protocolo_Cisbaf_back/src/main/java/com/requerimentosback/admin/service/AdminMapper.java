@@ -14,9 +14,9 @@ public class AdminMapper {
             return AdminEntity.builder().build();
         }
         return AdminEntity.builder()
-                .username(request.username())
-                .password(request.password())
-                .base(Unidades.valueOf(request.base().toUpperCase()))
+                .username(request.username().trim())
+                .password(request.password().trim())
+                .base(Unidades.valueOf(request.base().toUpperCase().trim()))
                 .build();
     }
     protected AdminResponse toAdminResponse(AdminEntity adminEntity) {
