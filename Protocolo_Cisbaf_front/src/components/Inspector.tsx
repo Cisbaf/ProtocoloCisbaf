@@ -578,6 +578,7 @@ export default function Inspector() {
               {/* @ts-ignore */}
               <Box
                 as="textarea"
+                maxLength={255}
                 {...({
                   placeholder: "Ex: Documentação incompleta...",
                   value: refusalReason,
