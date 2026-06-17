@@ -1,7 +1,7 @@
 'use client';
 
 import { Box, Container, Flex, Heading, Link, HStack, Text, VStack, Button } from "@chakra-ui/react";
-import { Users, LayoutDashboard, UserCircle, Ticket, Menu as MenuIcon, X } from "lucide-react";
+import { LayoutDashboard, UserCircle, Ticket, Menu as MenuIcon, X } from "lucide-react";
 import NextLink from "next/link";
 import { useEffect, useState } from "react";
 import { ColorModeButton } from "@/components/ui/color-mode";
