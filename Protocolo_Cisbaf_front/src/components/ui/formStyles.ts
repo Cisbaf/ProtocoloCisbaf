@@ -15,7 +15,7 @@ export const COLORS = {
     step3Bg: { base: '#F5F3FF', _dark: '#4C1D95' },
     step3Text: { base: '#7C3AED', _dark: '#EDE9FE' },
 
-    reqAreaBg: { base: '#EFF6FF', _dark: '#1E3A8A' },
+    reqAreaBg: { base: '#C4D1F2', _dark: '#1E3A8A' },
     reqBorder: { base: '#93C5FD', _dark: '#1E40AF' },
 
     btnBg: '#2563EB',

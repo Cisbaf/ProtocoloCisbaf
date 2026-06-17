@@ -354,7 +354,7 @@ export default function RequerimentoForm() {
               pb={{ base: 8, md: 12 }}
               px={{ base: 4, md: 8 }}
               textAlign="center"
-              bg={COLORS.reqAreaBg}
+              bg={{ base: "slate.900", _dark: "slate.700" }}
             >
               <Center>
                 <VStack gap={3} maxW="2xl">
@@ -362,7 +362,7 @@ export default function RequerimentoForm() {
                     size={{ base: '2xl', md: '4xl' }}
                     fontWeight="900"
                     letterSpacing="tight"
-                    color={COLORS.headingDark}
+                    color='#F8FAFC'
                   >
                     Central de Requerimentos
                   </Heading>

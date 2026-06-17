@@ -46,15 +46,15 @@ export default function Header() {
           {/* ── LOGO ── */}
           <Link as={NextLink} href="/" _hover={{ textDecoration: "none" }} onClick={() => setIsMobileMenuOpen(false)}>
             <HStack gap={3}>
-              <Box bg="blue.600" p={{ base: 1.5, md: 2 }} borderRadius="xl" shadow="lg" color="white">
-                <Users size={24} />
+              <Box display="flex" alignItems="center" justifyContent="center">
+                <img src="/cisbaf.png" alt="Logo Cisbaf" style={{ height: '60px', width: 'auto', objectFit: 'contain' }} />
               </Box>
               <VStack align="start" gap={0}>
-                <Heading size={{ base: "sm", md: "md" }} fontWeight="black" color={{ base: "slate.900", _dark: "slate.100" }} letterSpacing="tight">
+                <Heading size={{ base: "sm", md: "md" }} fontWeight="black" color={{ base: "red.700", _dark: "red.400" }} letterSpacing="tight">
                   Protocolo Cisbaf
                 </Heading>
-                <Text fontSize={{ base: "2xs", md: "xs" }} fontWeight="bold" color={{ base: "blue.600", _dark: "blue.400" }} textTransform="uppercase" letterSpacing="widest">
-                  Central de Requisições
+                <Text fontSize={{ base: "2xs", md: "xs" }} fontWeight="bold" color={{ base: "yellow.600", _dark: "yellow.400" }} textTransform="uppercase" letterSpacing="widest">
+                  Central de Requerimentos
                 </Text>
               </VStack>
             </HStack>

@@ -178,7 +178,7 @@ export default function StatsModal({ isOpen, onClose, bases }: StatsModalProps) 
             <ResponsiveContainer width="100%" height="100%">
                 <BarChart data={charts.cargos} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
                     <CartesianGrid strokeDasharray="3 3" vertical={false} />
-                    <XAxis dataKey="label" tick={{ fill: '#64748b', fontSize: 12 }} />
+                    <XAxis dataKey="label" tick={false} />
                     <YAxis tick={{ fill: '#64748b', fontSize: 12 }} />
                     <Tooltip cursor={{ fill: '#f1f5f9' }} contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px rgba(0,0,0,0.1)' }} />
                     <Bar dataKey="value" fill="#8b5cf6" radius={[4, 4, 0, 0]} name="Quantidade" />
