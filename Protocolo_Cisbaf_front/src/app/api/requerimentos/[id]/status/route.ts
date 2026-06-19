@@ -1,6 +1,5 @@
 import { NextResponse } from 'next/server';
 
-
 export async function PUT(
   request: Request,
   { params }: { params: Promise<{ id: string }> }
@@ -10,6 +9,7 @@ export async function PUT(
     const body = await request.json();
     const cookieHeader = request.headers.get('cookie');
 
+    // 1. Busca o estado atual no Java
     const getRes = await fetch(`${process.env.BACKEND_INTERNAL_URL}/form/${id}`, {
       headers: {
         ...(cookieHeader ? { Cookie: cookieHeader } : {}),
@@ -18,11 +18,20 @@ export async function PUT(
     if (!getRes.ok) throw new Error('Requerimento não encontrado');
     const existing = await getRes.json();
 
-    existing.confirmacao = body.confirmacao;
+    // 2. Mapeia os dados do body do Front-end para o objeto que vai para o Java
+    if (body.confirmacao !== undefined) {
+      existing.confirmacao = body.confirmacao;
+    }
     if (body.motivo !== undefined) {
       existing.motivo = body.motivo;
     }
 
+    // 👇 A LINHA QUE FALTAVA 👇
+    if (body.finalizarArquivar !== undefined) {
+      existing.finalizarArquivar = body.finalizarArquivar;
+    }
+
+    // 3. Envia os dados atualizados para o Java
     const putRes = await fetch(`${process.env.BACKEND_INTERNAL_URL}/form/${id}`, {
       method: 'PUT',
       headers: {

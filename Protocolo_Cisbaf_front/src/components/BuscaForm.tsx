@@ -31,17 +31,21 @@ import {
     AlignLeft,
     Gift,
     Download,
+    MessageCircle,
+    ChevronDown,
 } from "lucide-react";
 import { useState } from "react";
 import Header from "./Header";
 import { toaster } from "@/components/ui/toaster";
 import { Formulario } from '@/components/types';
+import ChatPanel from '@/components/modal/ChatPanel';
 
 export default function BuscaForm() {
     const [codigo, setCodigo] = useState('');
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
     const [data, setData] = useState<Formulario | null>(null);
+    const [chatAberto, setChatAberto] = useState(false);
 
     const handleDownloadArquivo = async (arquivoPath: string) => {
         try {
@@ -247,6 +251,51 @@ export default function BuscaForm() {
                                         </>
                                     )}
 
+                                    {/* ── Chat com o RH (colapsável) ── */}
+                                    <Separator />
+                                    <Box
+                                        border="1px solid"
+                                        borderColor={{ base: 'gray.200', _dark: 'slate.700' }}
+                                        borderRadius="2xl"
+                                        overflow="hidden"
+                                    >
+                                        {/* Cabeçalho clicável */}
+                                        <Flex
+                                            as="button"
+                                            w="full"
+                                            px={4}
+                                            py={3}
+                                            align="center"
+                                            gap={2}
+                                            bg={{ base: 'slate.800', _dark: 'slate.950' }}
+                                            cursor="pointer"
+                                            onClick={() => setChatAberto((v) => !v)}
+                                            _hover={{ bg: { base: 'slate.700', _dark: 'slate.900' } }}
+                                            transition="background 0.2s"
+                                        >
+                                            <MessageCircle size={18} color="#60a5fa" />
+                                            <Text fontWeight="bold" color="white" fontSize="sm" flex={1} textAlign="left">
+                                                Conversa com o RH
+                                            </Text>
+                                            <Box
+                                                color="white"
+                                                transition="transform 0.25s"
+                                                style={{ transform: chatAberto ? 'rotate(180deg)' : 'rotate(0deg)' }}
+                                            >
+                                                <ChevronDown size={18} />
+                                            </Box>
+                                        </Flex>
+
+                                        {/* Conteúdo colapsável */}
+                                        {chatAberto && (
+                                            <ChatPanel
+                                                formularioId={data.id!}
+                                                remetente="SOLICITANTE"
+                                                nomeRemetente={`${data.usuario?.nome} ${data.usuario?.sobrenome}`}
+                                            />
+                                        )}
+                                    </Box>
+
                                     {/* ── Cards de detalhe ── */}
                                     <SimpleGrid columns={{ base: 1, md: 2 }} gap={4}>
                                         <DetailCard icon={<User size={20} />} label="NOME" value={data.usuario?.nome + " " + data.usuario?.sobrenome} />
@@ -307,7 +356,6 @@ export default function BuscaForm() {
                                             </Box>
                                         </>
                                     )}
-
 
                                 </VStack>
 

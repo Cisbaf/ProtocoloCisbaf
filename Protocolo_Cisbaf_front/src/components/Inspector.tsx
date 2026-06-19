@@ -3,7 +3,7 @@
 import { Formulario } from '@/components/types';
 import { toaster } from '@/components/ui/toaster';
 import { Badge, Box, Button, Card, Center, Container, HStack, Heading, SimpleGrid, Spinner, Table, Text, VStack } from '@chakra-ui/react';
-import { AlertCircle, ArrowUpDown, BarChartIcon, CheckCircle, Eye, RefreshCw, Search, Trash, User, XCircle, } from 'lucide-react';
+import { AlertCircle, ArrowUpDown, BarChartIcon, CheckCircle, Eye, RefreshCw, Search, Trash, User, XCircle, Archive, ArchiveRestore, Undo2 } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import Header from './Header';
 import ReqDetailsModal from './modal/ReqDetailsModal';
@@ -17,13 +17,13 @@ export default function Inspector() {
   const [nameFilter, setNameFilter] = useState("");
   const [baseFilter, setBaseFilter] = useState("all");
   const [assuntoFilter, setAssuntoFilter] = useState("all");
-  const [statusFilter, setStatusFilter] = useState<"all" | "pending" | "approved" | "rejected">("all");
+
+  const [statusFilter, setStatusFilter] = useState<"all" | "em_analise" | "finalizado">("all");
+  const [isArchiveMode, setIsArchiveMode] = useState(false);
+
   const [selectedReq, setSelectedReq] = useState<Formulario | null>(null);
-  const [refusalReason, setRefusalReason] = useState("");
-  const [reqToRefuseId, setReqToRefuseId] = useState<string | null>(null);
   const [updatingId, setUpdatingId] = useState<string | null>(null);
 
-  const [isRefuseModalOpen, setIsRefuseModalOpen] = useState(false);
   const [isStatsModalOpen, setIsStatsModalOpen] = useState(false);
 
   const bases = Array.from(new Set(requerimentos.map(r => r.unidade).filter(Boolean)));
@@ -47,11 +47,11 @@ export default function Inspector() {
   // eslint-disable-next-line react-hooks/set-state-in-effect
   useEffect(() => { fetchRequerimentos(); }, []);
 
-  const updateStatus = async (id: string, approved: boolean, motivo?: string) => {
-    if (approved) {
-      if (!window.confirm("Tem certeza que deseja aprovar este requerimento?")) {
-        return;
-      }
+  const updateStatus = async (id: string, novoStatus: 'FINALIZADO' | 'ARQUIVADO' | 'EM_ANALISE' | 'TERMINADO') => {
+    if (novoStatus === 'FINALIZADO') {
+      if (!window.confirm("Tem certeza que deseja finalizar este requerimento?")) return;
+    } else if (novoStatus === 'ARQUIVADO') {
+      if (!window.confirm("Tem certeza que deseja arquivar este requerimento?")) return;
     }
 
     try {
@@ -61,8 +61,7 @@ export default function Inspector() {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          confirmacao: approved,
-          motivo: motivo
+          finalizarArquivar: novoStatus,
         })
       });
 
@@ -73,7 +72,7 @@ export default function Inspector() {
       toaster.create({ title: 'Sucesso', type: 'success' });
 
       setRequerimentos(prev =>
-        prev.map(req => req.id === id ? { ...req, confirmacao: approved } : req)
+        prev.map(req => req.id === id ? { ...req, finalizarArquivar: novoStatus } : req)
       );
 
     } catch (err: unknown) {
@@ -158,6 +157,12 @@ export default function Inspector() {
   };
 
   const filtered = requerimentos.filter(r => {
+    // 1. Lógica do Modo Arquivo: engloba ARQUIVADO e TERMINADO
+    const isArchived = r.finalizarArquivar === 'ARQUIVADO' || r.finalizarArquivar === 'TERMINADO';
+    if (isArchiveMode && !isArchived) return false;
+    if (!isArchiveMode && isArchived) return false;
+
+    // 2. Filtros de Texto e Base
     const matchesName = nameFilter === "" ||
       r.usuario?.nome.toLowerCase().includes(nameFilter.toLowerCase()) ||
       r.usuario?.cpf.includes(nameFilter) ||
@@ -167,33 +172,39 @@ export default function Inspector() {
     const matchesBase = baseFilter === "all" || r.unidade === baseFilter;
     const matchesAssunto = assuntoFilter === "all" || r.assunto === assuntoFilter;
 
-    const matchesStatus = statusFilter === "all" ||
-      (statusFilter === "pending" && r.confirmacao === null) ||
-      (statusFilter === "approved" && r.confirmacao === true) ||
-      (statusFilter === "rejected" && r.confirmacao === false);
+    // 3. Filtro de Status
+    const isEmAnalise = !r.finalizarArquivar || r.finalizarArquivar === 'EM_ANALISE';
+    const matchesStatus = isArchiveMode || statusFilter === "all" ||
+      (statusFilter === "em_analise" && isEmAnalise) ||
+      (statusFilter === "finalizado" && r.finalizarArquivar === 'FINALIZADO');
 
     return matchesName && matchesBase && matchesAssunto && matchesStatus;
   });
 
   const sorted = [...filtered].sort((a, b) => {
-    const aUrgent = a.prioridade && a.prioridade !== "" && a.prioridade !== "false" && a.confirmacao === null;
-    const bUrgent = b.prioridade && b.prioridade !== "" && b.prioridade !== "false" && b.confirmacao === null;
+    const aPending = !a.finalizarArquivar || a.finalizarArquivar === 'EM_ANALISE';
+    const bPending = !b.finalizarArquivar || b.finalizarArquivar === 'EM_ANALISE';
+
+    const aUrgent = a.prioridade && a.prioridade !== "" && a.prioridade !== "false" && aPending;
+    const bUrgent = b.prioridade && b.prioridade !== "" && b.prioridade !== "false" && bPending;
+
     if (aUrgent && !bUrgent) return -1;
     if (!aUrgent && bUrgent) return 1;
 
-    const aPending = a.confirmacao === null;
-    const bPending = b.confirmacao === null;
     if (aPending && !bPending) return -1;
     if (!aPending && bPending) return 1;
 
     return 0;
   });
 
-  const renderStatus = (confirmacao: boolean | null | undefined) => {
-    if (confirmacao === true) return <Badge bg="green.100" color="green.700" borderRadius="full" px={3} py={1} fontWeight="black" display="flex" alignItems="center" gap={1}><CheckCircle size={12} /> APROVADO</Badge>;
-    if (confirmacao === false) return <Badge bg="red.100" color="red.700" borderRadius="full" px={3} py={1} fontWeight="black" display="flex" alignItems="center" gap={1}><XCircle size={12} /> RECUSADO</Badge>;
-    return <Badge bg="orange.100" color="orange.700" borderRadius="full" px={3} py={1} fontWeight="black" display="flex" alignItems="center" gap={1}><AlertCircle size={12} /> PENDENTE</Badge>;
+  const renderStatus = (status?: 'FINALIZADO' | 'ARQUIVADO' | 'EM_ANALISE' | 'TERMINADO') => {
+    if (status === 'FINALIZADO') return <Badge bg="green.100" color="green.700" borderRadius="full" px={3} py={1} fontWeight="black" display="flex" alignItems="center" gap={1}><CheckCircle size={12} /> FINALIZADO</Badge>;
+    if (status === 'ARQUIVADO') return <Badge bg="red.100" color="red.700" borderRadius="full" px={3} py={1} fontWeight="black" display="flex" alignItems="center" gap={1}><XCircle size={12} /> ARQUIVADO</Badge>;
+    if (status === 'TERMINADO') return <Badge bg="black" color="white" borderRadius="full" px={3} py={1} fontWeight="black" display="flex" alignItems="center" gap={1}><XCircle size={12} /> TERMINADO</Badge>;
+    return <Badge bg="orange.100" color="orange.700" borderRadius="full" px={3} py={1} fontWeight="black" display="flex" alignItems="center" gap={1}><AlertCircle size={12} /> EM ANÁLISE</Badge>;
   };
+
+  const isPending = (status?: 'FINALIZADO' | 'ARQUIVADO' | 'EM_ANALISE' | 'TERMINADO') => !status || status === 'EM_ANALISE';
 
   return (
     <>
@@ -206,7 +217,7 @@ export default function Inspector() {
             borderRadius={{ base: "xl", md: "3xl" }}
             overflow="hidden"
             border="2px solid"
-            borderColor={{ base: "gray.300", _dark: "slate.700" }}
+            borderColor={isArchiveMode ? "orange.400" : { base: "gray.300", _dark: "slate.700" }}
             bg={{ base: "white", _dark: "slate.900" }}
           >
             <Card.Header
@@ -214,16 +225,17 @@ export default function Inspector() {
               pb={{ base: 12, md: 20 }}
               px={{ base: 4, md: 8 }}
               textAlign="center"
-              bg={{ base: "slate.900", _dark: "slate.700" }}
+              bg={isArchiveMode ? "orange.600" : { base: "slate.900", _dark: "slate.700" }}
               color="white"
+              transition="background 0.3s ease"
             >
               <Center>
                 <VStack gap={4} maxW="3xl">
-                  <Badge bg="blue.500" color="white" px={4} py={1} borderRadius="full" fontWeight="black" fontSize="xs" letterSpacing="widest">
+                  <Badge bg={isArchiveMode ? "orange.800" : "blue.500"} color="white" px={4} py={1} borderRadius="full" fontWeight="black" fontSize="xs" letterSpacing="widest">
                     PAINEL ADMIN
                   </Badge>
                   <Heading size={{ base: "xl", md: "4xl" }} fontWeight="black" letterSpacing="tight">
-                    Gestão de Requerimentos
+                    {isArchiveMode ? "Arquivados e Terminados" : "Gestão de Requerimentos"}
                   </Heading>
                   <HStack gap={4} mt={4} flexWrap="wrap" justify="center">
                     <Button
@@ -239,17 +251,6 @@ export default function Inspector() {
                     </Button>
                     <Button
                       size={{ base: "md", md: "sm" }}
-                      bg="red.500"
-                      color="white"
-                      _hover={{ bg: "red.600" }}
-                      onClick={handleLogout}
-                      borderRadius="full"
-                      fontWeight="bold"
-                    >
-                      Sair
-                    </Button>
-                    <Button
-                      size={{ base: "md", md: "sm" }}
                       bg="green.500"
                       color="white"
                       _hover={{ bg: "green.600" }}
@@ -258,6 +259,29 @@ export default function Inspector() {
                       fontWeight="bold"
                     >
                       <BarChartIcon size={16} style={{ marginRight: '6px' }} /> Relatórios
+                    </Button>
+                    <Button
+                      size={{ base: "md", md: "sm" }}
+                      bg={isArchiveMode ? "white" : "slate.600"}
+                      color={isArchiveMode ? "orange.700" : "white"}
+                      _hover={{ bg: isArchiveMode ? "gray.100" : "slate.700" }}
+                      onClick={() => setIsArchiveMode(!isArchiveMode)}
+                      borderRadius="full"
+                      fontWeight="bold"
+                    >
+                      {isArchiveMode ? <ArchiveRestore size={16} style={{ marginRight: '6px' }} /> : <Archive size={16} style={{ marginRight: '6px' }} />}
+                      {isArchiveMode ? "Voltar ao Painel" : "Ver Arquivados"}
+                    </Button>
+                    <Button
+                      size={{ base: "md", md: "sm" }}
+                      bg="red.500"
+                      color="white"
+                      _hover={{ bg: "red.600" }}
+                      onClick={handleLogout}
+                      borderRadius="full"
+                      fontWeight="bold"
+                    >
+                      Sair
                     </Button>
                   </HStack>
                 </VStack>
@@ -347,28 +371,44 @@ export default function Inspector() {
 
                     <VStack align="start" gap={1}>
                       <Text fontSize="xs" fontWeight="black" color={{ base: "gray.500", _dark: "slate.400" }}>STATUS</Text>
-                      <Box
-                        as="select"
-                        {...({
-                          value: statusFilter,
-                          onChange: (e: any) => setStatusFilter(e.target.value)
-                        } as any)}
-                        w="full"
-                        p="10px"
-                        borderRadius="12px"
-                        border="1px solid"
-                        borderColor={{ base: "gray.200", _dark: "slate.600" }}
-                        fontSize="14px"
-                        fontWeight="600"
-                        outline="none"
-                        bg={{ base: "white", _dark: "slate.900" }}
-                        color={{ base: "black", _dark: "white" }}
-                      >
-                        <option value="all">Todos os Status</option>
-                        <option value="pending">Pendentes</option>
-                        <option value="approved">Aprovados</option>
-                        <option value="rejected">Recusados</option>
-                      </Box>
+                      {isArchiveMode ? (
+                        <Box
+                          w="full"
+                          p="10px"
+                          borderRadius="12px"
+                          border="1px solid"
+                          borderColor={{ base: "orange.300", _dark: "orange.700" }}
+                          bg={{ base: "orange.50", _dark: "orange.900/20" }}
+                          color={{ base: "orange.700", _dark: "orange.300" }}
+                          fontSize="14px"
+                          fontWeight="600"
+                          textAlign="center"
+                        >
+                          Arquivados / Terminados
+                        </Box>
+                      ) : (
+                        <Box
+                          as="select"
+                          {...({
+                            value: statusFilter,
+                            onChange: (e: any) => setStatusFilter(e.target.value)
+                          } as any)}
+                          w="full"
+                          p="10px"
+                          borderRadius="12px"
+                          border="1px solid"
+                          borderColor={{ base: "gray.200", _dark: "slate.600" }}
+                          fontSize="14px"
+                          fontWeight="600"
+                          outline="none"
+                          bg={{ base: "white", _dark: "slate.900" }}
+                          color={{ base: "black", _dark: "white" }}
+                        >
+                          <option value="all">Todos Ativos</option>
+                          <option value="em_analise">Em Análise</option>
+                          <option value="finalizado">Finalizados</option>
+                        </Box>
+                      )}
                     </VStack>
                   </SimpleGrid>
                 </Box>
@@ -393,13 +433,13 @@ export default function Inspector() {
                           p={4}
                           borderRadius="xl"
                           border="1px solid"
-                          borderColor={(r.prioridade && r.prioridade !== "" && r.prioridade !== "false" && r.confirmacao === null) ? { base: "red.200", _dark: "red.800" } : { base: "gray.200", _dark: "slate.700" }}
-                          bg={(r.prioridade && r.prioridade !== "" && r.prioridade !== "false" && r.confirmacao === null) ? { base: "red.50", _dark: "red.900/20" } : { base: "white", _dark: "slate.900" }}
+                          borderColor={(r.prioridade && r.prioridade !== "" && r.prioridade !== "false" && isPending(r.finalizarArquivar)) ? { base: "red.200", _dark: "red.800" } : { base: "gray.200", _dark: "slate.700" }}
+                          bg={(r.prioridade && r.prioridade !== "" && r.prioridade !== "false" && isPending(r.finalizarArquivar)) ? { base: "red.50", _dark: "red.900/20" } : { base: "white", _dark: "slate.900" }}
                           shadow="sm"
                         >
                           <HStack justify="space-between" mb={3}>
                             <Text fontWeight="black" color={{ base: "blue.600", _dark: "blue.400" }} fontSize="xs">ID: {r.id}</Text>
-                            {renderStatus(r.confirmacao)}
+                            {renderStatus(r.finalizarArquivar as any)}
                           </HStack>
 
                           <HStack gap={3} mb={3}>
@@ -434,14 +474,17 @@ export default function Inspector() {
                             <Button size="sm" colorPalette="blue" borderRadius="lg" onClick={() => setSelectedReq(r)} disabled={updatingId === r.id} flex={1}>
                               <Eye size={18} />
                             </Button>
-                            <Button size="sm" colorPalette="green" borderRadius="lg" onClick={() => r.id && updateStatus(r.id, true)} disabled={r.confirmacao === true || updatingId === r.id} loading={updatingId === r.id ? true : undefined} flex={1}>
+                            <Button size="sm" colorPalette="green" borderRadius="lg" onClick={() => r.id && updateStatus(r.id, 'FINALIZADO')} disabled={r.finalizarArquivar === 'FINALIZADO' || r.finalizarArquivar === 'TERMINADO' || updatingId === r.id} loading={updatingId === r.id ? true : undefined} flex={1}>
                               <CheckCircle size={18} />
                             </Button>
-                            <Button size="sm" colorPalette="red" borderRadius="lg" onClick={() => { setReqToRefuseId(r.id || null); setIsRefuseModalOpen(true); }} disabled={r.confirmacao === false || updatingId === r.id} flex={1}>
-                              <XCircle size={18} />
+                            <Button size="sm" colorPalette="red" borderRadius="lg" onClick={() => r.id && updateStatus(r.id, 'ARQUIVADO')} disabled={r.finalizarArquivar === 'ARQUIVADO' || updatingId === r.id} loading={updatingId === r.id ? true : undefined} flex={1}>
+                              <Archive size={18} />
                             </Button>
                             <Button size="sm" colorPalette="gray" borderRadius="lg" onClick={() => r.id && deleteForm(r.id)} disabled={updatingId !== null && updatingId !== r.id} loading={updatingId === r.id} flex={1}>
                               <Trash size={18} />
+                            </Button>
+                            <Button size="sm" colorPalette="blue" borderRadius="lg" onClick={() => r.id && updateStatus(r.id, 'EM_ANALISE')} disabled={r.finalizarArquivar === 'EM_ANALISE' || updatingId === r.id} loading={updatingId === r.id ? true : undefined} flex={1}>
+                              <Undo2 size={18} />
                             </Button>
                           </HStack>
                         </Box>
@@ -463,7 +506,7 @@ export default function Inspector() {
                         </Table.Header>
                         <Table.Body>
                           {sorted.map((r) => (
-                            <Table.Row key={r.id} _hover={{ bg: { base: "blue.50", _dark: "blue.900/20" } }} transition="all 0.2s" bg={(r.prioridade && r.prioridade !== "" && r.prioridade !== "false" && r.confirmacao === null) ? { base: "red.50", _dark: "red.900/20" } : undefined}>
+                            <Table.Row key={r.id} _hover={{ bg: { base: "blue.50", _dark: "blue.900/20" } }} transition="all 0.2s" bg={(r.prioridade && r.prioridade !== "" && r.prioridade !== "false" && isPending(r.finalizarArquivar)) ? { base: "red.50", _dark: "red.900/20" } : undefined}>
                               <Table.Cell px={6}>
                                 <Text fontWeight="black" color={{ base: "blue.600", _dark: "blue.400" }} fontSize="sm">{r.id}</Text>
                               </Table.Cell>
@@ -501,16 +544,15 @@ export default function Inspector() {
                                 )}
                               </Table.Cell>
                               <Table.Cell>
-                                {renderStatus(r.confirmacao)}
+                                {renderStatus(r.finalizarArquivar as any)}
                               </Table.Cell>
                               <Table.Cell textAlign="right" px={6}>
                                 <HStack gap={2} justify="flex-end">
                                   <Button size="sm" colorPalette="blue" borderRadius="lg" onClick={() => setSelectedReq(r)} disabled={!!updatingId}><Eye size={18} /></Button>
-                                  <Button size="sm" colorPalette="green" borderRadius="lg" onClick={() => r.id && updateStatus(r.id, true)} disabled={r.confirmacao === true || !!updatingId} loading={updatingId === r.id} shadow="sm"><CheckCircle size={18} /></Button>
-                                  <Button size="sm" colorPalette="red" borderRadius="lg" onClick={() => { setReqToRefuseId(r.id || null); setIsRefuseModalOpen(true); }} disabled={r.confirmacao === false || !!updatingId} loading={updatingId === r.id} shadow="sm"><XCircle size={18} /></Button>
-                                  <Button size="sm" colorPalette="gray" borderRadius="lg" onClick={() => r.id && deleteForm(r.id)} disabled={!!updatingId && updatingId !== r.id} loading={updatingId === r.id} shadow="sm">
-                                    <Trash size={18} />
-                                  </Button>
+                                  <Button size="sm" colorPalette="green" borderRadius="lg" onClick={() => r.id && updateStatus(r.id, 'FINALIZADO')} disabled={r.finalizarArquivar === 'FINALIZADO' || r.finalizarArquivar === 'TERMINADO' || !!updatingId} loading={updatingId === r.id} shadow="sm"><CheckCircle size={18} /></Button>
+                                  <Button size="sm" colorPalette="red" borderRadius="lg" onClick={() => r.id && updateStatus(r.id, 'ARQUIVADO')} disabled={r.finalizarArquivar === 'ARQUIVADO' || !!updatingId} loading={updatingId === r.id} shadow="sm"><Archive size={18} /></Button>
+                                  <Button size="sm" colorPalette="gray" borderRadius="lg" onClick={() => r.id && deleteForm(r.id)} disabled={!!updatingId && updatingId !== r.id} loading={updatingId === r.id} shadow="sm"><Trash size={18} /></Button>
+                                  <Button size="sm" colorPalette="blue" borderRadius="lg" onClick={() => r.id && updateStatus(r.id, 'EM_ANALISE')} disabled={r.finalizarArquivar === 'EM_ANALISE' || !!updatingId} loading={updatingId === r.id} shadow="sm"><Undo2 size={18} /></Button>
                                 </HStack>
                               </Table.Cell>
                             </Table.Row>
@@ -530,98 +572,14 @@ export default function Inspector() {
       <ReqDetailsModal
         req={selectedReq}
         onClose={() => setSelectedReq(null)}
-        renderStatus={renderStatus}
+        renderStatus={renderStatus as any}
         onApprove={(id) => {
-          updateStatus(id, true);
+          updateStatus(id, 'FINALIZADO');
           setSelectedReq(null);
-        }}
-        onReject={(id) => {
-          setReqToRefuseId(id);
-          setIsRefuseModalOpen(true);
         }}
         onDownload={handleDownloadArquivo}
       />
 
-
-      {/* ── Modal de Motivo da Recusa ── */}
-      {isRefuseModalOpen && (
-        <Box
-          position="fixed"
-          top={0}
-          left={0}
-          right={0}
-          bottom={0}
-          bg="blackAlpha.800"
-          zIndex={3000}
-          display="flex"
-          justifyContent="center"
-          alignItems="center"
-          backdropFilter="blur(10px)"
-          p={4}
-        >
-          <Box
-            bg={{ base: "white", _dark: "slate.900" }}
-            w="full"
-            maxW={{ base: "95%", md: "md" }}
-            borderRadius="2xl"
-            shadow="2xl"
-            p={6}
-            onClick={(e) => e.stopPropagation()}
-          >
-            <VStack align="stretch" gap={4}>
-              <Heading size="md" color={{ base: "red.600", _dark: "red.400" }} display="flex" alignItems="center" gap={2}>
-                <AlertCircle size={20} /> Motivo da Recusa
-              </Heading>
-              <Text fontSize="sm" color={{ base: "gray.600", _dark: "slate.400" }}>
-                Por favor, descreva o motivo pelo qual este requerimento está sendo indeferido.
-              </Text>
-              {/* @ts-ignore */}
-              <Box
-                as="textarea"
-                maxLength={255}
-                {...({
-                  placeholder: "Ex: Documentação incompleta...",
-                  value: refusalReason,
-                  onChange: (e: any) => setRefusalReason(e.target.value)
-                } as any)}
-                w="full"
-                minH="120px"
-                p="12px"
-                borderRadius="12px"
-                border="2px solid"
-                borderColor={{ base: "red.100", _dark: "red.900/50" }}
-                bg={{ base: "white", _dark: "slate.800" }}
-                color={{ base: "black", _dark: "white" }}
-                fontSize="14px"
-                outline="none"
-                style={{ resize: 'vertical' }}
-              />
-              <HStack gap={3} mt={2} flexDir={{ base: "column", sm: "row" }}>
-                <Button w={{ base: "full", sm: "auto" }} flex={1} variant="ghost" onClick={() => { setIsRefuseModalOpen(false); setRefusalReason(""); }}>
-                  CANCELAR
-                </Button>
-                <Button
-                  w={{ base: "full", sm: "auto" }}
-                  flex={2}
-                  colorPalette="red"
-                  disabled={!refusalReason.trim()}
-                  onClick={() => {
-                    if (reqToRefuseId) {
-                      updateStatus(reqToRefuseId, false, refusalReason);
-                      setIsRefuseModalOpen(false);
-                      setRefusalReason("");
-                      setSelectedReq(null);
-                    }
-                  }}
-                >
-                  CONFIRMAR RECUSA
-                </Button>
-              </HStack>
-
-            </VStack>
-          </Box>
-        </Box>
-      )}
       {/* ── Modal de Estatísticas e Gráficos ── */}
       <StatsModal
         isOpen={isStatsModalOpen}

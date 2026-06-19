@@ -29,6 +29,15 @@ export interface Usuario {
   endereco: Endereco;
 }
 
+// ─── Mensagem de Chat ─────────────────────────────────────────────────────────
+export interface Mensagem {
+  id: number;
+  conteudo: string;
+  remetente: 'ADMIN' | 'SOLICITANTE';
+  nomeRemetente: string;
+  dataEnvio: string; // LocalDateTime serializado como ISO string
+}
+
 // ─── Formulário (@Entity Formulario) ─────────────────────────────────────────
 export interface Formulario {
   id?: string;            // gerado pelo @PrePersist, não enviado pelo form
@@ -36,7 +45,7 @@ export interface Formulario {
   beneficio?: string;     // só obrigatório quando assunto === 'beneficios'
   descricao: string;
   prioridade: string;
-  confirmacao?: boolean | null; // @Builder.Default = null (preenchido pelo RH)
+  finalizarArquivar?: 'FINALIZADO' | 'ARQUIVADO' | 'EM_ANALISE' | 'TERMINADO';
   motivo?: string;        // preenchido pelo RH na recusa
   arquivoPath?: string;   // preenchido pelo backend após upload
   unidade: string;

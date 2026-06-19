@@ -39,6 +39,7 @@ export default function Header() {
       zIndex="1000"
       borderBottom="1px solid"
       borderColor={{ base: "rgba(226, 232, 240, 0.5)", _dark: "rgba(30, 41, 59, 0.5)" }}
+      shadow={"xl"}
     >
       <Container maxW="container.xl" h="full" px={{ base: 4, md: 8 }}>
         <Flex justify="space-between" align="center" h="full">
