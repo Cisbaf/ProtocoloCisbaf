@@ -2,6 +2,7 @@ package com.requerimentosback.form.service;
 
 import com.requerimentosback.form.model.Formulario;
 import com.requerimentosback.form.model.Usuarios;
+import com.requerimentosback.form.model.enuns.FinArq;
 import jakarta.mail.internet.MimeMessage;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -74,9 +75,16 @@ public class EmailService {
     }
 
     /**
-     * Chamado quando o formulário é aprovado ou recusado: notifica o solicitante.
+     * Chamado na atualização do formulário.
+     * Só notifica o solicitante se o status for FINALIZADO.
      */
     public void enviarEmailFinalizacaoFormulario(Formulario formulario) {
+        // Trava: Se não for FINALIZADO, não envia e-mail.
+        if (formulario.getFinalizarArquivar() != FinArq.FINALIZADO) {
+            log.info("Status do formulário {} é {}. Nenhum e-mail enviado.", formulario.getId(), formulario.getFinalizarArquivar());
+            return;
+        }
+
         log.info("Enviando email de finalização do formulário: {}", formulario.getId());
 
         Usuarios usuario = formulario.getUsuario();
@@ -85,10 +93,9 @@ public class EmailService {
             return;
         }
 
-        String status = Boolean.TRUE.equals(formulario.getConfirmacao()) ? "APROVADO" : "RECUSADO";
         enviarEmail(
                 usuario.getEmail(),
-                "Seu Requerimento foi " + status + " - " + formulario.getId(),
+                "Seu Requerimento foi Finalizado - " + formulario.getId(),
                 montarEmailFinalizacaoUsuario(formulario),
                 true
         );
@@ -141,12 +148,10 @@ public class EmailService {
 
     private String montarEmailFinalizacaoUsuario(Formulario formulario) {
         Usuarios u = formulario.getUsuario();
-        boolean aprovado = Boolean.TRUE.equals(formulario.getConfirmacao());
 
-        // Dinâmica de cores baseada na aprovação
-        String statusLabel = aprovado ? "APROVADO" : "RECUSADO";
-        String corStatus = aprovado ? "#16a34a" : "#dc2626"; // Verde ou Vermelho
-        String bgHeader = aprovado ? "#15803d" : "#b91c1c";
+        // Configuração visual fixa para FINALIZADO
+        String corStatus = "#16a34a"; // Verde
+        String bgHeader = "#15803d";  // Verde escuro para o cabeçalho
 
         String blocoBeneficio = (formulario.getBeneficio() != null && !formulario.getBeneficio().isBlank())
                 ? "<tr><td style='padding: 12px 0; border-bottom: 1px solid #e2e8f0; color: #64748b;'><strong>Benefício:</strong></td><td style='padding: 12px 0; border-bottom: 1px solid #e2e8f0; color: #1e293b; font-weight: 500;'>" + safe(formulario.getBeneficio()) + "</td></tr>"
@@ -156,29 +161,21 @@ public class EmailService {
                 ? "<tr><td style='padding: 12px 0; border-bottom: 1px solid #e2e8f0; color: #64748b;'><strong>Prioridade:</strong></td><td style='padding: 12px 0; border-bottom: 1px solid #e2e8f0; color: #1e293b; font-weight: 500;'>" + safe(formulario.getPrioridade()) + "</td></tr>"
                 : "";
 
-        String blocoMotivo = (!aprovado && formulario.getMotivo() != null && !formulario.getMotivo().isBlank())
-                ? "<tr><td style='padding: 12px 0 0 0; color: #64748b;'><strong>Motivo da Recusa:</strong></td><td style='padding: 12px 0 0 0; color: #dc2626; font-weight: 600;'>" + safe(formulario.getMotivo()) + "</td></tr>"
-                : "";
-
-        // Ajusta a borda do Status dependendo se o motivo vai renderizar embaixo ou não
-        String estiloUltimaLinhaBase = blocoMotivo.isEmpty() ? "padding: 12px 0 0 0;" : "padding: 12px 0; border-bottom: 1px solid #e2e8f0;";
-
         return "<div style='font-family: Arial, sans-serif; background-color: #f8fafc; padding: 40px 20px; margin: 0;'>" +
                 "<div style='max-width: 600px; margin: 0 auto; background-color: #ffffff; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 15px rgba(0,0,0,0.05);'>" +
                 "<div style='background-color: " + bgHeader + "; padding: 25px; text-align: center;'>" +
-                "<h2 style='color: #ffffff; margin: 0; font-size: 22px; letter-spacing: 0.5px;'>Atualização de Requerimento</h2>" +
+                "<h2 style='color: #ffffff; margin: 0; font-size: 22px; letter-spacing: 0.5px;'>Requerimento Finalizado</h2>" +
                 "</div>" +
                 "<div style='padding: 30px;'>" +
                 "<p style='color: #334155; font-size: 16px; line-height: 1.6; margin-top: 0;'>Olá, <strong>" + safe(u.getNome()) + "</strong>!</p>" +
-                "<p style='color: #475569; font-size: 15px; line-height: 1.6;'>O seu requerimento foi analisado e já possui um parecer final.</p>" +
+                "<p style='color: #475569; font-size: 15px; line-height: 1.6;'>O seu requerimento foi analisado e <strong>finalizado</strong> pela equipe.</p>" +
                 "<div style='background-color: #f1f5f9; padding: 20px; border-radius: 8px; margin: 25px 0;'>" +
                 "<table width='100%' border='0' cellpadding='0' cellspacing='0' style='font-size: 14px; text-align: left;'>" +
                 "<tr><td style='padding: 0 0 12px 0; border-bottom: 1px solid #e2e8f0; color: #64748b; width: 40%;'><strong>ID do Protocolo:</strong></td><td style='padding: 0 0 12px 0; border-bottom: 1px solid #e2e8f0; color: #1e293b; font-weight: 600;'>" + safe(formulario.getId()) + "</td></tr>" +
                 "<tr><td style='padding: 12px 0; border-bottom: 1px solid #e2e8f0; color: #64748b;'><strong>Assunto:</strong></td><td style='padding: 12px 0; border-bottom: 1px solid #e2e8f0; color: #1e293b; font-weight: 500;'>" + safe(formulario.getAssunto()) + "</td></tr>" +
                 blocoBeneficio +
                 blocoPrioridade +
-                "<tr><td style='" + estiloUltimaLinhaBase + " color: #64748b;'><strong>Status Final:</strong></td><td style='" + estiloUltimaLinhaBase + " color: " + corStatus + "; font-weight: 700;'>" + statusLabel + "</td></tr>" +
-                blocoMotivo +
+                "<tr><td style='padding: 12px 0; color: #64748b;'><strong>Status Atual:</strong></td><td style='padding: 12px 0; color: " + corStatus + "; font-weight: 700;'>FINALIZADO</td></tr>" +
                 "</table>" +
                 "</div>" +
                 "<p style='color: #475569; font-size: 15px;'>Caso tenha alguma dúvida, entre em contato com o setor responsável.</p>" +

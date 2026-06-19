@@ -2,6 +2,7 @@ package com.requerimentosback.form.repository;
 
 import com.requerimentosback.form.model.DadoGraficoDTO;
 import com.requerimentosback.form.model.Formulario;
+import com.requerimentosback.form.model.enuns.FinArq;
 import com.requerimentosback.form.model.enuns.Unidades;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
@@ -65,4 +66,6 @@ public interface FormularioRepository extends JpaRepository<Formulario, String> 
             "GROUP BY f.usuario.cargo " +
             "ORDER BY COUNT(f) DESC")
     List<DadoGraficoDTO> obterVolumePorCargoFiltrado(@Param("inicio") Date inicio, @Param("fim") Date fim, @Param("unidade") Unidades unidade);
+
+    List<Formulario> findByFinalizarArquivarAndDataMudancaBefore(FinArq status, Date data);
 }

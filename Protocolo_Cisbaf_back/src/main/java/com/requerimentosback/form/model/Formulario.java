@@ -1,5 +1,6 @@
 package com.requerimentosback.form.model;
 
+import com.requerimentosback.form.model.enuns.FinArq;
 import com.requerimentosback.form.model.enuns.Unidades;
 import jakarta.persistence.*;
 import lombok.*;
@@ -15,12 +16,15 @@ import java.util.concurrent.ThreadLocalRandom;
 @AllArgsConstructor
 @NoArgsConstructor
 @Builder
+@ToString
 public class Formulario {
     @Id
     @Column(nullable = false, updatable = false, length = 30)
     private String id;
 
     private Date dataCriacao;
+
+    private Date dataMudanca;
 
     @Column(nullable = false, length = 100)
     private String assunto;
@@ -38,10 +42,9 @@ public class Formulario {
 
     private String arquivoPath;
 
-    @Builder.Default
-    private Boolean confirmacao = null;
-
-    private String motivo;
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    private FinArq finalizarArquivar;
 
     @ManyToOne(cascade = CascadeType.PERSIST)
     @JoinColumn(name = "userId")

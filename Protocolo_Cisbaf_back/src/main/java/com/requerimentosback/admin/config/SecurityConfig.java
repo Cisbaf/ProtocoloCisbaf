@@ -61,6 +61,10 @@ public class SecurityConfig {
 
                         .requestMatchers(HttpMethod.GET, "/form/arquivos/download/**").authenticated()
 
+                        .requestMatchers(HttpMethod.GET, "/form/{id}/mensagens").permitAll()
+                        .requestMatchers(HttpMethod.POST, "/form/{id}/mensagens").permitAll()
+
+
                         .requestMatchers(HttpMethod.POST, "/form").permitAll()
 
                         .requestMatchers(HttpMethod.PUT, "/form/{id}").permitAll()
@@ -90,12 +94,12 @@ public class SecurityConfig {
                         // ==========================
 
                         .requestMatchers(
-                                "/v3/api-docs",        // <-- Adicione esta linha
+                                "/v3/api-docs",
                                 "/v3/api-docs/**",
                                 "/swagger-ui/**",
                                 "/swagger-ui.html",
-                                "/swagger-resources/**", // <-- Boa prática adicionar esses também
-                                "/webjars/**"          // <-- Boa prática adicionar esses também
+                                "/swagger-resources/**",
+                                "/webjars/**"
                         ).permitAll()
 
                 )

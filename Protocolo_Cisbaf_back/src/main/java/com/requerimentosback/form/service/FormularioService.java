@@ -4,6 +4,7 @@ import com.requerimentosback.admin.repository.AdminRepository;
 import com.requerimentosback.form.model.DadoGraficoDTO;
 import com.requerimentosback.form.model.Formulario;
 import com.requerimentosback.form.model.Usuarios;
+import com.requerimentosback.form.model.enuns.FinArq;
 import com.requerimentosback.form.model.enuns.TipoGrafico;
 import com.requerimentosback.form.model.enuns.Unidades;
 import com.requerimentosback.form.repository.FormularioRepository;
@@ -12,10 +13,13 @@ import jakarta.persistence.EntityNotFoundException;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.security.Principal;
+import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.util.Date;
 import java.util.List;
 import java.util.Optional;
@@ -58,8 +62,12 @@ public class FormularioService {
                     usuarioExistente.setDataNascimento(usuarioRequest.getDataNascimento());
                     usuarioExistente.setSexo(usuarioRequest.getSexo());
                     usuarioExistente.setEmail(usuarioRequest.getEmail());
-                    usuarioExistente.setTelefone(usuarioRequest.getTelefone().replaceAll("\\D", ""));
-                    usuarioExistente.setCelular(usuarioRequest.getCelular().replaceAll("\\D", ""));
+
+                    usuarioExistente.setTelefone(usuarioRequest.getTelefone() != null
+                            ? usuarioRequest.getTelefone().replaceAll("\\D", "") : null);
+                    usuarioExistente.setCelular(usuarioRequest.getCelular() != null
+                            ? usuarioRequest.getCelular().replaceAll("\\D", "") : null);
+
                     usuarioExistente.setEmailAlt(usuarioRequest.getEmailAlt());
                     usuarioExistente.setMatricula(usuarioRequest.getMatricula());
                     usuarioExistente.setCargo(usuarioRequest.getCargo());
@@ -71,6 +79,7 @@ public class FormularioService {
 
         formulario.setUsuario(usuario);
         formulario.setDataCriacao(new Date());
+        formulario.setFinalizarArquivar(FinArq.EM_ANALISE);
 
         formulario = repository.saveAndFlush(formulario);
 
@@ -88,24 +97,29 @@ public class FormularioService {
         Formulario existing = repository.findById(id)
                 .orElseThrow(() -> new EntityNotFoundException("Formulário não encontrado para o ID: " + id));
 
+        // Verifica se o status está mudando EXATAMENTE agora para FINALIZADO
         existing.setAssunto(formDaRequisicao.getAssunto() != null ? formDaRequisicao.getAssunto() : existing.getAssunto());
         existing.setBeneficio(formDaRequisicao.getBeneficio() != null ? formDaRequisicao.getBeneficio() : existing.getBeneficio());
         existing.setDescricao(formDaRequisicao.getDescricao() != null ? formDaRequisicao.getDescricao() : existing.getDescricao());
         existing.setPrioridade(formDaRequisicao.getPrioridade() != null ? formDaRequisicao.getPrioridade() : existing.getPrioridade());
-        existing.setConfirmacao(formDaRequisicao.getConfirmacao() != null ? formDaRequisicao.getConfirmacao() : existing.getConfirmacao());
-        existing.setMotivo(formDaRequisicao.getMotivo() != null ? formDaRequisicao.getMotivo() : existing.getMotivo());
         existing.setArquivoPath(formDaRequisicao.getArquivoPath() != null ? formDaRequisicao.getArquivoPath() : existing.getArquivoPath());
         existing.setUnidade(formDaRequisicao.getUnidade() != null ? formDaRequisicao.getUnidade() : existing.getUnidade());
+        existing.setFinalizarArquivar(formDaRequisicao.getFinalizarArquivar() != null ? formDaRequisicao.getFinalizarArquivar() : existing.getFinalizarArquivar());
 
-        var salvo = repository.save(existing);
+        if (existing.getFinalizarArquivar() != formDaRequisicao.getFinalizarArquivar()) {
+               existing.setDataMudanca(new Date());
+        }
+        // Removida a linha duplicada de setFinalizarArquivar que havia aqui
 
-        if (salvo.getConfirmacao() != null) {
+        var salvo = repository.saveAndFlush(existing);
+
+        // Dispara o e-mail apenas se a transição for nova e para FINALIZADO
             try {
-                emailService.enviarEmailFinalizacaoFormulario(salvo);
+                emailService.enviarEmailFinalizacaoFormulario(existing);
             } catch (Exception e) {
                 log.error("Erro ao enviar email de finalização para o form {}", id, e);
             }
-        }
+
 
         return salvo;
     }
@@ -137,5 +151,32 @@ public class FormularioService {
             case EVOLUCAO_DIARIA -> repository.obterEvolucaoTemporalFiltrado(inicio, fim, unidade);
             case VOLUME_CARGO -> repository.obterVolumePorCargoFiltrado(inicio, fim, unidade);
         };
+    }
+
+    @Scheduled(cron = "0 0 0 * * *")
+    @Transactional
+    public void atualizarStatusParaTerminado() {
+        log.info("Iniciando tarefa agendada para verificar formulários a terminar...");
+
+        // Define o limite de 14 dias atrás
+        LocalDateTime limite = LocalDateTime.now().minusDays(14);
+        Date dataLimite = Date.from(limite.atZone(ZoneId.systemDefault()).toInstant());
+
+        // Busca todos que estão FINALIZADOS e foram mudados há mais de 14 dias
+        List<Formulario> paraTerminar = repository.findByFinalizarArquivarAndDataMudancaBefore(
+                FinArq.FINALIZADO,
+                dataLimite
+        );
+
+        if (!paraTerminar.isEmpty()) {
+            for (Formulario f : paraTerminar) {
+                f.setFinalizarArquivar(FinArq.TERMINADO);
+                f.setDataMudanca(new Date()); // Atualiza a data da mudança para o momento atual
+            }
+            repository.saveAll(paraTerminar);
+            log.info("Sucesso: {} formulários foram marcados como TERMINADO.", paraTerminar.size());
+        } else {
+            log.info("Nenhum formulário para ser terminado hoje.");
+        }
     }
 }
