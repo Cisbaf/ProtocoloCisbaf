@@ -35,10 +35,15 @@ import {
     Smartphone,
     User,
     X,
-    XCircle
+    XCircle,
+    Printer // <-- 1. Adicionei o ícone da impressora/PDF
 } from 'lucide-react';
 import ChatPanel from './ChatPanel';
 import { useMemo, useState } from 'react';
+
+// 2. Importe o jsPDF e o autoTable
+import jsPDF from 'jspdf';
+import autoTable from 'jspdf-autotable';
 
 interface ReqDetailsModalProps {
     req: Formulario | null;
@@ -55,12 +60,10 @@ export default function ReqDetailsModal({
     renderStatus,
     onDownload
 }: ReqDetailsModalProps) {
-    if (!req) return null;
     const [chatAberto, setChatAberto] = useState(false);
 
-
     const dataCriacaoFormatada = useMemo(() => {
-        if (!req.dataCriacao) return "—";
+        if (!req || !req.dataCriacao) return "—";
         try {
             const dataObj = new Date(req.dataCriacao);
             if (isNaN(dataObj.getTime())) return req.dataCriacao;
@@ -76,7 +79,71 @@ export default function ReqDetailsModal({
         } catch (e) {
             return req.dataCriacao;
         }
-    }, [req.dataCriacao]);
+    }, [req?.dataCriacao]);
+
+    // 3. Função responsável por montar e baixar o PDF
+    const handleGerarPDF = () => {
+        if (!req) return;
+
+        const doc = new jsPDF();
+
+        // Título e Cabeçalho
+        doc.setFontSize(18);
+        doc.setTextColor(40, 40, 40);
+        doc.text("Sistema de Requerimentos - CISBAF", 14, 22);
+
+        doc.setFontSize(11);
+        doc.setTextColor(100, 100, 100);
+        doc.text(`Protocolo ID: ${req.id}`, 14, 30);
+        doc.text(`Data da Solicitação: ${dataCriacaoFormatada}`, 14, 36);
+
+        const statusMap: Record<string, string> = {
+            'FINALIZADO': 'Finalizado',
+            'ARQUIVADO': 'Arquivado',
+            'EM_ANALISE': 'Em Análise',
+            'TERMINADO': 'Terminado'
+        };
+
+        // Tabela com os dados do Usuário
+        autoTable(doc, {
+            startY: 45,
+            head: [['Dados do Solicitante', '']],
+            body: [
+                ['Nome Completo', `${req.usuario?.nome || ''} ${req.usuario?.sobrenome || ''}`],
+                ['CPF', req.usuario?.cpf || '—'],
+                ['Matrícula', req.usuario?.matricula || '—'],
+                ['Cargo', req.usuario?.cargo || '—'],
+                ['Unidade', req.unidade || '—'],
+                ['E-mail', req.usuario?.email || '—'],
+                ['Celular', req.usuario?.celular || '—'],
+            ],
+            theme: 'grid',
+            headStyles: { fillColor: [59, 130, 246] }, // Azul
+            columnStyles: { 0: { cellWidth: 50, fontStyle: 'bold' } }
+        });
+
+        // Tabela com os dados do Requerimento
+        autoTable(doc, {
+            startY: (doc as any).lastAutoTable.finalY + 10,
+            head: [['Detalhes da Solicitação', '']],
+            body: [
+                ['Status Atual', statusMap[req.finalizarArquivar || 'EM_ANALISE'] || 'Em Análise'],
+                ['Prioridade', req.prioridade.toLocaleUpperCase() || 'NORMAL'],
+                ['Assunto', req.assunto || '—'],
+                ['Benefício', req.beneficio || '—'],
+                ['Descrição', req.descricao || '—'],
+            ],
+            theme: 'grid',
+            headStyles: { fillColor: [59, 130, 246] },
+            columnStyles: { 0: { cellWidth: 50, fontStyle: 'bold' } },
+            styles: { cellPadding: 3, overflow: 'linebreak' }
+        });
+
+        // Salva o PDF com o ID do protocolo no nome
+        doc.save(`Requerimento_${req.id}.pdf`);
+    };
+
+    if (!req) return null;
 
     return (
         <Box
@@ -120,12 +187,17 @@ export default function ReqDetailsModal({
                         </HStack>
                         <Text fontSize="xs" opacity={0.7}>Detalhes completos da solicitação</Text>
                     </VStack>
-                    <Button size="sm" variant="ghost" color="white" onClick={onClose} borderRadius="full" aria-label="Fechar">
-                        <X size={24} />
-                    </Button>
 
+                    {/* 4. Adicionei o botão de Imprimir PDF no cabeçalho */}
+                    <HStack gap={2}>
+                        <Button size="sm" variant="outline" color="white" _hover={{ bg: 'whiteAlpha.200' }} onClick={handleGerarPDF} borderRadius="full">
+                            <Printer size={16} style={{ marginRight: '6px' }} /> PDF
+                        </Button>
+                        <Button size="sm" variant="ghost" color="white" onClick={onClose} borderRadius="full" aria-label="Fechar">
+                            <X size={24} />
+                        </Button>
+                    </HStack>
                 </Box>
-
 
                 {/* ── CORPO DO MODAL ── */}
                 <Box p={{ base: 4, md: 8 }} overflowY="auto" flex={1}>
