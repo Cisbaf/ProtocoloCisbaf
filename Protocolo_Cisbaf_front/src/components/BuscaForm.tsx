@@ -226,30 +226,9 @@ export default function BuscaForm() {
                                                 <Hash size={20} /> {data.id}
                                             </Heading>
                                         </VStack>
-                                        {/* ── Motivo da recusa ── */}
 
-                                        <HStack ml={{ md: "auto" }} gap={2}>
-                                            {data.prioridade && data.prioridade !== "" && data.prioridade !== "false" && (
-                                                <Badge colorPalette="red" variant="solid" px={3} py={1} borderRadius="full" fontWeight="bold">
-                                                    {data.prioridade === "true" ? "ALTA" : data.prioridade.toUpperCase().replace("_", " ")}
-                                                </Badge>
-                                            )}
-                                            {renderStatusBadge(data.confirmacao)}
-                                        </HStack>
                                     </Flex>
-                                    {data.confirmacao === false && data.motivo && (
-                                        <>
-                                            <Box p={5} bg={{ base: "red.50", _dark: "red.900/20" }} borderRadius="2xl" border="1.5px solid" borderColor={{ base: "red.100", _dark: "red.900/50" }}>
-                                                <Flex align="center" gap={2} mb={3}>
-                                                    <XCircle size={16} color="red" />
-                                                    <Text fontSize="xs" fontWeight="black" color={{ base: "red.500", _dark: "red.400" }} textTransform="uppercase">
-                                                        Motivo da Recusa
-                                                    </Text>
-                                                </Flex>
-                                                <Text fontSize="sm" color={{ base: "red.700", _dark: "red.200" }}>{data.motivo}</Text>
-                                            </Box>
-                                        </>
-                                    )}
+
 
                                     {/* ── Chat com o RH (colapsável) ── */}
                                     <Separator />
