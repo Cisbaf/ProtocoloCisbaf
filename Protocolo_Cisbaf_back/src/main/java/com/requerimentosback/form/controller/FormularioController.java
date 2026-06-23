@@ -119,13 +119,17 @@ public class FormularioController {
     @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<?> save(
             @RequestPart("formulario") String formularioJson,
-            @RequestPart(value = "arquivo", required = false) MultipartFile arquivo) {
+            @RequestPart(value = "arquivos", required = false) List<MultipartFile> arquivos) {
 
         try {
+            if (arquivos != null && arquivos.size() > 3) {
+                return ResponseEntity.badRequest().body(java.util.Map.of("error", "Você só pode enviar no máximo 3 arquivos por solicitação."));
+            }
+
             ObjectMapper mapper = new ObjectMapper();
             Formulario formulario = mapper.readValue(formularioJson, Formulario.class);
 
-            return ResponseEntity.ok(service.save(formulario, arquivo));
+            return ResponseEntity.ok(service.save(formulario, arquivos));
 
         } catch (IllegalArgumentException e) {
             return ResponseEntity.badRequest().body(java.util.Map.of("error", e.getMessage()));

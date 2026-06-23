@@ -114,9 +114,7 @@ public class EmailService {
                 : "";
 
         // Mesma proteção para prioridade
-        String blocoPrioridade = (formulario.getPrioridade() != null && !formulario.getPrioridade().isBlank())
-                ? "<tr><td style='padding: 12px 0; border-bottom: 1px solid #e2e8f0; color: #64748b;'><strong>Prioridade:</strong></td><td style='padding: 12px 0; border-bottom: 1px solid #e2e8f0; color: #1e293b; font-weight: 500;'>" + safe(formulario.getPrioridade()) + "</td></tr>"
-                : "";
+
 
         return "<div style='font-family: Arial, sans-serif; background-color: #f8fafc; padding: 40px 20px; margin: 0;'>" +
                 "<div style='max-width: 600px; margin: 0 auto; background-color: #ffffff; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 15px rgba(0,0,0,0.05);'>" +
@@ -131,7 +129,6 @@ public class EmailService {
                 "<tr><td style='padding: 0 0 12px 0; border-bottom: 1px solid #e2e8f0; color: #64748b; width: 40%;'><strong>ID do Protocolo:</strong></td><td style='padding: 0 0 12px 0; border-bottom: 1px solid #e2e8f0; color: #1e293b; font-weight: 600;'>" + safe(formulario.getId()) + "</td></tr>" +
                 "<tr><td style='padding: 12px 0; border-bottom: 1px solid #e2e8f0; color: #64748b;'><strong>Assunto:</strong></td><td style='padding: 12px 0; border-bottom: 1px solid #e2e8f0; color: #1e293b; font-weight: 500;'>" + safe(formulario.getAssunto()) + "</td></tr>" +
                 blocoBeneficio +
-                blocoPrioridade +
                 "<tr><td style='padding: 12px 0; border-bottom: 1px solid #e2e8f0; color: #64748b;'><strong>Matrícula:</strong></td><td style='padding: 12px 0; border-bottom: 1px solid #e2e8f0; color: #1e293b; font-weight: 500;'>" + safe(u.getMatricula()) + "</td></tr>" +
                 "<tr><td style='padding: 12px 0; border-bottom: 1px solid #e2e8f0; color: #64748b;'><strong>Cargo:</strong></td><td style='padding: 12px 0; border-bottom: 1px solid #e2e8f0; color: #1e293b; font-weight: 500;'>" + safe(u.getCargo()) + "</td></tr>" +
                 "<tr><td style='padding: 12px 0 0 0; color: #64748b;'><strong>Unidade:</strong></td><td style='padding: 12px 0 0 0; color: #1e293b; font-weight: 500;'>" + safe(formulario.getUnidade() != null ? formulario.getUnidade().name() : null) + "</td></tr>" +
@@ -157,10 +154,6 @@ public class EmailService {
                 ? "<tr><td style='padding: 12px 0; border-bottom: 1px solid #e2e8f0; color: #64748b;'><strong>Benefício:</strong></td><td style='padding: 12px 0; border-bottom: 1px solid #e2e8f0; color: #1e293b; font-weight: 500;'>" + safe(formulario.getBeneficio()) + "</td></tr>"
                 : "";
 
-        String blocoPrioridade = (formulario.getPrioridade() != null && !formulario.getPrioridade().isBlank())
-                ? "<tr><td style='padding: 12px 0; border-bottom: 1px solid #e2e8f0; color: #64748b;'><strong>Prioridade:</strong></td><td style='padding: 12px 0; border-bottom: 1px solid #e2e8f0; color: #1e293b; font-weight: 500;'>" + safe(formulario.getPrioridade()) + "</td></tr>"
-                : "";
-
         return "<div style='font-family: Arial, sans-serif; background-color: #f8fafc; padding: 40px 20px; margin: 0;'>" +
                 "<div style='max-width: 600px; margin: 0 auto; background-color: #ffffff; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 15px rgba(0,0,0,0.05);'>" +
                 "<div style='background-color: " + bgHeader + "; padding: 25px; text-align: center;'>" +
@@ -174,7 +167,6 @@ public class EmailService {
                 "<tr><td style='padding: 0 0 12px 0; border-bottom: 1px solid #e2e8f0; color: #64748b; width: 40%;'><strong>ID do Protocolo:</strong></td><td style='padding: 0 0 12px 0; border-bottom: 1px solid #e2e8f0; color: #1e293b; font-weight: 600;'>" + safe(formulario.getId()) + "</td></tr>" +
                 "<tr><td style='padding: 12px 0; border-bottom: 1px solid #e2e8f0; color: #64748b;'><strong>Assunto:</strong></td><td style='padding: 12px 0; border-bottom: 1px solid #e2e8f0; color: #1e293b; font-weight: 500;'>" + safe(formulario.getAssunto()) + "</td></tr>" +
                 blocoBeneficio +
-                blocoPrioridade +
                 "<tr><td style='padding: 12px 0; color: #64748b;'><strong>Status Atual:</strong></td><td style='padding: 12px 0; color: " + corStatus + "; font-weight: 700;'>FINALIZADO</td></tr>" +
                 "</table>" +
                 "</div>" +

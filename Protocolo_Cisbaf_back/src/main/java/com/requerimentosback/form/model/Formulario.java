@@ -38,8 +38,7 @@ public class Formulario {
     @Column(nullable = false, length = 100)
     private Unidades unidade;
 
-    private String prioridade;
-
+    @Column(length = 1000)
     private String arquivoPath;
 
     @Enumerated(EnumType.STRING)

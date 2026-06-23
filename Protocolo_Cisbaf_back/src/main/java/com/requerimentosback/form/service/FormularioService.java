@@ -44,11 +44,18 @@ public class FormularioService {
     }
 
     @Transactional
-    public Formulario save(Formulario formulario, MultipartFile arquivo) {
+    public Formulario save(Formulario formulario, List<MultipartFile> arquivos) {
 
-        if (arquivo != null && !arquivo.isEmpty()) {
-            String nomeArquivo = discoService.salvarArquivo(arquivo);
-            formulario.setArquivoPath(nomeArquivo);
+        if (arquivos != null && !arquivos.isEmpty()) {
+            java.util.List<String> nomesArquivos = new java.util.ArrayList<>();
+            for (MultipartFile arquivo : arquivos) {
+                if (arquivo != null && !arquivo.isEmpty()) {
+                    nomesArquivos.add(discoService.salvarArquivo(arquivo));
+                }
+            }
+            if (!nomesArquivos.isEmpty()) {
+                formulario.setArquivoPath(String.join(";", nomesArquivos));
+            }
         }
 
         Usuarios usuarioRequest = formulario.getUsuario();
@@ -58,9 +65,6 @@ public class FormularioService {
                 .map(usuarioExistente -> {
                     usuarioExistente.setNome(usuarioRequest.getNome());
                     usuarioExistente.setSobrenome(usuarioRequest.getSobrenome());
-                    usuarioExistente.setRg(usuarioRequest.getRg());
-                    usuarioExistente.setDataNascimento(usuarioRequest.getDataNascimento());
-                    usuarioExistente.setSexo(usuarioRequest.getSexo());
                     usuarioExistente.setEmail(usuarioRequest.getEmail());
 
                     usuarioExistente.setTelefone(usuarioRequest.getTelefone() != null
@@ -71,8 +75,6 @@ public class FormularioService {
                     usuarioExistente.setEmailAlt(usuarioRequest.getEmailAlt());
                     usuarioExistente.setMatricula(usuarioRequest.getMatricula());
                     usuarioExistente.setCargo(usuarioRequest.getCargo());
-                    usuarioExistente.setCor(usuarioRequest.getCor());
-                    usuarioExistente.setEndereco(usuarioRequest.getEndereco());
                     return usuariosRepository.save(usuarioExistente);
                 })
                 .orElseGet(() -> usuariosRepository.save(usuarioRequest));
@@ -101,7 +103,6 @@ public class FormularioService {
         existing.setAssunto(formDaRequisicao.getAssunto() != null ? formDaRequisicao.getAssunto() : existing.getAssunto());
         existing.setBeneficio(formDaRequisicao.getBeneficio() != null ? formDaRequisicao.getBeneficio() : existing.getBeneficio());
         existing.setDescricao(formDaRequisicao.getDescricao() != null ? formDaRequisicao.getDescricao() : existing.getDescricao());
-        existing.setPrioridade(formDaRequisicao.getPrioridade() != null ? formDaRequisicao.getPrioridade() : existing.getPrioridade());
         existing.setArquivoPath(formDaRequisicao.getArquivoPath() != null ? formDaRequisicao.getArquivoPath() : existing.getArquivoPath());
         existing.setUnidade(formDaRequisicao.getUnidade() != null ? formDaRequisicao.getUnidade() : existing.getUnidade());
         existing.setFinalizarArquivar(formDaRequisicao.getFinalizarArquivar() != null ? formDaRequisicao.getFinalizarArquivar() : existing.getFinalizarArquivar());

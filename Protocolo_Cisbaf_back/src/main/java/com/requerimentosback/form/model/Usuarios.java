@@ -1,14 +1,9 @@
 package com.requerimentosback.form.model;
 
-import com.fasterxml.jackson.annotation.JsonFormat;
-import com.requerimentosback.form.model.enuns.Cores;
-import com.requerimentosback.form.model.enuns.Sexos;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.Pattern;
 import lombok.*;
 import org.hibernate.validator.constraints.br.CPF;
-
-import java.util.Date;
 
 @Entity
 @Getter
@@ -28,13 +23,11 @@ public class Usuarios {
     @Column(nullable = false, length = 100)
     private String sobrenome;
 
+    @Column(nullable = false, unique = true, length = 30)
+    private String matricula;
 
-    @Column(nullable = false, unique = true, length = 20)
-    private String rg;
-
-    @Column(nullable = false)
-    @JsonFormat(pattern = "dd/MM/yyyy")
-    private Date dataNascimento;
+    @Column(nullable = false, length = 100)
+    private String cargo;
 
     @Pattern(
             regexp = "^[A-Za-z0-9+_.-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,}$",
@@ -60,19 +53,4 @@ public class Usuarios {
             message = "E-mail inválido."
     )
     private String emailAlt;
-
-    @Column(nullable = false, unique = true, length = 30)
-    private String matricula;
-
-    @Column(nullable = false, length = 100)
-    private String cargo;
-
-    @Enumerated(EnumType.STRING)
-    private Cores cor;
-
-    @Enumerated(EnumType.STRING)
-    private Sexos sexo;
-
-    @Embedded
-    private Endereco endereco;
 }
