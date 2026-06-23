@@ -1,6 +1,6 @@
 'use client';
 
-import { FormValues, sexos, assuntos, cores, beneficios, prioridade, unidades } from '@/components/types';
+import { FormValues, assuntos, beneficios, unidades } from '@/components/types';
 import { toaster } from "@/components/ui/toaster";
 import {
   Badge, Box, Button, Card, Center, Container, Field, Flex, Heading, Input, Separator,
@@ -60,7 +60,6 @@ export default function RequerimentoForm() {
     setError,
     formState: { isSubmitting, errors },
   } = useForm<FormValues>({
-    defaultValues: { prioridade: "" },
   });
 
 
@@ -107,51 +106,35 @@ export default function RequerimentoForm() {
   // ── Submit ────────────────────────────────────────────────────────────────
   const onSubmit = async (data: FormValues) => {
     try {
-      let dataNascimentoFormatada = data.dataNascimento;
-      if (dataNascimentoFormatada && dataNascimentoFormatada.includes('-')) {
-        const [year, month, day] = dataNascimentoFormatada.split('-');
-        dataNascimentoFormatada = `${day}/${month}/${year}`;
-      }
 
       const payload = {
         usuario: {
           cpf: data.cpf.trim(),
           nome: data.nome.trim(),
           sobrenome: data.sobrenome.trim(),
-          rg: data.rg.trim(),
-          dataNascimento: dataNascimentoFormatada,
-          sexo: data.sexo,
           email: data.email.trim(),
           telefone: data.telefone,
           celular: data.celular,
           emailAlt: data.emailAlt,
           matricula: data.matricula.trim(),
           cargo: data.cargo.trim(),
-          cor: data.cor,
-          endereco: {
-            cep: data.cep,
-            endereco: data.logradouro.trim(),
-            numero: data.numero,
-            complemento: data.complemento,
-            bairro: data.bairro.trim(),
-            cidade: data.localidade.trim(),
-            estado: data.uf.trim(),
-          },
+
         },
         assunto: data.assunto.trim(),
         beneficio: data.beneficio,
         descricao: data.descricao.trim(),
         unidade: data.unidade,
 
-        prioridade: data.prioridade_tramitacao_tipo || "",
       };
 
       const formData = new FormData();
       formData.append('formulario', JSON.stringify(payload));
       if (data.arquivo && data.arquivo.length > 0) {
-        formData.append('arquivo', data.arquivo[0]);
+        for (let i = 0; i < data.arquivo.length; i++) {
+          formData.append('arquivos', data.arquivo[i]);
+        }
       } else {
-        formData.append('arquivo', new Blob([]), '');
+        formData.append('arquivos', new Blob([]), '');
       }
 
       console.log("Data:", Object.fromEntries(formData));
@@ -220,42 +203,6 @@ export default function RequerimentoForm() {
     }
   };
 
-  // ── Busca de CEP via backend (/form/cep/:cep) ────────────────────────────
-  const fetchCep = async (cep: string) => {
-    const clean = cep.replace(/\D/g, '');
-    if (clean.length !== 8) return;
-
-    setIsFetchingCep(true);
-    try {
-      const res = await fetch(`/api/form/${clean}`);
-      if (!res.ok) throw new Error('CEP não encontrado');
-
-      const json: {
-        cep: string;
-        logradouro: string;
-        complemento: string;
-        bairro: string;
-        localidade: string;
-        uf: string;
-        estado: string;
-      } = await res.json();
-
-      setValue('logradouro', json.logradouro ?? '', { shouldValidate: true });
-      setValue('complemento', json.complemento ?? '');
-      setValue('bairro', json.bairro ?? '', { shouldValidate: true });
-      setValue('localidade', json.localidade ?? '', { shouldValidate: true });
-      setValue('uf', json.uf ?? '', { shouldValidate: true });
-    } catch {
-      toaster.create({
-        title: 'CEP inválido',
-        description: 'Não foi possível localizar o endereço. Preencha manualmente.',
-        type: 'warning',
-      });
-    } finally {
-      setIsFetchingCep(false);
-    }
-  };
-
   // ── Busca de usuário por CPF ──────────────────────────────────────────────
   const fetchUsuario = async (cpf: string, nome: string, sobrenome: string) => {
     cpf = cpf.replace(/\D/g, '');
@@ -278,38 +225,16 @@ export default function RequerimentoForm() {
         return;
       }
 
-      if (user.dataNascimento) {
-        if (user.dataNascimento.includes('/')) {
-          const [day, month, year] = user.dataNascimento.split('/');
-          setValue('dataNascimento', `${year}-${month}-${day}`, { shouldValidate: true });
-        } else {
-          setValue('dataNascimento', user.dataNascimento, { shouldValidate: true });
-        }
-      }
 
       if (user.nome) setValue('nome', user.nome, { shouldValidate: true });
       if (user.sobrenome) setValue('sobrenome', user.sobrenome, { shouldValidate: true })
-      if (user.rg) setValue('rg', user.rg, { shouldValidate: true });
-      if (user.sexo) setValue('sexo', user.sexo, { shouldValidate: true });
       if (user.email) setValue('email', user.email, { shouldValidate: true });
       if (user.telefone) setValue('telefone', user.telefone);
       if (user.celular) setValue('celular', user.celular);
       if (user.emailAlt) setValue('emailAlt', user.emailAlt);
       if (user.matricula) setValue('matricula', user.matricula, { shouldValidate: true });
       if (user.cargo) setValue('cargo', user.cargo, { shouldValidate: true });
-      if (user.cor) setValue('cor', user.cor, { shouldValidate: true });
       if (user.unidade) setValue('unidade', user.unidade, { shouldValidate: true });
-
-      if (user.endereco) {
-        const e = user.endereco;
-        if (e.cep) setValue('cep', e.cep, { shouldValidate: true });
-        if (e.endereco) setValue('logradouro', e.endereco, { shouldValidate: true });
-        if (e.numero) setValue('numero', e.numero, { shouldValidate: true });
-        if (e.complemento) setValue('complemento', e.complemento);
-        if (e.bairro) setValue('bairro', e.bairro, { shouldValidate: true });
-        if (e.cidade) setValue('localidade', e.cidade, { shouldValidate: true });
-        if (e.estado) setValue('uf', e.estado, { shouldValidate: true });
-      }
 
       toaster.create({
         title: 'Dados carregados',
@@ -460,114 +385,6 @@ export default function RequerimentoForm() {
                           {errors.sobrenome?.message}
                         </Field.ErrorText>
                       </Field.Root>
-
-
-                      {/* RG */}
-                      <Field.Root required invalid={!!errors.rg}>
-                        <Field.Label {...labelStyle}>DOCUMENTO RG*</Field.Label>
-                        <Input
-                          {...register('rg', {
-                            required: 'O campo Documento RG é obrigatório',
-                            onChange: (e) => {
-                              e.target.value = e.target.value.replace(/\D/g, '');
-                            },
-                          })}
-                          {...inputStyle}
-                          maxLength={10}
-                          placeholder="Número do RG"
-                        />
-                        <Field.ErrorText style={{ color: '#DC2626', fontSize: '12px' }}>
-                          {errors.rg?.message}
-                        </Field.ErrorText>
-                      </Field.Root>
-
-                      {/* Data de Nascimento */}
-                      <Field.Root required invalid={!!errors.dataNascimento}>
-                        <Field.Label {...labelStyle}>
-                          <Box color="currentColor"><Calendar size={14} /></Box> DATA DE NASCIMENTO*
-                        </Field.Label>
-                        <Input
-                          type="date"
-                          {...register('dataNascimento', { required: 'O campo Data de Nascimento é obrigatório' })}
-                          {...inputStyle}
-                        />
-                        <Field.ErrorText style={{ color: '#DC2626', fontSize: '12px' }}>
-                          {errors.dataNascimento?.message}
-                        </Field.ErrorText>
-                      </Field.Root>
-
-                      {/* Sexo */}
-                      <Field.Root required invalid={!!errors.sexo}>
-                        <Field.Label {...labelStyle}>SEXO*</Field.Label>
-                        <Controller control={control} name="sexo"
-                          rules={{ required: "Selecione o sexo" }}
-                          render={({ field }) => (
-                            <Select.Root
-                              collection={sexos}
-                              value={field.value ? [field.value] : []}
-                              onValueChange={(details) => field.onChange(details.value[0])}
-                            >
-
-                              <Select.Trigger {...inputStyle}>
-                                <Select.ValueText placeholder="Selecione..." />
-                                <Select.Indicator />
-                              </Select.Trigger>
-                              <Portal>
-                                <Select.Positioner>
-                                  <Select.Content color={COLORS.headingDark}>
-                                    {sexos.items.map((item) => (
-                                      <Select.Item key={item.value} item={item}>
-                                        {item.label}
-                                      </Select.Item>
-                                    ))}
-
-                                  </Select.Content>
-                                </Select.Positioner>
-                              </Portal>
-                            </Select.Root>
-                          )}
-                        />
-                        <Field.ErrorText style={{ color: '#DC2626', fontSize: '12px' }}>
-                          {errors.sexo?.message}
-                        </Field.ErrorText>
-                      </Field.Root>
-
-                      {/* Cor */}
-                      <Field.Root required invalid={!!errors.cor}>
-                        <Field.Label {...labelStyle}>COR / ETNIA*</Field.Label>
-                        <Controller
-                          control={control}
-                          name="cor"
-                          rules={{ required: "Selecione a cor/etnia" }}
-                          render={({ field }) => (
-                            <Select.Root
-                              collection={cores}
-                              value={field.value ? [field.value] : []}
-                              onValueChange={(details) => field.onChange(details.value[0])}
-                            >
-                              <Select.Trigger {...inputStyle}>
-                                <Select.ValueText placeholder="Selecione..." />
-                                <Select.Indicator />
-                              </Select.Trigger>
-                              <Portal>
-                                <Select.Positioner>
-                                  <Select.Content color={COLORS.headingDark}>
-                                    {cores.items.map((item) => (
-                                      <Select.Item key={item.value} item={item}>
-                                        {item.label}
-                                      </Select.Item>
-                                    ))}
-
-                                  </Select.Content>
-                                </Select.Positioner>
-                              </Portal>
-                            </Select.Root>
-                          )}
-                        />
-                        <Field.ErrorText style={{ color: '#DC2626', fontSize: '12px' }}>
-                          {errors.cor?.message}
-                        </Field.ErrorText>
-                      </Field.Root>
                     </SimpleGrid>
                   </VStack>
 
@@ -577,7 +394,7 @@ export default function RequerimentoForm() {
                   <VStack gap={8} align="stretch">
                     <SectionHeader
                       step="PASSO 02"
-                      title="Localização e Contato"
+                      title="Informações de Contato"
                       badgeBg={COLORS.step2Bg}
                       badgeColor={COLORS.step2Text}
                     />
@@ -653,153 +470,6 @@ export default function RequerimentoForm() {
                         </Field.ErrorText>
                       </Field.Root>
                     </SimpleGrid>
-
-                    {/* Endereço */}
-                    <Box
-                      p={6}
-                      borderRadius="2xl"
-                      border="1.5px solid"
-                      borderColor="gray.200"
-                      bg={{ base: '#F8FAFC', _dark: 'slate.900' }}
-                    >
-                      <Flex align="center" gap={2} mb={5} color={COLORS.step2Text}>
-                        <MapPin size={16} />
-                        <Text
-                          fontSize="sm"
-                          fontWeight="700"
-                          letterSpacing="wider"
-                          color={COLORS.labelGray}
-                        >
-                          ENDEREÇO
-                        </Text>
-                      </Flex>
-
-                      <SimpleGrid columns={{ base: 1, md: 4 }} gap={5}>
-                        {/* CEP */}
-                        <Field.Root required invalid={!!errors.cep}>
-                          <Field.Label {...labelStyle}>
-                            CEP*
-                            {isFetchingCep && (
-                              <Spinner size="xs" color={COLORS.btnBg} ml={1} />
-                            )}
-                          </Field.Label>
-                          <Input
-                            {...register('cep', {
-                              required: 'O campo CEP é obrigatório',
-                              onChange: (e) => {
-                                e.target.value = e.target.value.replace(/\D/g, '');
-                              },
-                              onBlur: (e) => fetchCep(e.target.value),
-                            })}
-                            maxLength={8}
-                            {...inputStyle}
-                            h="50px"
-                            placeholder="Apenas números"
-                          />
-                          <Field.ErrorText style={{ color: '#DC2626', fontSize: '12px' }}>
-                            {errors.cep?.message}
-                          </Field.ErrorText>
-                        </Field.Root>
-
-                        {/* Logradouro */}
-                        <Box gridColumn={{ md: 'span 2' }}>
-                          <Field.Root required invalid={!!errors.logradouro}>
-                            <Field.Label {...labelStyle}>LOGRADOURO*</Field.Label>
-                            <Input
-                              {...register('logradouro', { required: 'O campo Logradouro é obrigatório' })}
-                              {...inputStyle}
-                              h="50px"
-                              maxLength={50}
-                            />
-                            <Field.ErrorText style={{ color: '#DC2626', fontSize: '12px' }}>
-                              {errors.logradouro?.message}
-                            </Field.ErrorText>
-                          </Field.Root>
-                        </Box>
-
-                        {/* Número */}
-                        <Field.Root required invalid={!!errors.numero}>
-                          <Field.Label {...labelStyle}>NÚMERO*</Field.Label>
-                          <Input
-                            {...register('numero', {
-                              required: 'O campo Número é obrigatório',
-                              onChange: (e) => {
-                                e.target.value = e.target.value.replace(/\D/g, '');
-                              }
-                            })}
-                            {...inputStyle}
-                            h="50px"
-                            maxLength={8}
-                          />
-                          <Field.ErrorText style={{ color: '#DC2626', fontSize: '12px' }}>
-                            {errors.numero?.message}
-                          </Field.ErrorText>
-                        </Field.Root>
-
-                        {/* Complemento */}
-                        <Field.Root invalid={!!errors.complemento}>
-                          <Field.Label {...labelStyle}>COMPLEMENTO</Field.Label>
-                          <Input
-                            {...register('complemento')}
-                            {...inputStyle}
-                            h="50px"
-                            placeholder="Apto, Bloco…"
-                            maxLength={30}
-                          />
-                          <Field.ErrorText style={{ color: '#DC2626', fontSize: '12px' }}>
-                            {errors.complemento?.message}
-                          </Field.ErrorText>
-                        </Field.Root>
-
-                        {/* Bairro */}
-                        <Field.Root required invalid={!!errors.bairro}>
-                          <Field.Label {...labelStyle}>BAIRRO*</Field.Label>
-                          <Input
-                            {...register('bairro', { required: 'O campo Bairro é obrigatório' })}
-                            {...inputStyle}
-                            h="50px"
-                            maxLength={30}
-                          />
-                          <Field.ErrorText style={{ color: '#DC2626', fontSize: '12px' }}>
-                            {errors.bairro?.message}
-                          </Field.ErrorText>
-                        </Field.Root>
-
-                        {/* Cidade */}
-                        <Field.Root required invalid={!!errors.localidade}>
-                          <Field.Label {...labelStyle}>CIDADE*</Field.Label>
-                          <Input
-                            {...register('localidade', { required: 'O campo Cidade é obrigatório' })}
-                            {...inputStyle}
-                            h="50px"
-                            maxLength={30}
-                          />
-                          <Field.ErrorText style={{ color: '#DC2626', fontSize: '12px' }}>
-                            {errors.localidade?.message}
-                          </Field.ErrorText>
-                        </Field.Root>
-
-                        {/* UF */}
-                        <Field.Root required invalid={!!errors.uf}>
-                          <Field.Label {...labelStyle}>UF*</Field.Label>
-                          <Input
-                            {...register('uf', {
-                              required: 'O campo UF é obrigatório',
-                              onChange: (e) => {
-                                e.target.value = e.target.value.replace(/[^A-Za-z]/g, '').toUpperCase();
-                              }
-                            })}
-                            {...inputStyle}
-                            h="50px"
-                            maxLength={2}
-                            placeholder="RJ"
-                          />
-                          <Field.ErrorText style={{ color: '#DC2626', fontSize: '12px' }}>
-                            {errors.uf?.message}
-                          </Field.ErrorText>
-                        </Field.Root>
-                      </SimpleGrid>
-                    </Box>
                   </VStack>
 
                   <Separator borderColor={COLORS.border} />
@@ -1023,7 +693,7 @@ export default function RequerimentoForm() {
                           gap={2}
                           color={COLORS.headingDark}
                         >
-                          <Upload size={16} color={COLORS.btnBg} /> ANEXAR DOCUMENTAÇÃO (PDF / JPG)
+                          <Upload size={16} color={COLORS.btnBg} /> ANEXAR DOCUMENTAÇÃO
                         </Field.Label>
                         <Flex
                           align="center"
@@ -1035,8 +705,11 @@ export default function RequerimentoForm() {
                         >
                           <Input
                             type="file"
+                            multiple
                             accept=".pdf,.jpg,.jpeg,.png"
-                            {...register('arquivo')}
+                            {...register('arquivo', {
+                              validate: (files) => !files || files.length <= 3 || 'No máximo 3 arquivos permitidos'
+                            })}
                             border="none"
                             p={1}
                             cursor="pointer"
@@ -1048,48 +721,7 @@ export default function RequerimentoForm() {
                         </Field.ErrorText>
                       </Field.Root>
 
-                      {/* Prioridade */}
-                      <Box p={5} bg={{ base: 'white', _dark: '#0F172A' }} borderRadius="xl" border="2px solid" borderColor="blue.100" >
-                        <VStack align="stretch" gap={4}>
-                          <HStack gap={3} align="flex-start">
-                            <Box bg="blue.600" p={2} borderRadius="xl" color="white" mt={0.5}>
-                              <Scale size={18} />
-                            </Box>
-                            <VStack align="start" gap={0}>
-                              <Text fontSize="sm" fontWeight="800" color="blue.700" textTransform="uppercase">
-                                Prioridade de Tramitação Legal
-                              </Text>
-                              <Text fontSize="xs" color="blue.600">
-                                Caso possua direito a atendimento prioritário, selecione sua condição abaixo para acelerar o processo.
-                              </Text>
-                            </VStack>
-                          </HStack>
 
-                          <Controller
-                            name="prioridade_tramitacao_tipo"
-                            control={control}
-                            render={({ field }) => (
-                              <Select.Root collection={prioridade} value={field.value ? [field.value] : []} onValueChange={(change) => field.onChange(change.value[0])}>
-                                <Select.Trigger {...inputStyle}>
-                                  <Select.ValueText placeholder='- Não me enquadro / Nenhuma das opções -' />
-                                  <Select.Indicator />
-                                </Select.Trigger>
-                                <Portal>
-                                  <Select.Positioner>
-                                    <Select.Content color={COLORS.headingDark}>
-                                      {prioridade.items.map((item) => (
-                                        <Select.Item key={item.value} item={item}>
-                                          {item.label}
-                                        </Select.Item>
-                                      ))}
-                                    </Select.Content>
-                                  </Select.Positioner>
-                                </Portal>
-                              </Select.Root>
-                            )}
-                          />
-                        </VStack>
-                      </Box>
                     </VStack>
                   </VStack>
 

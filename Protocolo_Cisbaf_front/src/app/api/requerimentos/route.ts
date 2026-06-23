@@ -24,11 +24,11 @@ export async function POST(request: Request) {
 
     // The backend expects "formulario" (JSON string) and "arquivo" (file)
     const formulario = formData.get('formulario');
-    const arquivo = formData.get('arquivo');
+    const arquivos = formData.getAll('arquivos');
 
     const backendFormData = new FormData();
     if (formulario) backendFormData.append('formulario', formulario);
-    if (arquivo) backendFormData.append('arquivo', arquivo);
+    arquivos.forEach((arq) => backendFormData.append('arquivos', arq));
 
     const res = await fetch(`${process.env.BACKEND_INTERNAL_URL}/form`, {
       method: 'POST',

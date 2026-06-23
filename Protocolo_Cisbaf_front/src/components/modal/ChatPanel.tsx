@@ -51,7 +51,7 @@ export default function ChatPanel({ formularioId, remetente, nomeRemetente }: Ch
             const res = await fetch(`/api/requerimentos/${formularioId}/mensagens`);
             if (res.ok) {
                 const data: Mensagem[] = await res.json();
-                // Opcional: Só atualiza o estado se houver mudança real (baseado no tamanho)
+                // Só atualiza o estado se houver mudança real (baseado no tamanho)
                 setMensagens((prev) => (prev.length !== data.length ? data : prev));
             }
         } catch {
@@ -117,8 +117,6 @@ export default function ChatPanel({ formularioId, remetente, nomeRemetente }: Ch
             overflow="hidden"
             bg={{ base: 'white', _dark: 'slate.900' }}
         >
-
-
             {/* Área de mensagens */}
             <Box
                 ref={scrollContainerRef}
@@ -235,6 +233,7 @@ export default function ChatPanel({ formularioId, remetente, nomeRemetente }: Ch
                         borderRadius="xl"
                         resize="none"
                         rows={2}
+                        color={{ base: "black", _dark: "white" }}
                         bg={{ base: 'gray.50', _dark: 'slate.800' }}
                         border="1.5px solid"
                         borderColor={{ base: 'gray.200', _dark: 'slate.600' }}

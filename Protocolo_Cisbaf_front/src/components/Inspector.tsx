@@ -185,11 +185,7 @@ export default function Inspector() {
     const aPending = !a.finalizarArquivar || a.finalizarArquivar === 'EM_ANALISE';
     const bPending = !b.finalizarArquivar || b.finalizarArquivar === 'EM_ANALISE';
 
-    const aUrgent = a.prioridade && a.prioridade !== "" && a.prioridade !== "false" && aPending;
-    const bUrgent = b.prioridade && b.prioridade !== "" && b.prioridade !== "false" && bPending;
 
-    if (aUrgent && !bUrgent) return -1;
-    if (!aUrgent && bUrgent) return 1;
 
     if (aPending && !bPending) return -1;
     if (!aPending && bPending) return 1;
@@ -433,8 +429,8 @@ export default function Inspector() {
                           p={4}
                           borderRadius="xl"
                           border="1px solid"
-                          borderColor={(r.prioridade && r.prioridade !== "" && r.prioridade !== "false" && isPending(r.finalizarArquivar)) ? { base: "red.200", _dark: "red.800" } : { base: "gray.200", _dark: "slate.700" }}
-                          bg={(r.prioridade && r.prioridade !== "" && r.prioridade !== "false" && isPending(r.finalizarArquivar)) ? { base: "red.50", _dark: "red.900/20" } : { base: "white", _dark: "slate.900" }}
+                          borderColor={(isPending(r.finalizarArquivar)) ? { base: "red.200", _dark: "red.800" } : { base: "gray.200", _dark: "slate.700" }}
+                          bg={(isPending(r.finalizarArquivar)) ? { base: "red.50", _dark: "red.900/20" } : { base: "white", _dark: "slate.900" }}
                           shadow="sm"
                         >
                           <HStack justify="space-between" mb={3}>
@@ -459,11 +455,7 @@ export default function Inspector() {
                             <HStack flexWrap="wrap" gap={2}>
                               <Badge size="sm" colorPalette="blue">{r.assunto}</Badge>
                               {r.beneficio && <Badge size="sm" colorPalette="purple">{r.beneficio}</Badge>}
-                              {r.prioridade && r.prioridade !== "" && r.prioridade !== "false" && (
-                                <Badge colorPalette="red" variant="solid" borderRadius="full">
-                                  {r.prioridade === "true" ? "ALTA" : r.prioridade.toUpperCase().replace("_", " ")}
-                                </Badge>
-                              )}
+
                             </HStack>
                             <Text fontSize="sm" color="gray.500" lineClamp={2}>
                               {r.descricao}
@@ -499,14 +491,13 @@ export default function Inspector() {
                             <Table.ColumnHeader fontWeight="black" color={{ base: "slate.900", _dark: "slate.200" }} py={6} px={6}>ID <ArrowUpDown size={12} style={{ display: 'inline', marginLeft: '4px' }} /></Table.ColumnHeader>
                             <Table.ColumnHeader fontWeight="black" color={{ base: "slate.900", _dark: "slate.200" }}>COLABORADOR</Table.ColumnHeader>
                             <Table.ColumnHeader fontWeight="black" color={{ base: "slate.900", _dark: "slate.200" }}>ASSUNTO</Table.ColumnHeader>
-                            <Table.ColumnHeader fontWeight="black" color={{ base: "slate.900", _dark: "slate.200" }}>PRIORIDADE</Table.ColumnHeader>
                             <Table.ColumnHeader fontWeight="black" color={{ base: "slate.900", _dark: "slate.200" }}>STATUS</Table.ColumnHeader>
                             <Table.ColumnHeader fontWeight="black" color={{ base: "slate.900", _dark: "slate.200" }} textAlign="right" px={6}>AÇÕES</Table.ColumnHeader>
                           </Table.Row>
                         </Table.Header>
                         <Table.Body>
                           {sorted.map((r) => (
-                            <Table.Row key={r.id} _hover={{ bg: { base: "blue.50", _dark: "blue.900/20" } }} transition="all 0.2s" bg={(r.prioridade && r.prioridade !== "" && r.prioridade !== "false" && isPending(r.finalizarArquivar)) ? { base: "red.50", _dark: "red.900/20" } : undefined}>
+                            <Table.Row key={r.id} _hover={{ bg: { base: "blue.50", _dark: "blue.900/20" } }} transition="all 0.2s" bg={(isPending(r.finalizarArquivar)) ? { base: "red.50", _dark: "red.900/20" } : undefined}>
                               <Table.Cell px={6}>
                                 <Text fontWeight="black" color={{ base: "blue.600", _dark: "blue.400" }} fontSize="sm">{r.id}</Text>
                               </Table.Cell>
@@ -533,15 +524,6 @@ export default function Inspector() {
                                     {r.descricao}
                                   </Text>
                                 </VStack>
-                              </Table.Cell>
-                              <Table.Cell>
-                                {r.prioridade && r.prioridade !== "" && r.prioridade !== "false" ? (
-                                  <Badge colorPalette="red" variant="solid" borderRadius="full">
-                                    {r.prioridade === "true" ? "ALTA" : r.prioridade.toUpperCase().replace("_", " ")}
-                                  </Badge>
-                                ) : (
-                                  <Badge colorPalette="gray" variant="subtle" borderRadius="full">NORMAL</Badge>
-                                )}
                               </Table.Cell>
                               <Table.Cell>
                                 {renderStatus(r.finalizarArquivar as any)}

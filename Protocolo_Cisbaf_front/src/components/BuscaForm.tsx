@@ -308,31 +308,35 @@ export default function BuscaForm() {
                                     {data.arquivoPath && (
                                         <>
                                             <Separator />
-                                            <Box p={5} bg={{ base: "blue.50", _dark: "blue.900/20" }} borderRadius="2xl" border="1.5px solid" borderColor={{ base: "blue.100", _dark: "blue.900/50" }}>
-                                                <Flex align="center" justify="space-between" flexDir={{ base: "column", sm: "row" }} gap={4}>
-                                                    <Flex align="center" gap={3}>
-                                                        <Center boxSize="40px" bg={{ base: "blue.100", _dark: "blue.900/50" }} borderRadius="lg" color={{ base: "blue.800", _dark: "blue.400" }}>
-                                                            <Download size={20} />
-                                                        </Center>
-                                                        <VStack align="start" gap={0}>
-                                                            <Text fontSize="xs" fontWeight="black" color={{ base: "blue.500", _dark: "blue.400" }} textTransform="uppercase">
-                                                                Documento Anexo
-                                                            </Text>
-                                                            <Text fontWeight="bold" color={{ base: "slate.800", _dark: "slate.200" }} maxW={{ base: "200px", sm: "300px" }} truncate title={decodeURIComponent(data.arquivoPath)}>
-                                                                {decodeURIComponent(data.arquivoPath.split('/').pop() || data.arquivoPath)}
-                                                            </Text>
-                                                        </VStack>
-                                                    </Flex>
-                                                    <Button
-                                                        size="sm"
-                                                        colorPalette="blue"
-                                                        borderRadius="xl"
-                                                        onClick={() => handleDownloadArquivo(data.arquivoPath || '')}
-                                                    >
-                                                        Baixar Arquivo
-                                                    </Button>
-                                                </Flex>
-                                            </Box>
+                                            <HStack gap={2} flexWrap="wrap">
+                                                {data.arquivoPath.split(';').map((path, idx) => (
+                                                    <Box key={idx} p={5} bg={{ base: "blue.50", _dark: "blue.900/20" }} borderRadius="2xl" border="1.5px solid" borderColor={{ base: "blue.100", _dark: "blue.900/50" }}>
+                                                        <Flex align="center" justify="space-between" flexDir={{ base: "column", sm: "row" }} gap={4}>
+                                                            <Flex align="center" gap={3}>
+                                                                <Center boxSize="40px" bg={{ base: "blue.100", _dark: "blue.900/50" }} borderRadius="lg" color={{ base: "blue.800", _dark: "blue.400" }}>
+                                                                    <Download size={20} />
+                                                                </Center>
+                                                                <VStack align="start" gap={0}>
+                                                                    <Text fontSize="xs" fontWeight="black" color={{ base: "blue.500", _dark: "blue.400" }} textTransform="uppercase">
+                                                                        Documento Anexo {idx + 1}
+                                                                    </Text>
+                                                                    <Text fontWeight="bold" color={{ base: "slate.800", _dark: "slate.200" }} maxW={{ base: "200px", sm: "300px" }} truncate title={decodeURIComponent(path)}>
+                                                                        {decodeURIComponent(path.split('/').pop() || path)}
+                                                                    </Text>
+                                                                </VStack>
+                                                            </Flex>
+                                                            <Button
+                                                                size="sm"
+                                                                colorPalette="blue"
+                                                                borderRadius="xl"
+                                                                onClick={() => handleDownloadArquivo(path)}
+                                                            >
+                                                                Baixar Arquivo
+                                                            </Button>
+                                                        </Flex>
+                                                    </Box>
+                                                ))}
+                                            </HStack>
                                         </>
                                     )}
 
