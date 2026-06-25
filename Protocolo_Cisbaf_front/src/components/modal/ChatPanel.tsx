@@ -11,7 +11,7 @@ import {
     Textarea,
     VStack,
 } from '@chakra-ui/react';
-import { MessageCircle, Send } from 'lucide-react';
+import { MessageCircle, Send, Paperclip, FileText, X, Download } from 'lucide-react';
 import { useCallback, useEffect, useRef, useState } from 'react';
 
 interface ChatPanelProps {
@@ -35,15 +35,25 @@ function formatarHora(dataEnvio: string) {
     }
 }
 
+function obterNomeOriginal(arquivoPath: string) {
+    const parts = arquivoPath.split('_');
+    if (parts.length > 1) {
+        return parts.slice(1).join('_');
+    }
+    return arquivoPath;
+}
+
 const isAdmin = (msg: Mensagem) => msg.remetente === 'ADMIN';
 
 export default function ChatPanel({ formularioId, remetente, nomeRemetente }: ChatPanelProps) {
     const [mensagens, setMensagens] = useState<Mensagem[]>([]);
     const [conteudo, setConteudo] = useState('');
+    const [arquivosSelecionados, setArquivosSelecionados] = useState<File[]>([]);
     const [carregando, setCarregando] = useState(true);
     const [enviando, setEnviando] = useState(false);
 
     const scrollContainerRef = useRef<HTMLDivElement>(null);
+    const fileInputRef = useRef<HTMLInputElement>(null);
     const mensagensLengthRef = useRef(0); // Referência para evitar scroll hijacking
 
     const fetchMensagens = useCallback(async () => {
@@ -79,22 +89,75 @@ export default function ChatPanel({ formularioId, remetente, nomeRemetente }: Ch
         mensagensLengthRef.current = mensagens.length;
     }, [mensagens]);
 
+    const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        if (e.target.files) {
+            const files = Array.from(e.target.files);
+            if (arquivosSelecionados.length + files.length > 3) {
+                alert("Você só pode enviar no máximo 3 arquivos.");
+                return;
+            }
+            setArquivosSelecionados((prev) => [...prev, ...files]);
+        }
+    };
+
+    const handleRemoveFile = (indexToRemove: number) => {
+        setArquivosSelecionados((prev) => prev.filter((_, idx) => idx !== indexToRemove));
+        if (fileInputRef.current) {
+            fileInputRef.current.value = '';
+        }
+    };
+
+    const handleDownloadArquivo = async (arquivoPath: string) => {
+        try {
+            const res = await fetch(`/api/download/${arquivoPath}`);
+            if (!res.ok) throw new Error("Erro ao baixar arquivo");
+            const blob = await res.blob();
+
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = obterNomeOriginal(arquivoPath);
+
+            document.body.appendChild(link);
+            link.click();
+            link.remove();
+            URL.revokeObjectURL(url);
+        } catch (err: unknown) {
+            console.error("Erro no download:", err);
+            alert("Não foi possível baixar o arquivo.");
+        }
+    };
+
     const handleEnviar = async () => {
         const texto = conteudo.trim();
-        if (!texto || enviando) return;
+        if (!texto && arquivosSelecionados.length === 0) return;
+        if (enviando) return;
 
         setEnviando(true);
         try {
+            const formData = new FormData();
+            formData.append('conteudo', texto);
+            formData.append('remetente', remetente);
+            formData.append('nomeRemetente', nomeRemetente);
+            arquivosSelecionados.forEach((file) => {
+                formData.append('arquivos', file);
+            });
+
             const res = await fetch(`/api/requerimentos/${formularioId}/mensagens`, {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ conteudo: texto, remetente, nomeRemetente }),
+                body: formData,
             });
             if (res.ok) {
                 const nova: Mensagem = await res.json();
                 setMensagens((prev) => [...prev, nova]);
                 setConteudo('');
+                setArquivosSelecionados([]);
+                if (fileInputRef.current) {
+                    fileInputRef.current.value = '';
+                }
             }
+        } catch (error) {
+            console.error(error);
         } finally {
             setEnviando(false);
         }
@@ -206,9 +269,78 @@ export default function ChatPanel({ formularioId, remetente, nomeRemetente }: Ch
                                             : { base: 'gray.200', _dark: 'slate.600' }
                                     }
                                 >
-                                    <Text fontSize="sm" whiteSpace="pre-wrap" wordBreak="break-word">
-                                        {msg.conteudo}
-                                    </Text>
+                                    {msg.conteudo && (
+                                        <Text fontSize="sm" whiteSpace="pre-wrap" wordBreak="break-word">
+                                            {msg.conteudo}
+                                        </Text>
+                                    )}
+
+                                    {msg.arquivoPath && (
+                                        <VStack align="stretch" gap={1.5} mt={msg.conteudo ? 2 : 0}>
+                                            {msg.arquivoPath.split(';').map((path, idx) => {
+                                                const nomeOriginal = obterNomeOriginal(path);
+                                                return (
+                                                    <HStack
+                                                        key={idx}
+                                                        bg={
+                                                            proprio
+                                                                ? 'whiteAlpha.200'
+                                                                : { base: 'gray.50', _dark: 'slate.800' }
+                                                        }
+                                                        border="1px solid"
+                                                        borderColor={
+                                                            proprio
+                                                                ? 'whiteAlpha.300'
+                                                                : { base: 'gray.200', _dark: 'slate.600' }
+                                                        }
+                                                        px={3}
+                                                        py={1.5}
+                                                        borderRadius="xl"
+                                                        justify="space-between"
+                                                        gap={3}
+                                                    >
+                                                        <HStack gap={2} minW={0} flex={1}>
+                                                            <FileText size={16} style={{ flexShrink: 0 }} />
+                                                            <Text
+                                                                fontSize="xs"
+                                                                fontWeight="bold"
+                                                                truncate
+                                                                title={nomeOriginal}
+                                                                color={
+                                                                    proprio
+                                                                        ? 'white'
+                                                                        : { base: 'slate.800', _dark: 'slate.200' }
+                                                                }
+                                                            >
+                                                                {nomeOriginal}
+                                                            </Text>
+                                                        </HStack>
+                                                        <Button
+                                                            size="2xs"
+                                                            variant="ghost"
+                                                            color={
+                                                                proprio
+                                                                    ? 'white'
+                                                                    : { base: 'blue.500', _dark: 'blue.400' }
+                                                            }
+                                                            _hover={{
+                                                                bg: proprio
+                                                                    ? 'whiteAlpha.300'
+                                                                    : { base: 'gray.200', _dark: 'slate.700' }
+                                                            }}
+                                                            onClick={() => handleDownloadArquivo(path)}
+                                                            p={1}
+                                                            minW="auto"
+                                                            h="auto"
+                                                            borderRadius="md"
+                                                        >
+                                                            <Download size={14} />
+                                                        </Button>
+                                                    </HStack>
+                                                );
+                                            })}
+                                        </VStack>
+                                    )}
                                 </Box>
                             </VStack>
                         );
@@ -223,12 +355,73 @@ export default function ChatPanel({ formularioId, remetente, nomeRemetente }: Ch
                 borderColor={{ base: 'gray.200', _dark: 'slate.700' }}
                 bg={{ base: 'white', _dark: 'slate.900' }}
             >
+                {/* Visualização de arquivos selecionados */}
+                {arquivosSelecionados.length > 0 && (
+                    <Flex gap={2} mb={2} flexWrap="wrap">
+                        {arquivosSelecionados.map((file, idx) => (
+                            <HStack
+                                key={idx}
+                                bg={{ base: 'blue.50', _dark: 'blue.950/45' }}
+                                border="1px solid"
+                                borderColor={{ base: 'blue.200', _dark: 'blue.900/60' }}
+                                px={3}
+                                py={1.5}
+                                borderRadius="full"
+                                gap={1.5}
+                            >
+                                <FileText size={14} className="text-blue-500" />
+                                <Text fontSize="xs" fontWeight="bold" maxW="150px" truncate color={{ base: 'blue.700', _dark: 'blue.300' }}>
+                                    {file.name}
+                                </Text>
+                                <Box
+                                    as="button"
+                                    onClick={() => handleRemoveFile(idx)}
+                                    color={{ base: 'blue.400', _dark: 'blue.500' }}
+                                    _hover={{ color: 'red.500' }}
+                                    display="flex"
+                                    alignItems="center"
+                                    justifyContent="center"
+                                    transition="color 0.2s"
+                                >
+                                    <X size={14} />
+                                </Box>
+                            </HStack>
+                        ))}
+                    </Flex>
+                )}
+
                 <HStack gap={2} align="end">
+                    <Button
+                        variant="ghost"
+                        onClick={() => fileInputRef.current?.click()}
+                        disabled={enviando}
+                        borderRadius="xl"
+                        size="sm"
+                        h="52px"
+                        w="52px"
+                        p={0}
+                        color={{ base: 'gray.500', _dark: 'slate.400' }}
+                        _hover={{ bg: { base: 'gray.100', _dark: 'slate.800' } }}
+                        flexShrink={0}
+                    >
+                        <Paperclip size={20} />
+                    </Button>
+                    <input
+                        type="file"
+                        ref={fileInputRef}
+                        onChange={handleFileChange}
+                        multiple
+                        style={{ display: 'none' }}
+                    />
                     <Textarea
                         value={conteudo}
                         onChange={(e) => setConteudo(e.target.value)}
                         onKeyDown={handleKeyDown}
-                        placeholder="Digite sua mensagem... (Enter para enviar)"
+                        placeholder={
+                            arquivosSelecionados.length > 0
+                                ? "Adicione um comentário (opcional)..."
+                                : "Digite sua mensagem... (Enter para enviar)"
+                        }
                         size="sm"
                         borderRadius="xl"
                         resize="none"
@@ -247,7 +440,7 @@ export default function ChatPanel({ formularioId, remetente, nomeRemetente }: Ch
                     <Button
                         onClick={handleEnviar}
                         loading={enviando}
-                        disabled={!conteudo.trim()}
+                        disabled={!conteudo.trim() && arquivosSelecionados.length === 0}
                         colorPalette="blue"
                         borderRadius="xl"
                         size="sm"
@@ -259,7 +452,7 @@ export default function ChatPanel({ formularioId, remetente, nomeRemetente }: Ch
                     </Button>
                 </HStack>
                 <Text fontSize="2xs" color={{ base: 'gray.400', _dark: 'slate.500' }} mt={1}>
-                    Shift+Enter para nova linha · Atualiza automaticamente a cada 8s
+                    Shift+Enter para nova linha · Envie até 3 arquivos · Atualiza a cada 8s
                 </Text>
             </Box>
         </Box>

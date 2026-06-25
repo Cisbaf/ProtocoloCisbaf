@@ -16,10 +16,11 @@ export interface Usuario {
 // ─── Mensagem de Chat ─────────────────────────────────────────────────────────
 export interface Mensagem {
   id: number;
-  conteudo: string;
+  conteudo?: string | null;
   remetente: 'ADMIN' | 'SOLICITANTE';
   nomeRemetente: string;
   dataEnvio: string; // LocalDateTime serializado como ISO string
+  arquivoPath?: string;
 }
 
 // ─── Formulário (@Entity Formulario) ─────────────────────────────────────────

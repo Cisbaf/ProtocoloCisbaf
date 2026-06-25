@@ -24,12 +24,22 @@ export async function POST(
 ) {
   const { id } = await params;
   try {
-    const body = await request.json();
-    const res = await fetch(`${process.env.BACKEND_INTERNAL_URL}/form/${id}/mensagens`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(body),
-    });
+    const contentType = request.headers.get('content-type') || '';
+    let res;
+    if (contentType.includes('multipart/form-data')) {
+      const formData = await request.formData();
+      res = await fetch(`${process.env.BACKEND_INTERNAL_URL}/form/${id}/mensagens`, {
+        method: 'POST',
+        body: formData,
+      });
+    } else {
+      const body = await request.json();
+      res = await fetch(`${process.env.BACKEND_INTERNAL_URL}/form/${id}/mensagens`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body),
+      });
+    }
     if (!res.ok) throw new Error('Erro ao enviar mensagem');
     const data = await res.json();
     return NextResponse.json(data);

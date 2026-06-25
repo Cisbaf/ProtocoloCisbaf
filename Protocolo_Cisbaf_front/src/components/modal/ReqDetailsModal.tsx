@@ -265,31 +265,7 @@ export default function ReqDetailsModal({
                             )}
                         </Box>
 
-                        {/* CARD 2: Detalhes da Solicitação */}
-                        <Box p={5} bg={{ base: "white", _dark: "slate.800" }} borderRadius="xl" borderWidth="1px" borderColor={{ base: "gray.200", _dark: "slate.700" }} shadow="sm">
-                            <Heading size="md" display="flex" alignItems="center" gap={2} color={{ base: "slate.800", _dark: "slate.100" }} mb={5}>
-                                <FileText size={20} color="#3B82F6" /> Detalhes do Requerimento
-                            </Heading>
 
-                            <Stack direction={{ base: "column", sm: "row" }} gap={4} mb={5}>
-                                <VStack align="start" gap={1} flex={1}>
-                                    <Text fontSize="xs" fontWeight="black" color={{ base: "gray.400", _dark: "slate.500" }}>ASSUNTO</Text>
-                                    <Badge size="lg" colorPalette="blue" px={3} py={1} borderRadius="md">{req.assunto}</Badge>
-                                </VStack>
-                                {req.beneficio && (
-                                    <VStack align="start" gap={1} flex={1}>
-                                        <Text fontSize="xs" fontWeight="black" color={{ base: "gray.400", _dark: "slate.500" }}>BENEFÍCIO</Text>
-                                        <Badge size="lg" colorPalette="purple" px={3} py={1} borderRadius="md">{req.beneficio}</Badge>
-                                    </VStack>
-                                )}
-                            </Stack>
-                            <VStack align="start" gap={1}>
-                                <Text fontSize="xs" fontWeight="black" color={{ base: "gray.400", _dark: "slate.500" }}>DESCRIÇÃO DA SOLICITAÇÃO</Text>
-                                <Box p={4} bg={{ base: "gray.50", _dark: "slate.900" }} borderRadius="lg" w="full" borderWidth="1px" borderColor={{ base: "gray.100", _dark: "slate.700" }}>
-                                    <Text color={{ base: "slate.700", _dark: "slate.300" }} whiteSpace="pre-wrap" fontSize={{ base: "sm", md: "md" }}>{req.descricao}</Text>
-                                </Box>
-                            </VStack>
-                        </Box>
 
                         {/* CARD 3: Dados do Solicitante (Identificação e Contato) */}
                         <Box p={5} bg={{ base: "white", _dark: "slate.800" }} borderRadius="xl" borderWidth="1px" borderColor={{ base: "gray.200", _dark: "slate.700" }} shadow="sm">
@@ -319,6 +295,32 @@ export default function ReqDetailsModal({
                                     )}
                                 </VStack>
                             </SimpleGrid>
+                        </Box>
+
+                        {/* CARD 2: Detalhes da Solicitação */}
+                        <Box p={5} bg={{ base: "white", _dark: "slate.800" }} borderRadius="xl" borderWidth="1px" borderColor={{ base: "gray.200", _dark: "slate.700" }} shadow="sm">
+                            <Heading size="md" display="flex" alignItems="center" gap={2} color={{ base: "slate.800", _dark: "slate.100" }} mb={5}>
+                                <FileText size={20} color="#3B82F6" /> Detalhes do Requerimento
+                            </Heading>
+
+                            <Stack direction={{ base: "column", sm: "row" }} gap={4} mb={5}>
+                                <VStack align="start" gap={1} flex={1}>
+                                    <Text fontSize="xs" fontWeight="black" color={{ base: "gray.400", _dark: "slate.500" }}>ASSUNTO</Text>
+                                    <Badge size="lg" colorPalette="blue" px={3} py={1} borderRadius="md">{req.assunto}</Badge>
+                                </VStack>
+                                {req.beneficio && (
+                                    <VStack align="start" gap={1} flex={1}>
+                                        <Text fontSize="xs" fontWeight="black" color={{ base: "gray.400", _dark: "slate.500" }}>BENEFÍCIO</Text>
+                                        <Badge size="lg" colorPalette="purple" px={3} py={1} borderRadius="md">{req.beneficio}</Badge>
+                                    </VStack>
+                                )}
+                            </Stack>
+                            <VStack align="start" gap={1}>
+                                <Text fontSize="xs" fontWeight="black" color={{ base: "gray.400", _dark: "slate.500" }}>DESCRIÇÃO DA SOLICITAÇÃO</Text>
+                                <Box p={4} bg={{ base: "gray.50", _dark: "slate.900" }} borderRadius="lg" w="full" borderWidth="1px" borderColor={{ base: "gray.100", _dark: "slate.700" }}>
+                                    <Text color={{ base: "slate.700", _dark: "slate.300" }} whiteSpace="pre-wrap" fontSize={{ base: "sm", md: "md" }}>{req.descricao}</Text>
+                                </Box>
+                            </VStack>
                         </Box>
 
                         {/* CARD 4: Arquivos Anexados (Condicional) */}
