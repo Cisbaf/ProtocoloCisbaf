@@ -9,4 +9,6 @@ import java.util.List;
 @Repository
 public interface MensagemRepository extends JpaRepository<Mensagem, Long> {
     List<Mensagem> findByFormularioIdOrderByDataEnvioAsc(String formularioId);
+    
+    java.util.Optional<Mensagem> findFirstByFormularioIdAndNomeRemetenteOrderByDataEnvioDesc(String formularioId, String nomeRemetente);
 }

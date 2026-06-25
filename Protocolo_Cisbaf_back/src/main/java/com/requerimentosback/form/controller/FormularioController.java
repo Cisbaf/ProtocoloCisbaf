@@ -3,6 +3,7 @@ package com.requerimentosback.form.controller;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.requerimentosback.form.model.*;
 import com.requerimentosback.form.model.enuns.TipoGrafico;
+import com.requerimentosback.form.model.enuns.TipoRemetente;
 import com.requerimentosback.form.model.enuns.Unidades;
 import com.requerimentosback.form.service.CepClient;
 import com.requerimentosback.form.service.FormularioService;
@@ -176,12 +177,30 @@ public class FormularioController {
         return ResponseEntity.ok(mensagemService.listarPorFormulario(id));
     }
 
-    @PostMapping("/{id}/mensagens")
-    public ResponseEntity<Mensagem> enviarMensagem(
+    @PostMapping(value = "/{id}/mensagens", consumes = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<Mensagem> enviarMensagemJson(
             @PathVariable String id,
             @RequestBody @Valid MensagemRequestDTO dto) {
         try {
             return ResponseEntity.ok(mensagemService.enviar(id, dto));
+        } catch (jakarta.persistence.EntityNotFoundException e) {
+            return ResponseEntity.notFound().build();
+        }
+    }
+
+    @PostMapping(value = "/{id}/mensagens", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public ResponseEntity<Mensagem> enviarMensagemMultipart(
+            @PathVariable String id,
+            @RequestParam(value = "conteudo", required = false) String conteudo,
+            @RequestParam("remetente") TipoRemetente remetente,
+            @RequestParam("nomeRemetente") String nomeRemetente,
+            @RequestPart(value = "arquivos", required = false) List<MultipartFile> arquivos) {
+        try {
+            if ((conteudo == null || conteudo.trim().isEmpty()) && (arquivos == null || arquivos.isEmpty())) {
+                return ResponseEntity.badRequest().build();
+            }
+            MensagemRequestDTO dto = new MensagemRequestDTO(conteudo, remetente, nomeRemetente);
+            return ResponseEntity.ok(mensagemService.enviar(id, dto, arquivos));
         } catch (jakarta.persistence.EntityNotFoundException e) {
             return ResponseEntity.notFound().build();
         }

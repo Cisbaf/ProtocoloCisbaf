@@ -13,6 +13,8 @@ import jakarta.persistence.EntityNotFoundException;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.boot.context.event.ApplicationReadyEvent;
+import org.springframework.context.event.EventListener;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
@@ -86,7 +88,6 @@ public class FormularioService {
         formulario = repository.saveAndFlush(formulario);
 
         emailService.enviarEmailNovoFormulario(formulario);
-
         return formulario;
     }
 
@@ -99,28 +100,40 @@ public class FormularioService {
         Formulario existing = repository.findById(id)
                 .orElseThrow(() -> new EntityNotFoundException("Formulário não encontrado para o ID: " + id));
 
-        // Verifica se o status está mudando EXATAMENTE agora para FINALIZADO
+        FinArq statusAntigo = existing.getFinalizarArquivar();
+        FinArq statusNovo = formDaRequisicao.getFinalizarArquivar() != null ? formDaRequisicao.getFinalizarArquivar() : statusAntigo;
+
         existing.setAssunto(formDaRequisicao.getAssunto() != null ? formDaRequisicao.getAssunto() : existing.getAssunto());
         existing.setBeneficio(formDaRequisicao.getBeneficio() != null ? formDaRequisicao.getBeneficio() : existing.getBeneficio());
         existing.setDescricao(formDaRequisicao.getDescricao() != null ? formDaRequisicao.getDescricao() : existing.getDescricao());
         existing.setArquivoPath(formDaRequisicao.getArquivoPath() != null ? formDaRequisicao.getArquivoPath() : existing.getArquivoPath());
         existing.setUnidade(formDaRequisicao.getUnidade() != null ? formDaRequisicao.getUnidade() : existing.getUnidade());
-        existing.setFinalizarArquivar(formDaRequisicao.getFinalizarArquivar() != null ? formDaRequisicao.getFinalizarArquivar() : existing.getFinalizarArquivar());
 
-        if (existing.getFinalizarArquivar() != formDaRequisicao.getFinalizarArquivar()) {
-               existing.setDataMudanca(new Date());
+        existing.setFinalizarArquivar(statusNovo);
+
+        boolean mudouParaFinalizado = false;
+
+        if (statusAntigo != statusNovo) {
+            if(statusNovo == FinArq.EM_ANALISE){
+                existing.setDataMudanca(null);
+            }else{
+                existing.setDataMudanca(new Date());
+            }
+
+            if (statusNovo == FinArq.FINALIZADO) {
+                mudouParaFinalizado = true;
+            }
         }
-        // Removida a linha duplicada de setFinalizarArquivar que havia aqui
 
         var salvo = repository.saveAndFlush(existing);
 
-        // Dispara o e-mail apenas se a transição for nova e para FINALIZADO
+        if (mudouParaFinalizado) {
             try {
                 emailService.enviarEmailFinalizacaoFormulario(existing);
             } catch (Exception e) {
                 log.error("Erro ao enviar email de finalização para o form {}", id, e);
             }
-
+        }
 
         return salvo;
     }
@@ -154,8 +167,9 @@ public class FormularioService {
         };
     }
 
-    @Scheduled(cron = "0 0 0 * * *")
     @Transactional
+    @Scheduled(cron = "0 0 0 * * *") // Roda todos os dias à 00:00
+    @EventListener(ApplicationReadyEvent.class) // Roda assim que o projeto ligar
     public void atualizarStatusParaTerminado() {
         log.info("Iniciando tarefa agendada para verificar formulários a terminar...");
 

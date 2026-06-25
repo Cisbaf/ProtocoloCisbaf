@@ -25,8 +25,11 @@ public class Mensagem {
     private Formulario formulario;
 
     @Lob
-    @Column(nullable = false)
+    @Column(nullable = true)
     private String conteudo;
+
+    @Column(length = 1000)
+    private String arquivoPath;
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 20)
