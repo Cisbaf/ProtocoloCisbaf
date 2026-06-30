@@ -53,7 +53,7 @@ public class Formulario {
     public void gerarIdSeNaoExistente() {
         if (id == null || id.isBlank()) {
             String timestamp = LocalDateTime.now()
-                    .format(DateTimeFormatter.ofPattern("yyMMddHHmmssSSS"));
+                    .format(DateTimeFormatter.ofPattern("yyMMssSS"));
 
             int random = ThreadLocalRandom.current().nextInt(1000, 9999);
 

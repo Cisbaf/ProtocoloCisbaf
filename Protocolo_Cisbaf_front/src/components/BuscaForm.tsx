@@ -33,6 +33,7 @@ import {
     Download,
     MessageCircle,
     ChevronDown,
+    Archive,
 } from "lucide-react";
 import { useState } from "react";
 import Header from "./Header";
@@ -90,23 +91,19 @@ export default function BuscaForm() {
     };
 
     // confirmacao: null = aguardando RH | true = aceito | false = recusado
-    function renderStatusBadge(confirmacao: boolean | string | null | undefined) {
-        console.log("Confiramação: " + confirmacao)
-        if (confirmacao === true || confirmacao === "true") return (
+    function renderStatusBadge(finalizarArquivar: "FINALIZADO" | "ARQUIVADO" | "EM_ANALISE" | "TERMINADO" | undefined) {
+
+        if (finalizarArquivar === "FINALIZADO" || finalizarArquivar === "TERMINADO") return (
             <Badge bg="green.600" color="white" px={3} py={1} borderRadius="full" fontWeight="bold" display="flex" alignItems="center" gap={1}>
-                <CheckCircle size={14} /> ACEITO
+                <CheckCircle size={14} /> CONCLUIDO
             </Badge>
         );
-        if (confirmacao === false || confirmacao === "false") return (
-            <Badge bg="red.600" color="white" px={3} py={1} borderRadius="full" fontWeight="bold" display="flex" alignItems="center" gap={1}>
-                <XCircle size={14} /> RECUSADO
-            </Badge>
-        );
-        return (
+        if (finalizarArquivar === "ARQUIVADO" || finalizarArquivar === "EM_ANALISE") return (
             <Badge bg="orange.500" color="white" px={3} py={1} borderRadius="full" fontWeight="bold" display="flex" alignItems="center" gap={1}>
-                <AlertCircle size={14} /> PENDENTE
+                <AlertCircle size={14} /> EM ANÁLISE
             </Badge>
         );
+
     }
 
     return (
@@ -152,8 +149,8 @@ export default function BuscaForm() {
                                                 </Field.Label>
                                                 <Input
                                                     value={codigo}
-                                                    onChange={(e) => setCodigo(e.target.value.toUpperCase())}
-                                                    placeholder="Ex: 2000000000000000"
+                                                    onChange={(e) => setCodigo(e.target.value.replace(/\D/g, '').toUpperCase())}
+                                                    placeholder="0000000000000000000"
                                                     size="lg"
                                                     borderRadius="full"
                                                     bg={{ base: "gray.50", _dark: "slate.800" }}
@@ -163,6 +160,7 @@ export default function BuscaForm() {
                                                     fontWeight="medium"
                                                     _focus={{ borderColor: { base: "blue.500", _dark: "blue.400" }, bg: { base: "white", _dark: "slate.900" } }}
                                                     onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
+                                                    maxLength={30}
                                                 />
                                             </Field.Root>
                                             <Button
@@ -210,7 +208,7 @@ export default function BuscaForm() {
                                     {/* ── Cabeçalho do resultado ── */}
                                     <Flex
                                         flexDir={{ base: "column", md: "row" }}
-                                        align={{ base: "start", md: "center" }}
+                                        justifyContent={{ base: "space-between" }}
                                         gap={4}
                                         p={6}
                                         bg={{ base: "gray.50", _dark: "slate.800" }}
@@ -218,12 +216,20 @@ export default function BuscaForm() {
                                         border="2px solid"
                                         borderColor={{ base: "gray.100", _dark: "slate.700" }}
                                     >
-                                        <VStack align="start" gap={0}>
+                                        <VStack align="start" gap={0} >
                                             <Text fontSize="xs" fontWeight="black" color={{ base: "blue.800", _dark: "blue.400" }} textTransform="uppercase">
                                                 Código da Solicitação
                                             </Text>
                                             <Heading size="md" fontWeight="black" display="flex" alignItems="center" gap={2}>
                                                 <Hash size={20} /> {data.id}
+                                            </Heading>
+                                        </VStack>
+                                        <VStack align="start" gap={0}>
+                                            <Text fontSize="xs" fontWeight="black" color={{ base: "blue.800", _dark: "blue.400" }} textTransform="uppercase">
+                                                Status da Solicitação
+                                            </Text>
+                                            <Heading size="md" fontWeight="black" display="flex" alignItems="center" gap={2}>
+                                                {renderStatusBadge(data.finalizarArquivar)}
                                             </Heading>
                                         </VStack>
 

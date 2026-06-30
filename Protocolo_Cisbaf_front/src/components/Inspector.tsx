@@ -18,7 +18,7 @@ export default function Inspector() {
   const [baseFilter, setBaseFilter] = useState("all");
   const [assuntoFilter, setAssuntoFilter] = useState("all");
 
-  const [statusFilter, setStatusFilter] = useState<"all" | "em_analise" | "finalizado">("all");
+  const [statusFilter, setStatusFilter] = useState<"all" | "em_analise" | "finalizado" | "arquivado" | "terminado">("all");
   const [isArchiveMode, setIsArchiveMode] = useState(false);
 
   const [selectedReq, setSelectedReq] = useState<Formulario | null>(null);
@@ -174,9 +174,11 @@ export default function Inspector() {
 
     // 3. Filtro de Status
     const isEmAnalise = !r.finalizarArquivar || r.finalizarArquivar === 'EM_ANALISE';
-    const matchesStatus = isArchiveMode || statusFilter === "all" ||
+    const matchesStatus = statusFilter === "all" ||
       (statusFilter === "em_analise" && isEmAnalise) ||
-      (statusFilter === "finalizado" && r.finalizarArquivar === 'FINALIZADO');
+      (statusFilter === "finalizado" && r.finalizarArquivar === 'FINALIZADO') ||
+      (statusFilter === "arquivado" && r.finalizarArquivar === 'ARQUIVADO' && isArchiveMode) ||
+      (statusFilter === "terminado" && r.finalizarArquivar === "TERMINADO" && isArchiveMode);
 
     return matchesName && matchesBase && matchesAssunto && matchesStatus;
   });
@@ -195,8 +197,8 @@ export default function Inspector() {
 
   const renderStatus = (status?: 'FINALIZADO' | 'ARQUIVADO' | 'EM_ANALISE' | 'TERMINADO') => {
     if (status === 'FINALIZADO') return <Badge bg="green.100" color="green.700" borderRadius="full" px={3} py={1} fontWeight="black" display="flex" alignItems="center" gap={1}><CheckCircle size={12} /> FINALIZADO</Badge>;
-    if (status === 'ARQUIVADO') return <Badge bg="red.100" color="red.700" borderRadius="full" px={3} py={1} fontWeight="black" display="flex" alignItems="center" gap={1}><XCircle size={12} /> ARQUIVADO</Badge>;
-    if (status === 'TERMINADO') return <Badge bg="black" color="white" borderRadius="full" px={3} py={1} fontWeight="black" display="flex" alignItems="center" gap={1}><XCircle size={12} /> TERMINADO</Badge>;
+    if (status === 'ARQUIVADO') return <Badge bg="red.100" color="red.700" borderRadius="full" px={3} py={1} fontWeight="black" display="flex" alignItems="center" gap={1}><Archive size={12} /> ARQUIVADO</Badge>;
+    if (status === 'TERMINADO') return <Badge bg="black" color="white" borderRadius="full" px={3} py={1} fontWeight="black" display="flex" alignItems="center" gap={1}><CheckCircle size={12} /> TERMINADO</Badge>;
     return <Badge bg="orange.100" color="orange.700" borderRadius="full" px={3} py={1} fontWeight="black" display="flex" alignItems="center" gap={1}><AlertCircle size={12} /> EM ANÁLISE</Badge>;
   };
 
@@ -369,18 +371,25 @@ export default function Inspector() {
                       <Text fontSize="xs" fontWeight="black" color={{ base: "gray.500", _dark: "slate.400" }}>STATUS</Text>
                       {isArchiveMode ? (
                         <Box
+                          as="select"
+                          {...({
+                            value: statusFilter,
+                            onChange: (e: any) => setStatusFilter(e.target.value)
+                          } as any)}
                           w="full"
                           p="10px"
                           borderRadius="12px"
                           border="1px solid"
-                          borderColor={{ base: "orange.300", _dark: "orange.700" }}
-                          bg={{ base: "orange.50", _dark: "orange.900/20" }}
-                          color={{ base: "orange.700", _dark: "orange.300" }}
+                          borderColor={{ base: "gray.200", _dark: "slate.600" }}
                           fontSize="14px"
                           fontWeight="600"
-                          textAlign="center"
+                          outline="none"
+                          bg={{ base: "white", _dark: "slate.900" }}
+                          color={{ base: "black", _dark: "white" }}
                         >
-                          Arquivados / Terminados
+                          <option value="all">Todos Ativos</option>
+                          <option value="terminado">Terminado</option>
+                          <option value="arquivado">Arquivado</option>
                         </Box>
                       ) : (
                         <Box

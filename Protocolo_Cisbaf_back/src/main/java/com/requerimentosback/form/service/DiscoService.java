@@ -2,6 +2,8 @@ package com.requerimentosback.form.service;
 
 import jakarta.annotation.PostConstruct;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.context.event.ApplicationReadyEvent;
+import org.springframework.context.event.EventListener;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
@@ -55,6 +57,7 @@ public class DiscoService {
     }
 
     @Scheduled(cron = "0 0 0 * * ?")
+    @EventListener(ApplicationReadyEvent.class)
     public void comprimirArquivosAntigos() {
         Path raiz = Paths.get(diretorioUpload).toAbsolutePath().normalize();
 
@@ -93,12 +96,6 @@ public class DiscoService {
                         // Remove o arquivo original com segurança após compactá-lo
                         Files.delete(arquivo);
                     }
-                }
-
-                // Se nenhum arquivo foi adicionado, remove o zip vazio gerado
-                if (!temArquivoParaCompactar) {
-                    zos.close(); // Fecha antes de deletar
-                    Files.deleteIfExists(caminhoZip);
                 }
             }
 
