@@ -3,11 +3,11 @@
 import { Formulario } from '@/components/types';
 import { toaster } from '@/components/ui/toaster';
 import { Badge, Box, Button, Card, Center, Container, HStack, Heading, SimpleGrid, Spinner, Table, Text, VStack } from '@chakra-ui/react';
-import { AlertCircle, ArrowUpDown, BarChartIcon, CheckCircle, Eye, RefreshCw, Search, Trash, User, XCircle, Archive, ArchiveRestore, Undo2 } from 'lucide-react';
+import { AlertCircle, Archive, ArchiveRestore, ArrowUpDown, BarChartIcon, CheckCircle, Eye, RefreshCw, Search, Trash, Undo2, User } from 'lucide-react';
+import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import Header from './Header';
 import ReqDetailsModal from './modal/ReqDetailsModal';
-import { useRouter } from 'next/navigation';
 import StatsModal from './modal/StatsModal';
 
 export default function Inspector() {
@@ -475,18 +475,27 @@ export default function Inspector() {
                             <Button size="sm" colorPalette="blue" borderRadius="lg" onClick={() => setSelectedReq(r)} disabled={updatingId === r.id} flex={1}>
                               <Eye size={18} />
                             </Button>
-                            <Button size="sm" colorPalette="green" borderRadius="lg" onClick={() => r.id && updateStatus(r.id, 'FINALIZADO')} disabled={r.finalizarArquivar === 'FINALIZADO' || r.finalizarArquivar === 'TERMINADO' || updatingId === r.id} loading={updatingId === r.id ? true : undefined} flex={1}>
+
+                            <Button size="sm" colorPalette="green" borderRadius="lg" onClick={() => r.id && updateStatus(r.id, 'FINALIZADO')} disabled={r.finalizarArquivar === 'FINALIZADO'
+                              || r.finalizarArquivar === 'TERMINADO' || updatingId === r.id} loading={updatingId === r.id ? true : undefined} flex={1}>
                               <CheckCircle size={18} />
                             </Button>
-                            <Button size="sm" colorPalette="red" borderRadius="lg" onClick={() => r.id && updateStatus(r.id, 'ARQUIVADO')} disabled={r.finalizarArquivar === 'ARQUIVADO' || updatingId === r.id} loading={updatingId === r.id ? true : undefined} flex={1}>
+
+                            <Button size="sm" colorPalette="red" borderRadius="lg" onClick={() => r.id && updateStatus(r.id, 'ARQUIVADO')} disabled={r.finalizarArquivar === 'ARQUIVADO'
+                              || updatingId === r.id} loading={updatingId === r.id ? true : undefined} flex={1}>
                               <Archive size={18} />
                             </Button>
-                            <Button size="sm" colorPalette="gray" borderRadius="lg" onClick={() => r.id && deleteForm(r.id)} disabled={updatingId !== null && updatingId !== r.id} loading={updatingId === r.id} flex={1}>
+
+                            <Button size="sm" colorPalette="gray" borderRadius="lg" onClick={() => r.id && deleteForm(r.id)} disabled={updatingId !== null && updatingId !== r.id}
+                              loading={updatingId === r.id} flex={1}>
                               <Trash size={18} />
                             </Button>
-                            <Button size="sm" colorPalette="blue" borderRadius="lg" onClick={() => r.id && updateStatus(r.id, 'EM_ANALISE')} disabled={r.finalizarArquivar === 'EM_ANALISE' || updatingId === r.id} loading={updatingId === r.id ? true : undefined} flex={1}>
+
+                            <Button size="sm" colorPalette="blue" borderRadius="lg" onClick={() => r.id && updateStatus(r.id, 'EM_ANALISE')} disabled={r.finalizarArquivar === 'EM_ANALISE'
+                              || updatingId === r.id} loading={updatingId === r.id ? true : undefined} flex={1}>
                               <Undo2 size={18} />
                             </Button>
+
                           </HStack>
                         </Box>
                       ))}
@@ -566,6 +575,10 @@ export default function Inspector() {
         renderStatus={renderStatus as any}
         onApprove={(id) => {
           updateStatus(id, 'FINALIZADO');
+          setSelectedReq(null);
+        }}
+        onArchive={(id) => {
+          updateStatus(id, 'ARQUIVADO');
           setSelectedReq(null);
         }}
         onDownload={handleDownloadArquivo}

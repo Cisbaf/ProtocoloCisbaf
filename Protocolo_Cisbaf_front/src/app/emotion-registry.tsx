@@ -1,7 +1,7 @@
 'use client'
 
-import { CacheProvider } from '@emotion/react'
 import createCache from '@emotion/cache'
+import { CacheProvider } from '@emotion/react'
 import { useServerInsertedHTML } from 'next/navigation'
 import { useState } from 'react'
 

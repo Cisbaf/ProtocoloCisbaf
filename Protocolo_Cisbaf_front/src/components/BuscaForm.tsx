@@ -26,14 +26,12 @@ import {
     Briefcase,
     FileText,
     AlertCircle,
-    XCircle,
     MapPin,
     AlignLeft,
     Gift,
     Download,
     MessageCircle,
     ChevronDown,
-    Archive,
 } from "lucide-react";
 import { useState } from "react";
 import Header from "./Header";

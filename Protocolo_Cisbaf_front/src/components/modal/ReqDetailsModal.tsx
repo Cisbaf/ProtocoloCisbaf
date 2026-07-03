@@ -8,7 +8,6 @@ import {
     Flex,
     HStack,
     Heading,
-    Separator,
     SimpleGrid,
     Stack,
     Text,
@@ -27,15 +26,15 @@ import {
     Mail,
     MailPlus,
     MessageCircle,
+    Paperclip,
     Phone,
+    Printer,
     Smartphone,
     User,
-    X,
-    Printer,
-    Paperclip // <-- Adicionado para ícone de anexo
+    X
 } from 'lucide-react';
-import ChatPanel from './ChatPanel';
 import { useMemo, useState } from 'react';
+import ChatPanel from './ChatPanel';
 
 // 2. Importe o jsPDF e o autoTable
 import jsPDF from 'jspdf';
@@ -45,6 +44,7 @@ interface ReqDetailsModalProps {
     req: Formulario | null;
     onClose: () => void;
     onApprove: (id: string) => void;
+    onArchive: (id: string) => void;
     renderStatus: (finalizarArquivar: 'FINALIZADO' | 'ARQUIVADO' | 'EM_ANALISE' | 'TERMINADO') => React.ReactNode;
     onDownload: (arquivoPath: string) => void;
 }
@@ -53,6 +53,7 @@ export default function ReqDetailsModal({
     req,
     onClose,
     onApprove,
+    onArchive,
     renderStatus,
     onDownload
 }: ReqDetailsModalProps) {
@@ -354,38 +355,42 @@ export default function ReqDetailsModal({
                 </Box>
 
                 {/* ── BOTÕES DE AÇÃO (Fixos no rodapé) ── */}
-                <Box
-                    p={{ base: 4, md: 5 }}
-                    bg={{ base: "white", _dark: "slate.900" }}
-                    borderTop="1px solid"
-                    borderColor={{ base: "gray.200", _dark: "slate.800" }}
-                    display="flex"
-                    flexDir={{ base: "column", sm: "row" }}
-                    gap={4}
-                >
-                    <Button
-                        flex={1}
-                        w={{ base: "full", sm: "auto" }}
-                        colorPalette="green"
-                        borderRadius="xl"
-                        size="lg"
-                        onClick={() => onApprove(req.id!)}
-                        disabled={req.finalizarArquivar === 'FINALIZADO'}
+                {req.finalizarArquivar !== "TERMINADO" && (
+                    <Box
+                        p={{ base: 4, md: 5 }}
+                        bg={{ base: "white", _dark: "slate.900" }}
+                        borderTop="1px solid"
+                        borderColor={{ base: "gray.200", _dark: "slate.800" }}
+                        display="flex"
+                        flexDir={{ base: "column", sm: "row" }}
+                        gap={4}
                     >
-                        <CheckCircle size={20} style={{ marginRight: '8px' }} /> FINALIZAR
-                    </Button>
-                    <Button
-                        flex={1}
-                        w={{ base: "full", sm: "auto" }}
-                        colorPalette="red"
-                        variant="outline"
-                        borderRadius="xl"
-                        size="lg"
-                        disabled={req.finalizarArquivar === 'ARQUIVADO'}
-                    >
-                        <Archive size={20} style={{ marginRight: '8px' }} /> ARQUIVAR
-                    </Button>
-                </Box>
+                        <Button
+                            flex={1}
+                            w={{ base: "full", sm: "auto" }}
+                            colorPalette="green"
+                            borderRadius="xl"
+                            size="lg"
+                            onClick={() => onApprove(req.id!)}
+                            disabled={req.finalizarArquivar === 'FINALIZADO'}
+                        >
+                            <CheckCircle size={20} style={{ marginRight: '8px' }} /> FINALIZAR
+                        </Button>
+                        <Button
+                            flex={1}
+                            w={{ base: "full", sm: "auto" }}
+                            colorPalette="red"
+                            variant="outline"
+                            borderRadius="xl"
+                            size="lg"
+                            onClick={() => onArchive(req.id!)}
+                            disabled={req.finalizarArquivar === 'ARQUIVADO'}
+                        >
+                            <Archive size={20} style={{ marginRight: '8px' }} /> ARQUIVAR
+                        </Button>
+                    </Box>
+                )}
+
             </Box>
         </Box>
     );

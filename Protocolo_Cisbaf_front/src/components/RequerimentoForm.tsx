@@ -3,18 +3,25 @@
 import { FormValues, assuntos, beneficios, unidades } from '@/components/types';
 import { toaster } from "@/components/ui/toaster";
 import {
-  Badge, Box, Button, Card, Center, Container, Field, Flex, Heading, Input, Separator,
-  SimpleGrid, Spinner, Text, Textarea, VStack, Select, HStack, Portal,
+  Badge, Box, Button, Card, Center, Container, Field, Flex,
+  HStack,
+  Heading, Input,
+  Portal,
+  Select,
+  Separator,
+  SimpleGrid, Spinner, Text, Textarea, VStack,
 } from '@chakra-ui/react';
 
+import { COLORS, inputStyle, labelStyle } from '@/components/ui/formStyles';
 import {
-  Calendar, CreditCard, Info, Mail, MapPin, Send,
-  Smartphone, Upload, User, Scale, Copy, Check, ClipboardCheck
+  Check, ClipboardCheck,
+  Copy,
+  CreditCard, Info, Mail, Send,
+  Smartphone, Upload, User
 } from 'lucide-react';
 import { useEffect, useState } from 'react';
-import { useForm, Controller, useWatch } from 'react-hook-form';
+import { Controller, useForm, useWatch } from 'react-hook-form';
 import Header from './Header';
-import { inputStyle, labelStyle, COLORS } from '@/components/ui/formStyles';
 
 
 // ─── Sub-componente: cabeçalho de seção ──────────────────────────────────────
