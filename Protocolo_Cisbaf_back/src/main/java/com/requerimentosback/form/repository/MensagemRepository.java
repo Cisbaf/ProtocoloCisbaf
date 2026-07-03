@@ -5,10 +5,13 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
+import java.util.Optional;
 
 @Repository
 public interface MensagemRepository extends JpaRepository<Mensagem, Long> {
     List<Mensagem> findByFormularioIdOrderByDataEnvioAsc(String formularioId);
     
-    java.util.Optional<Mensagem> findFirstByFormularioIdAndNomeRemetenteOrderByDataEnvioDesc(String formularioId, String nomeRemetente);
+   Optional<Mensagem> findFirstByFormularioIdAndNomeRemetenteOrderByDataEnvioDesc(String formularioId, String nomeRemetente);
+
+    void deleteByFormularioId(String formularioId);
 }

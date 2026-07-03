@@ -8,6 +8,7 @@ import com.requerimentosback.form.model.enuns.FinArq;
 import com.requerimentosback.form.model.enuns.TipoGrafico;
 import com.requerimentosback.form.model.enuns.Unidades;
 import com.requerimentosback.form.repository.FormularioRepository;
+import com.requerimentosback.form.repository.MensagemRepository;
 import com.requerimentosback.form.repository.UsuariosRepository;
 import jakarta.persistence.EntityNotFoundException;
 import jakarta.transaction.Transactional;
@@ -36,6 +37,7 @@ public class FormularioService {
     private final DiscoService discoService;
     private final EmailService emailService;
     private final AdminRepository adminRepository;
+    private final MensagemRepository mensagemRepository;
 
     public List<Formulario> findAll() {
         return repository.findAll();
@@ -91,7 +93,9 @@ public class FormularioService {
         return formulario;
     }
 
+    @Transactional
     public void deleteById(String id) {
+        mensagemRepository.deleteByFormularioId(id);
         repository.deleteById(id);
     }
 
