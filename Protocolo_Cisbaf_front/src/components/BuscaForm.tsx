@@ -282,9 +282,16 @@ export default function BuscaForm() {
                                     {/* ── Cards de detalhe ── */}
                                     <SimpleGrid columns={{ base: 1, md: 2 }} gap={4}>
                                         <DetailCard icon={<User size={20} />} label="NOME" value={data.usuario?.nome + " " + data.usuario?.sobrenome} />
-                                        <DetailCard icon={<Hash size={20} />} label="MATRÍCULA" value={data.usuario?.matricula} />
-                                        <DetailCard icon={<MapPin size={20} />} label="UNIDADE" value={data.unidade} />
-                                        <DetailCard icon={<Briefcase size={20} />} label="CARGO" value={data.usuario?.cargo} />
+
+                                        {(data.usuario?.matricula != null && data.usuario.matricula.trim() !== "") && (
+                                            <DetailCard icon={<Hash size={20} />} label="MATRÍCULA" value={data.usuario.matricula ?? ""} />
+                                        )}
+                                        {(data.unidade != null && data.unidade.trim() !== "") && (
+                                            <DetailCard icon={<MapPin size={20} />} label="UNIDADE" value={data.unidade ?? ""} />
+                                        )}
+                                        {(data.usuario?.cargo != null && data.usuario.cargo.trim() !== "") && (
+                                            <DetailCard icon={<Briefcase size={20} />} label="CARGO" value={data.usuario.cargo ?? ""} />
+                                        )}
                                         <DetailCard icon={<FileText size={20} />} label="ASSUNTO" value={data.assunto} />
                                         {data.beneficio && (
                                             <DetailCard icon={<Gift size={20} />} label="BENEFÍCIO" value={data.beneficio} />

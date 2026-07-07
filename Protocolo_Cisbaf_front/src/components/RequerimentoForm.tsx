@@ -52,7 +52,6 @@ function SectionHeader({ step, title, badgeBg, badgeColor, }: {
 // ─── Componente principal ─────────────────────────────────────────────────────
 export default function RequerimentoForm() {
   const [, setResetKey] = useState(0);
-  const [isFetchingCep, setIsFetchingCep] = useState(false);
   const [isFetchingUser, setIsFetchingUser] = useState(false);
   const [submittedId, setSubmittedId] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
@@ -123,8 +122,8 @@ export default function RequerimentoForm() {
           telefone: data.telefone,
           celular: data.celular,
           emailAlt: data.emailAlt,
-          matricula: data.matricula.trim(),
-          cargo: data.cargo.trim(),
+          matricula: data.matricula,
+          cargo: data.cargo != null ? data.cargo : " ",
 
         },
         assunto: data.assunto.trim(),
@@ -483,78 +482,84 @@ export default function RequerimentoForm() {
 
                   {/* ══ PASSO 03 – Dados do Requerimento ══ */}
                   <VStack gap={8} align="stretch">
-                    <SectionHeader
-                      step="PASSO 03"
-                      title="Dados do Requerimento"
-                      badgeBg={COLORS.step3Bg}
-                      badgeColor={COLORS.step3Text}
-                    />
 
-                    <SimpleGrid columns={{ base: 1, md: 3 }} gap={6}>
-                      {/* MATRÍCULA */}
-                      <Field.Root required invalid={!!errors.matricula}>
-                        <Field.Label {...labelStyle}>MATRÍCULA*</Field.Label>
-                        <Input
-                          {...register('matricula', {
-                            required: 'O campo Matrícula é obrigatório',
-                            onChange: (e) => {
-                              e.target.value = e.target.value.replace(/\D/g, '');
-                            }
-                          })}
-                          maxLength={15}
-                          {...inputStyle}
-                          placeholder="Apenas números"
+                    {watchAssunto != null && watchAssunto !== 'Ouvidoria' && (
+                      <>
+                        <SectionHeader
+                          step="PASSO 03"
+                          title="Dados do Requerimento"
+                          badgeBg={COLORS.step3Bg}
+                          badgeColor={COLORS.step3Text}
                         />
-                        <Field.ErrorText style={{ color: '#DC2626', fontSize: '12px' }}>
-                          {errors.matricula?.message}
-                        </Field.ErrorText>
-                      </Field.Root>
 
-                      {/* Cargo */}
-                      <Field.Root required invalid={!!errors.cargo}>
-                        <Field.Label {...labelStyle}>CARGO*</Field.Label>
-                        <Input
-                          {...register('cargo', { required: 'O campo Cargo é obrigatório' })}
-                          {...inputStyle}
-                          placeholder="Seu cargo"
-                          maxLength={50}
-                        />
-                        <Field.ErrorText style={{ color: '#DC2626', fontSize: '12px' }}>
-                          {errors.cargo?.message}
-                        </Field.ErrorText>
-                      </Field.Root>
+                        <SimpleGrid columns={{ base: 1, md: 3 }} gap={6}>
+                          {/* MATRÍCULA */}
+                          <Field.Root required invalid={!!errors.matricula}>
+                            <Field.Label {...labelStyle}>MATRÍCULA*</Field.Label>
+                            <Input
+                              {...register('matricula', {
+                                required: 'O campo Matrícula é obrigatório',
+                                onChange: (e) => {
+                                  e.target.value = e.target.value.replace(/\D/g, '');
+                                }
+                              })}
+                              maxLength={15}
+                              {...inputStyle}
+                              placeholder="Apenas números"
+                            />
+                            <Field.ErrorText style={{ color: '#DC2626', fontSize: '12px' }}>
+                              {errors.matricula?.message}
+                            </Field.ErrorText>
+                          </Field.Root>
 
-                      {/* Unidade */}
-                      <Field.Root required invalid={!!errors.unidade}>
-                        <Field.Label {...labelStyle}>UNIDADE*</Field.Label>
-                        <Controller control={control} name="unidade"
-                          rules={{ required: "Selecione a unidade" }}
-                          render={({ field }) => (
-                            <Select.Root collection={unidades} value={field.value ? [field.value] : []} onValueChange={(change) => field.onChange(change.value[0])}>
-                              <Select.Trigger {...inputStyle}>
-                                <Select.ValueText placeholder='Selecione uma unidade...' />
-                                <Select.Indicator />
-                              </Select.Trigger>
-                              <Portal>
-                                <Select.Positioner>
-                                  <Select.Content color={COLORS.headingDark}>
-                                    {unidades.items.map((item) => (
-                                      <Select.Item key={item.value} item={item}>
-                                        {item.label}
-                                      </Select.Item>
-                                    ))}
+                          {/* Cargo */}
+                          <Field.Root required invalid={!!errors.cargo}>
+                            <Field.Label {...labelStyle}>CARGO*</Field.Label>
+                            <Input
+                              {...register('cargo', { required: 'O campo Cargo é obrigatório' })}
+                              {...inputStyle}
+                              placeholder="Seu cargo"
+                              maxLength={50}
+                            />
+                            <Field.ErrorText style={{ color: '#DC2626', fontSize: '12px' }}>
+                              {errors.cargo?.message}
+                            </Field.ErrorText>
+                          </Field.Root>
 
-                                  </Select.Content>
-                                </Select.Positioner>
-                              </Portal>
-                            </Select.Root>
-                          )}>
-                        </Controller>
-                        <Field.ErrorText style={{ color: '#DC2626', fontSize: '12px' }}>
-                          {errors.unidade?.message}
-                        </Field.ErrorText>
-                      </Field.Root>
-                    </SimpleGrid>
+                          {/* Unidade */}
+                          <Field.Root required invalid={!!errors.unidade}>
+                            <Field.Label {...labelStyle}>UNIDADE*</Field.Label>
+                            <Controller control={control} name="unidade"
+                              rules={{ required: "Selecione a unidade" }}
+                              render={({ field }) => (
+                                <Select.Root collection={unidades} value={field.value ? [field.value] : []} onValueChange={(change) => field.onChange(change.value[0])}>
+                                  <Select.Trigger {...inputStyle}>
+                                    <Select.ValueText placeholder='Selecione uma unidade...' />
+                                    <Select.Indicator />
+                                  </Select.Trigger>
+                                  <Portal>
+                                    <Select.Positioner>
+                                      <Select.Content color={COLORS.headingDark}>
+                                        {unidades.items.map((item) => (
+                                          <Select.Item key={item.value} item={item}>
+                                            {item.label}
+                                          </Select.Item>
+                                        ))}
+
+                                      </Select.Content>
+                                    </Select.Positioner>
+                                  </Portal>
+                                </Select.Root>
+                              )}>
+                            </Controller>
+                            <Field.ErrorText style={{ color: '#DC2626', fontSize: '12px' }}>
+                              {errors.unidade?.message}
+                            </Field.ErrorText>
+                          </Field.Root>
+                        </SimpleGrid>
+                      </>
+                    )}
+
 
                     {/* Área do requerimento */}
                     <VStack

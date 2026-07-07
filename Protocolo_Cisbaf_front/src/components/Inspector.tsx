@@ -26,7 +26,7 @@ export default function Inspector() {
 
   const [isStatsModalOpen, setIsStatsModalOpen] = useState(false);
 
-  const bases = Array.from(new Set(requerimentos.map(r => r.unidade).filter(Boolean)));
+  const bases = Array.from(new Set(requerimentos.map(r => r.unidade).filter(Boolean) as string[]));
   const assuntosUnicos = Array.from(new Set(requerimentos.map(r => r.assunto).filter(Boolean)));
 
   const fetchRequerimentos = async () => {
@@ -166,7 +166,7 @@ export default function Inspector() {
     const matchesName = nameFilter === "" ||
       r.usuario?.nome.toLowerCase().includes(nameFilter.toLowerCase()) ||
       r.usuario?.cpf.includes(nameFilter) ||
-      r.usuario?.matricula.includes(nameFilter) ||
+      r.usuario?.matricula?.includes(nameFilter) ||
       r.usuario?.sobrenome.toLowerCase().includes(nameFilter);
 
     const matchesBase = baseFilter === "all" || r.unidade === baseFilter;
@@ -526,10 +526,13 @@ export default function Inspector() {
                                   </Box>
                                   <VStack align="start" gap={0}>
                                     <Text fontWeight="black" color={{ base: "slate.800", _dark: "slate.200" }}>{r.usuario?.nome + " " + r.usuario?.sobrenome}</Text>
-                                    <HStack gap={2}>
-                                      <Text fontSize="xs" fontWeight="bold" color={{ base: "gray.500", _dark: "slate.400" }}>{r.usuario?.cargo?.toUpperCase()}</Text>
-                                      <Badge size="sm" variant="subtle">{r.usuario?.matricula}</Badge>
-                                    </HStack>
+                                    {r.usuario?.cargo !== null && r.usuario?.matricula !== null && (
+                                      <HStack gap={2}>
+                                        <Text fontSize="xs" fontWeight="bold" color={{ base: "gray.500", _dark: "slate.400" }}>{r.usuario?.cargo?.toUpperCase()}</Text>
+                                        <Badge size="sm" variant="subtle">{r.usuario?.matricula}</Badge>
+                                      </HStack>
+                                    )}
+
                                     <Text fontSize="xs" color={{ base: "gray.400", _dark: "slate.500" }}>{r.unidade}</Text>
                                   </VStack>
                                 </HStack>

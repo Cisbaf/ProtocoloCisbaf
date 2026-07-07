@@ -9,8 +9,8 @@ export interface Usuario {
   telefone?: string;
   celular?: string;
   emailAlt?: string;
-  matricula: string;
-  cargo: string;
+  matricula?: string;
+  cargo?: string;
 }
 
 // ─── Mensagem de Chat ─────────────────────────────────────────────────────────
@@ -32,7 +32,7 @@ export interface Formulario {
   finalizarArquivar?: 'FINALIZADO' | 'ARQUIVADO' | 'EM_ANALISE' | 'TERMINADO';
   motivo?: string;        // preenchido pelo RH na recusa
   arquivoPath?: string;   // preenchido pelo backend após upload
-  unidade: string;
+  unidade?: string;
   dataCriacao: string;
   usuario: Usuario;
 }
@@ -59,9 +59,9 @@ export interface FormValues {
   emailAlt?: string;
 
   // Dados funcionais
-  matricula: string;
-  cargo: string;
-  unidade: string;
+  matricula?: string;
+  cargo?: string;
+  unidade?: string;
 
   // Requerimento
   assunto: string;
@@ -73,9 +73,10 @@ export interface FormValues {
 export const assuntos = createListCollection({
   items: [
     { label: 'Atestado', value: 'Atestado' },
+    { label: 'Benefícios (Refeição e Transporte)', value: 'Benefício' },
     { label: 'Desligamento', value: 'Desligamento' },
     { label: 'Folha de Pagamento', value: 'Folha de Pagamento' },
-    { label: 'Benefícios (Refeição e Transporte)', value: 'Benefício' },
+    { label: 'Ouvidoria', value: 'Ouvidoria' },
     { label: 'Outros Assuntos (Administrativos)', value: 'Assuntos Administrativos' },
   ],
 });
