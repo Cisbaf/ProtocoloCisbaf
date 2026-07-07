@@ -86,6 +86,7 @@ public class FormularioService {
         formulario.setUsuario(usuario);
         formulario.setDataCriacao(new Date());
         formulario.setFinalizarArquivar(FinArq.EM_ANALISE);
+        formulario.setUnidade(formulario.getUnidade() != null ? formulario.getUnidade() : Unidades.OUVIDORIA);
 
         formulario = repository.saveAndFlush(formulario);
 

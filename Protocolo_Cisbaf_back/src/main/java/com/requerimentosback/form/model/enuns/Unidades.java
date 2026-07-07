@@ -9,6 +9,7 @@ public enum Unidades {
     QUEIMADOS("Base SAMU Queimados"),
     NILOPOLIS("Base SSAMU Nilópolis"),
     IRIS("UPA Jardim Íris"),
+    OUVIDORIA("Ouvidoria"),
     ADMIN("Administracao");
 
     private final String unidade;
