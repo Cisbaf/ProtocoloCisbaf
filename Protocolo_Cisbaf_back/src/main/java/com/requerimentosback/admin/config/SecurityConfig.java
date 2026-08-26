@@ -34,13 +34,13 @@ public class SecurityConfig {
 
                         // ==========================
 
-                        .requestMatchers(HttpMethod.GET, "/admin/{username}").authenticated()
+                        .requestMatchers(HttpMethod.GET, "/admin", "/admin/me", "/admin/{username}").authenticated()
 
                         .requestMatchers(HttpMethod.POST, "/admin/register").permitAll()
 
                         .requestMatchers(HttpMethod.POST, "/admin/login").permitAll()
 
-                        .requestMatchers(HttpMethod.DELETE, "/admin/{id}").authenticated()
+                        .requestMatchers(HttpMethod.DELETE, "/admin/{username}").hasAuthority("ACESSO_TOTAL")
 
 
                         // ==========================
@@ -57,7 +57,7 @@ public class SecurityConfig {
 
                         .requestMatchers(HttpMethod.GET, "/form/cep/{cep}").permitAll()
 
-                        .requestMatchers(HttpMethod.GET, "/form/graficos", "/form/graficos/**").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/form/graficos", "/form/graficos/**").authenticated()
 
                         .requestMatchers(HttpMethod.GET, "/form/arquivos/download/**").authenticated()
 
@@ -67,7 +67,7 @@ public class SecurityConfig {
 
                         .requestMatchers(HttpMethod.POST, "/form").permitAll()
 
-                        .requestMatchers(HttpMethod.PUT, "/form/{id}").permitAll()
+                        .requestMatchers(HttpMethod.PUT, "/form/{id}").authenticated()
 
                         .requestMatchers(HttpMethod.DELETE, "/form/{id}").authenticated()
 

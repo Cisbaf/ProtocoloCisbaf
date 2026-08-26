@@ -91,12 +91,4 @@ public class JwtRequestFilter extends OncePerRequestFilter {
         response.addCookie(cookie);
     }
 
-    public void removeCookie(@NonNull HttpServletResponse response, String TokenName) {
-        Cookie cookie = new Cookie(TokenName, null);
-        cookie.setMaxAge(0);
-        cookie.setHttpOnly(httponly);
-        cookie.setPath("/");
-
-        response.addCookie(cookie);
-    }
 }

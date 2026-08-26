@@ -14,6 +14,8 @@ import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
 import javax.naming.AuthenticationException;
 import java.net.URI;
+import java.security.Principal;
+import java.util.List;
 
 @RestController
 @RequestMapping("/admin")
@@ -22,21 +24,27 @@ public class AdminController {
     private final AdminService adminService;
     private final LoginService loginService;
 
+    @GetMapping("/me")
+    public ResponseEntity<AdminResponse> findCurrent(Principal principal) {
+        return ResponseEntity.ok(adminService.findCurrent(principal));
+    }
+
+    @GetMapping
+    public ResponseEntity<List<AdminResponse>> findAll(Principal principal) {
+        return ResponseEntity.ok(adminService.findAll(principal));
+    }
+
     @GetMapping("/{username}")
-    public ResponseEntity<AdminResponse> findByUsername(@RequestParam String username) {
+    public ResponseEntity<AdminResponse> findByUsername(@PathVariable String username) {
         return ResponseEntity.ok(adminService.findByUsername(username));
     }
 
     @PostMapping("/register")
-    public ResponseEntity<AdminResponse> save(@RequestBody AdminRequest request) throws AuthenticationException {
-        try {
-            var admin = adminService.create(request);
-            URI uri = ServletUriComponentsBuilder.fromCurrentRequest().path("/{id}").build(admin.id());
+    public ResponseEntity<AdminResponse> save(@RequestBody AdminRequest request, Principal principal) {
+        var admin = adminService.create(request, principal);
+        URI uri = ServletUriComponentsBuilder.fromCurrentRequest().path("/{id}").build(admin.id());
 
-            return ResponseEntity.created(uri).build();
-        }catch (Exception e){
-            throw new AuthenticationException(e.getMessage());
-        }
+        return ResponseEntity.created(uri).body(admin);
     }
 
     @PostMapping("/login")
@@ -49,9 +57,9 @@ public class AdminController {
         }
     }
 
-    @DeleteMapping("/{id}")
-    public ResponseEntity<Void> delete(@RequestParam String id) {
-        adminService.delete(id);
+    @DeleteMapping("/{username}")
+    public ResponseEntity<Void> delete(@PathVariable String username, Principal principal) {
+        adminService.delete(username, principal);
         return ResponseEntity.noContent().build();
     }
 

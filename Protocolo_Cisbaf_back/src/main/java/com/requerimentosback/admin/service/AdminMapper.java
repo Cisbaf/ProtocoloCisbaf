@@ -3,8 +3,10 @@ package com.requerimentosback.admin.service;
 import com.requerimentosback.admin.model.AdminEntity;
 import com.requerimentosback.admin.model.dtos.AdminRequest;
 import com.requerimentosback.admin.model.dtos.AdminResponse;
-import com.requerimentosback.form.model.enuns.Unidades;
 import org.springframework.stereotype.Service;
+
+import java.util.LinkedHashSet;
+import java.util.Set;
 
 @Service
 public class AdminMapper {
@@ -16,7 +18,8 @@ public class AdminMapper {
         return AdminEntity.builder()
                 .username(request.username().trim())
                 .password(request.password().trim())
-                .base(Unidades.valueOf(request.base().toUpperCase().trim()))
+                .assuntosPermitidos(new LinkedHashSet<>(request.assuntosPermitidos()))
+                .acessoTotal(request.acessoTotal())
                 .build();
     }
     protected AdminResponse toAdminResponse(AdminEntity adminEntity) {
@@ -26,7 +29,10 @@ public class AdminMapper {
         return AdminResponse.builder()
                 .id(adminEntity.getId())
                 .username(adminEntity.getUsername())
-                .base(adminEntity.getBase().toString())
+                .assuntosPermitidos(adminEntity.getAssuntosPermitidos() == null
+                        ? Set.of()
+                        : new LinkedHashSet<>(adminEntity.getAssuntosPermitidos()))
+                .acessoTotal(adminEntity.podeVerTudo())
                 .build();
     }
 }
