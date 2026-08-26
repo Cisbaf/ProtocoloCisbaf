@@ -2,10 +2,12 @@ package com.requerimentosback.form.model.erros;
 
 import jakarta.validation.ConstraintViolationException;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
 import java.util.List;
+import java.util.Map;
 
 @RestControllerAdvice
 public class TratadorDeErrosGlobal {
@@ -23,5 +25,15 @@ public class TratadorDeErrosGlobal {
 
         // Retorna o status 400 com a lista de erros no corpo da resposta
         return ResponseEntity.badRequest().body(erros);
+    }
+
+    @ExceptionHandler(IllegalArgumentException.class)
+    public ResponseEntity<Map<String, String>> tratarDadosInvalidos(IllegalArgumentException ex) {
+        return ResponseEntity.badRequest().body(Map.of("error", ex.getMessage()));
+    }
+
+    @ExceptionHandler(AccessDeniedException.class)
+    public ResponseEntity<Map<String, String>> tratarAcessoNegado(AccessDeniedException ex) {
+        return ResponseEntity.status(403).body(Map.of("error", ex.getMessage()));
     }
 }

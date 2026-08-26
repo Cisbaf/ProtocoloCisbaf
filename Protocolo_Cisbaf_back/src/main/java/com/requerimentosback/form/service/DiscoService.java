@@ -72,7 +72,6 @@ public class DiscoService {
 
             // Abre o arquivo Zip para escrita
             try (ZipOutputStream zos = new ZipOutputStream(new FileOutputStream(caminhoZip.toFile()))) {
-                boolean temArquivoParaCompactar = false;
 
                 for (Path arquivo : stream) {
                     // Ignora subpastas e arquivos .zip já criados anteriormente
@@ -85,7 +84,6 @@ public class DiscoService {
                     Instant tempoModificacao = attrs.lastModifiedTime().toInstant();
 
                     if (tempoModificacao.isBefore(limiteTempo)) {
-                        temArquivoParaCompactar = true;
 
                         // Adiciona o arquivo no ZIP
                         ZipEntry zipEntry = new ZipEntry(arquivo.getFileName().toString());

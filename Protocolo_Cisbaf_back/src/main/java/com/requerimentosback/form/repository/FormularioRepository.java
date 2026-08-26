@@ -9,6 +9,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
+import java.util.Collection;
 import java.util.Date;
 import java.util.List;
 
@@ -16,6 +17,7 @@ import java.util.List;
 public interface FormularioRepository extends JpaRepository<Formulario, String> {
 
     List<Formulario> findByUnidade(Unidades unidade);
+    List<Formulario> findByAssuntoIn(Collection<String> assuntos);
 
     // --- QUERIES GERAIS (TODAS AS UNIDADES) ---
 

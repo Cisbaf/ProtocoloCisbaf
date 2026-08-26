@@ -8,6 +8,7 @@ import com.requerimentosback.form.model.enuns.Unidades;
 import com.requerimentosback.form.service.CepClient;
 import com.requerimentosback.form.service.FormularioService;
 import com.requerimentosback.form.service.MensagemService;
+import jakarta.persistence.EntityNotFoundException;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -71,13 +72,14 @@ public class FormularioController {
             @RequestParam TipoGrafico tipo,
             @RequestParam @DateTimeFormat(pattern = "yyyy-MM-dd") Date inicio,
             @RequestParam @DateTimeFormat(pattern = "yyyy-MM-dd") Date fim,
-            @RequestParam(required = false) String unidade // Recebe como ‘String’ porque pode vir "all"
+            @RequestParam(required = false) String unidade, // Recebe como ‘String’ porque pode vir "all"
+            Principal principal
     ) {
         Unidades filtroUnidade = (unidade != null && !unidade.equals("all"))
                 ? Unidades.valueOf(unidade)
                 : null;
 
-        List<DadoGraficoDTO> dados = service.buscarDadosParaGrafico(tipo, inicio, fim, filtroUnidade);
+        List<DadoGraficoDTO> dados = service.buscarDadosParaGrafico(tipo, inicio, fim, filtroUnidade, principal);
         return ResponseEntity.ok(dados);
     }
 
@@ -133,14 +135,17 @@ public class FormularioController {
             return ResponseEntity.ok(service.save(formulario, arquivos));
 
         } catch (IllegalArgumentException e) {
+            log.warn("Dados inválidos ao salvar formulário", e);
             return ResponseEntity.badRequest().body(java.util.Map.of("error", e.getMessage()));
 
         } catch (org.springframework.dao.DataIntegrityViolationException e) {
             e.getMostSpecificCause();
             String msg = e.getMostSpecificCause().getMessage();
+            log.warn("Erro de integridade ao salvar formulário: {}", msg, e);
             return ResponseEntity.badRequest().body(java.util.Map.of("error", "Erro de integridade (banco de dados): " + msg));
 
         } catch (Exception e) {
+            log.error("Erro inesperado ao salvar formulário", e);
             Throwable rootCause = e;
 
             while (rootCause != null) {
@@ -155,18 +160,18 @@ public class FormularioController {
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<Formulario> update(@PathVariable String id, @RequestBody Formulario formulario) {
+    public ResponseEntity<Formulario> update(@PathVariable String id, @RequestBody Formulario formulario, Principal principal) {
         try {
             System.out.println(formulario.toString());
-            return ResponseEntity.ok(service.update(id, formulario));
-        } catch (RuntimeException e) {
+            return ResponseEntity.ok(service.updateByAdmin(id, formulario, principal));
+        } catch (EntityNotFoundException e) {
             return ResponseEntity.notFound().build();
         }
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> deleteById(@PathVariable String id) {
-        service.deleteById(id);
+    public ResponseEntity<Void> deleteById(@PathVariable String id, Principal principal) {
+        service.deleteById(id, principal);
         return ResponseEntity.noContent().build();
     }
 

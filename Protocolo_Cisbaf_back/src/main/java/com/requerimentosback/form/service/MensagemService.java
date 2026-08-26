@@ -72,10 +72,7 @@ public class MensagemService {
         mensagem = mensagemRepository.save(mensagem);
 
         if (NOME_ADMIN.equalsIgnoreCase(mensagem.getNomeRemetente()) && deveEnviarEmail) {
-            String emailConteudo = mensagem.getConteudo() != null && !mensagem.getConteudo().isBlank()
-                    ? mensagem.getConteudo()
-                    : "[Arquivos Anexados]";
-            emailService.enviarEmailPorCadaMensagemAdmin(formulario, emailConteudo);
+            emailService.enviarEmailPorCadaMensagemAdmin(formulario);
         }
 
         return mensagem;

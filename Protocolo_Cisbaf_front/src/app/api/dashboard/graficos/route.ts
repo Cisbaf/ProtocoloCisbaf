@@ -18,11 +18,15 @@ export async function GET(request: Request) {
   }
 
   try {
+    const cookieHeader = request.headers.get('cookie');
     const backendUrl = `${process.env.BACKEND_INTERNAL_URL}/form/graficos?tipo=${tipo}&inicio=${inicio}&fim=${fim}&unidade=${unidade}`;
 
     const res = await fetch(backendUrl, {
       // 2. Avisa o Node.js interno para não fazer cache desta requisição ao Spring Boot
       cache: 'no-store',
+      headers: {
+        ...(cookieHeader ? { Cookie: cookieHeader } : {}),
+      },
     });
 
     if (!res.ok) {

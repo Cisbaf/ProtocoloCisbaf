@@ -23,9 +23,14 @@ import org.springframework.web.multipart.MultipartFile;
 import java.security.Principal;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
+import java.time.format.DateTimeFormatter;
+import java.util.Comparator;
 import java.util.Date;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 @Slf4j
 @Service
@@ -95,7 +100,8 @@ public class FormularioService {
     }
 
     @Transactional
-    public void deleteById(String id) {
+    public void deleteById(String id, Principal principal) {
+        validarAcessoAoFormulario(id, principal);
         mensagemRepository.deleteByFormularioId(id);
         repository.deleteById(id);
     }
@@ -143,17 +149,38 @@ public class FormularioService {
         return salvo;
     }
 
-    public List<Formulario> findByAdmin(Principal principal) {
-        var admin = adminRepository.findByUsername(principal.getName()).orElseThrow(EntityNotFoundException::new);
-        var baseName = admin.getBase();
-
-        if (baseName == Unidades.ADMIN) {
-            return repository.findAll();
-        }
-        return repository.findByUnidade(baseName);
+    @Transactional
+    public Formulario updateByAdmin(String id, Formulario formulario, Principal principal) {
+        validarAcessoAoFormulario(id, principal);
+        return update(id, formulario);
     }
 
-    public List<DadoGraficoDTO> buscarDadosParaGrafico(TipoGrafico tipo, Date inicio, Date fim, Unidades unidade) {
+    public List<Formulario> findByAdmin(Principal principal) {
+        var admin = adminRepository.findByUsername(principal.getName()).orElseThrow(EntityNotFoundException::new);
+        if (admin.podeVerTudo()) {
+            return repository.findAll();
+        }
+        if (admin.getAssuntosPermitidos() != null && !admin.getAssuntosPermitidos().isEmpty()) {
+            return repository.findByAssuntoIn(admin.getAssuntosPermitidos());
+        }
+        if (admin.getBase() != null) {
+            return repository.findByUnidade(admin.getBase());
+        }
+        return List.of();
+    }
+
+    public List<DadoGraficoDTO> buscarDadosParaGrafico(TipoGrafico tipo, Date inicio, Date fim, Unidades unidade, Principal principal) {
+        var admin = adminRepository.findByUsername(principal.getName()).orElseThrow(EntityNotFoundException::new);
+
+        if (!admin.podeVerTudo()) {
+            List<Formulario> formularios = findByAdmin(principal).stream()
+                    .filter(form -> form.getDataCriacao() != null
+                            && !form.getDataCriacao().before(inicio)
+                            && !form.getDataCriacao().after(fim))
+                    .filter(form -> unidade == null || form.getUnidade() == unidade)
+                    .toList();
+            return agruparDados(tipo, formularios);
+        }
 
         // Se a unidade não foi enviada (ou é "all"), busca o geral
         if (unidade == null) {
@@ -170,6 +197,38 @@ public class FormularioService {
             case EVOLUCAO_DIARIA -> repository.obterEvolucaoTemporalFiltrado(inicio, fim, unidade);
             case VOLUME_CARGO -> repository.obterVolumePorCargoFiltrado(inicio, fim, unidade);
         };
+    }
+
+    private List<DadoGraficoDTO> agruparDados(TipoGrafico tipo, List<Formulario> formularios) {
+        Function<Formulario, String> agrupador = switch (tipo) {
+            case RANKING_UNIDADES -> form -> form.getUnidade().toString();
+            case EVOLUCAO_DIARIA -> form -> form.getDataCriacao().toInstant()
+                    .atZone(ZoneId.systemDefault())
+                    .toLocalDate()
+                    .format(DateTimeFormatter.ISO_LOCAL_DATE);
+            case VOLUME_CARGO -> form -> form.getUsuario() != null ? form.getUsuario().getCargo() : null;
+        };
+
+        Map<String, Long> dados = formularios.stream()
+                .filter(form -> agrupador.apply(form) != null)
+                .collect(Collectors.groupingBy(agrupador, Collectors.counting()));
+
+        Comparator<Map.Entry<String, Long>> ordenacao = tipo == TipoGrafico.EVOLUCAO_DIARIA
+                ? Map.Entry.comparingByKey()
+                : Map.Entry.<String, Long>comparingByValue().reversed();
+
+        return dados.entrySet().stream()
+                .sorted(ordenacao)
+                .map(entry -> new DadoGraficoDTO(entry.getKey(), entry.getValue()))
+                .toList();
+    }
+
+    private void validarAcessoAoFormulario(String id, Principal principal) {
+        var admin = adminRepository.findByUsername(principal.getName()).orElseThrow(EntityNotFoundException::new);
+        var formulario = repository.findById(id).orElseThrow(EntityNotFoundException::new);
+        if (!admin.podeVerAssunto(formulario.getAssunto())) {
+            throw new org.springframework.security.access.AccessDeniedException("Sem acesso a este assunto");
+        }
     }
 
     @Transactional

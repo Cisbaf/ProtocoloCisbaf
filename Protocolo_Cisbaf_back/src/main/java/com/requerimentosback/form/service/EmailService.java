@@ -114,7 +114,7 @@ public class EmailService {
      * Só notifica o solicitante se o status for FINALIZADO.
      */
     @Async
-    public void enviarEmailPorCadaMensagemAdmin(Formulario formulario, String conteudo) {
+    public void enviarEmailPorCadaMensagemAdmin(Formulario formulario) {
         
         Usuarios usuario = formulario.getUsuario();
         if (usuario == null || usuario.getEmail() == null) {
@@ -125,21 +125,18 @@ public class EmailService {
         enviarEmail(
                 usuario.getEmail(),
                 "Seu Requerimento obteve resposta do Administrador - " + formulario.getId(),
-                montarEmailAvisoDeResposta(formulario, conteudo),
+                montarEmailAvisoDeResposta(formulario),
                 true
         );
     }
 
-    private String montarEmailAvisoDeResposta(Formulario formulario, String conteudo) {
+    private String montarEmailAvisoDeResposta(Formulario formulario) {
         Usuarios u = formulario.getUsuario();
 
         // Só renderiza a linha se o benefício existir e não estiver em branco
         String blocoBeneficio = (formulario.getBeneficio() != null && !formulario.getBeneficio().isBlank())
                 ? "<tr><td style='padding: 12px 0; border-bottom: 1px solid #e2e8f0; color: #64748b;'><strong>Benefício Solicitado:</strong></td><td style='padding: 12px 0; border-bottom: 1px solid #e2e8f0; color: #1e293b; font-weight: 500;'>" + safe(formulario.getBeneficio()) + "</td></tr>"
                 : "";
-
-        // Formata o conteúdo da mensagem para preservar quebras de linha no HTML
-        String mensagemFormatada = safe(conteudo).replace("\n", "<br>");
 
         return "<div style='font-family: Arial, sans-serif; background-color: #f8fafc; padding: 40px 20px; margin: 0;'>" +
                 "<div style='max-width: 600px; margin: 0 auto; background-color: #ffffff; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 15px rgba(0,0,0,0.05);'>" +

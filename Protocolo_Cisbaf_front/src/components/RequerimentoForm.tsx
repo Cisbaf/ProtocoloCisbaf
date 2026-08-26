@@ -49,6 +49,33 @@ function SectionHeader({ step, title, badgeBg, badgeColor, }: {
   );
 }
 
+// Validador de CPF brasileiro
+const isValidCPF = (cpf: string): boolean => {
+  const cleanCPF = cpf.replace(/\D/g, '');
+  if (cleanCPF.length !== 11) return false;
+  if (/^(\d)\1{10}$/.test(cleanCPF)) return false; // Ignora CPFs com dígitos todos iguais
+
+  let sum = 0;
+  let remainder;
+
+  for (let i = 1; i <= 9; i++) {
+    sum += parseInt(cleanCPF.substring(i - 1, i)) * (11 - i);
+  }
+  remainder = (sum * 10) % 11;
+  if (remainder === 10 || remainder === 11) remainder = 0;
+  if (remainder !== parseInt(cleanCPF.substring(9, 10))) return false;
+
+  sum = 0;
+  for (let i = 1; i <= 10; i++) {
+    sum += parseInt(cleanCPF.substring(i - 1, i)) * (12 - i);
+  }
+  remainder = (sum * 10) % 11;
+  if (remainder === 10 || remainder === 11) remainder = 0;
+  if (remainder !== parseInt(cleanCPF.substring(10, 11))) return false;
+
+  return true;
+};
+
 // ─── Componente principal ─────────────────────────────────────────────────────
 export default function RequerimentoForm() {
   const [, setResetKey] = useState(0);
@@ -149,12 +176,24 @@ export default function RequerimentoForm() {
         method: 'POST',
         body: formData,
       });
-      if (!res.ok) {
-        const errData = await res.json();
-        throw errData;
+
+      const responseText = await res.text();
+      let responseData: any = null;
+
+      try {
+        responseData = responseText ? JSON.parse(responseText) : null;
+      } catch {
+        responseData = {
+          error: 'O servidor retornou uma resposta inválida. Tente novamente em alguns instantes.',
+          raw: responseText,
+        };
       }
 
-      const result = await res.json();
+      if (!res.ok) {
+        throw responseData;
+      }
+
+      const result = responseData;
 
       setSubmittedId(result.id);
       reset();
@@ -196,9 +235,15 @@ export default function RequerimentoForm() {
           errorMessage = error.message;
         } else if (error.error && typeof error.error === 'string') {
           errorMessage = error.error;
+        } else if (error.requestId) {
+          errorMessage = `Erro registrado com o código ${error.requestId}.`;
         }
       } else if (typeof error === 'string') {
         errorMessage = error;
+      }
+
+      if (error?.requestId && !errorMessage.includes(error.requestId)) {
+        errorMessage = `${errorMessage} Código: ${error.requestId}`;
       }
 
       toaster.create({
@@ -340,6 +385,7 @@ export default function RequerimentoForm() {
                         <Input
                           {...register('cpf', {
                             required: 'O campo CPF é obrigatório',
+                            validate: (value) => isValidCPF(value) || 'CPF inválido',
                             onChange: (e) => {
                               e.target.value = e.target.value.replace(/\D/g, '');
                             },
@@ -413,7 +459,13 @@ export default function RequerimentoForm() {
                         </Field.Label>
                         <Input
                           type="email"
-                          {...register('email', { required: 'O campo E-mail Principal é obrigatório' })}
+                          {...register('email', {
+                            required: 'O campo E-mail Principal é obrigatório',
+                            pattern: {
+                              value: /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/,
+                              message: 'Formato de e-mail inválido',
+                            }
+                          })}
                           {...inputStyle}
                           placeholder="seu@email.com"
                           maxLength={70}
@@ -428,7 +480,18 @@ export default function RequerimentoForm() {
                         <Field.Label {...labelStyle}>E-MAIL SECUNDÁRIO</Field.Label>
                         <Input
                           type="email"
-                          {...register('emailAlt')}
+                          {...register('emailAlt', {
+                            pattern: {
+                              value: /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/,
+                              message: 'Formato de e-mail secundário inválido',
+                            },
+                            validate: (value, formValues) => {
+                              if (value && value === formValues.email) {
+                                return 'O e-mail secundário deve ser diferente do principal';
+                              }
+                              return true;
+                            }
+                          })}
                           {...inputStyle}
                           placeholder="outro@email.com"
                           maxLength={70}
@@ -439,14 +502,19 @@ export default function RequerimentoForm() {
                       </Field.Root>
 
                       {/* Celular */}
-                      <Field.Root invalid={!!errors.celular}>
+                      <Field.Root required invalid={!!errors.celular}>
                         <Field.Label {...labelStyle}>
                           <Box color="currentColor"><Smartphone size={14} /></Box> CELULAR*
                         </Field.Label>
                         <Input
                           {...register('celular', {
+                            required: 'O campo Celular é obrigatório',
                             onChange: (e) => {
                               e.target.value = e.target.value.replace(/\D/g, '');
+                            },
+                            validate: (value) => {
+                              const clean = (value || '').replace(/\D/g, '');
+                              return clean.length === 11 || 'O celular deve ter 11 dígitos (DDD + 9 dígitos)';
                             }
                           })}
                           maxLength={11}
@@ -465,6 +533,11 @@ export default function RequerimentoForm() {
                           {...register('telefone', {
                             onChange: (e) => {
                               e.target.value = e.target.value.replace(/\D/g, '');
+                            },
+                            validate: (value) => {
+                              if (!value) return true;
+                              const clean = value.replace(/\D/g, '');
+                              return clean.length === 10 || 'O telefone fixo deve ter 10 dígitos (DDD + 8 dígitos)';
                             }
                           })}
                           maxLength={10}
@@ -498,9 +571,17 @@ export default function RequerimentoForm() {
                             <Field.Label {...labelStyle}>MATRÍCULA*</Field.Label>
                             <Input
                               {...register('matricula', {
-                                required: 'O campo Matrícula é obrigatório',
+                                required: {
+                                  value: watchAssunto !== 'Ouvidoria',
+                                  message: 'O campo Matrícula é obrigatório',
+                                },
                                 onChange: (e) => {
                                   e.target.value = e.target.value.replace(/\D/g, '');
+                                },
+                                validate: (value) => {
+                                  if (watchAssunto === 'Ouvidoria') return true;
+                                  if (!value) return true;
+                                  return (value.length >= 4 && value.length <= 15) || 'A matrícula deve ter entre 4 e 15 dígitos';
                                 }
                               })}
                               maxLength={15}
@@ -516,7 +597,12 @@ export default function RequerimentoForm() {
                           <Field.Root required invalid={!!errors.cargo}>
                             <Field.Label {...labelStyle}>CARGO*</Field.Label>
                             <Input
-                              {...register('cargo', { required: 'O campo Cargo é obrigatório' })}
+                              {...register('cargo', {
+                                required: {
+                                  value: watchAssunto !== 'Ouvidoria',
+                                  message: 'O campo Cargo é obrigatório',
+                                }
+                              })}
                               {...inputStyle}
                               placeholder="Seu cargo"
                               maxLength={50}
@@ -530,7 +616,12 @@ export default function RequerimentoForm() {
                           <Field.Root required invalid={!!errors.unidade}>
                             <Field.Label {...labelStyle}>UNIDADE*</Field.Label>
                             <Controller control={control} name="unidade"
-                              rules={{ required: "Selecione a unidade" }}
+                              rules={{
+                                required: {
+                                  value: watchAssunto !== 'Ouvidoria',
+                                  message: "Selecione a unidade"
+                                }
+                              }}
                               render={({ field }) => (
                                 <Select.Root collection={unidades} value={field.value ? [field.value] : []} onValueChange={(change) => field.onChange(change.value[0])}>
                                   <Select.Trigger {...inputStyle}>
@@ -629,7 +720,12 @@ export default function RequerimentoForm() {
                             <CreditCard size={18} color={COLORS.btnBg} /> TIPO DE BENEFÍCIO*
                           </Field.Label>
                           <Controller control={control} name="beneficio"
-                            rules={{ required: "Selecione o tipo de benefício" }}
+                            rules={{
+                              required: {
+                                value: watchAssunto === 'Benefício',
+                                message: "Selecione o tipo de benefício"
+                              }
+                            }}
                             render={({ field }) => (
                               <Select.Root
                                 collection={beneficios}

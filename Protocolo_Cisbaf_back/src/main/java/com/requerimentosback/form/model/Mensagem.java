@@ -25,7 +25,6 @@ public class Mensagem {
     private Formulario formulario;
 
     @Lob
-    @Column(nullable = true)
     private String conteudo;
 
     @Column(length = 1000)

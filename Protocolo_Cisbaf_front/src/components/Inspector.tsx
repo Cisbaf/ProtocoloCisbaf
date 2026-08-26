@@ -3,10 +3,11 @@
 import { Formulario } from '@/components/types';
 import { toaster } from '@/components/ui/toaster';
 import { Badge, Box, Button, Card, Center, Container, HStack, Heading, SimpleGrid, Spinner, Table, Text, VStack } from '@chakra-ui/react';
-import { AlertCircle, Archive, ArchiveRestore, ArrowUpDown, BarChartIcon, CheckCircle, Eye, RefreshCw, Search, Trash, Undo2, User } from 'lucide-react';
+import { AlertCircle, Archive, ArchiveRestore, BarChartIcon, CheckCircle, Eye, RefreshCw, Search, Trash, Undo2, User, Users } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import Header from './Header';
+import AdminUsersModal, { AdminAccount } from './modal/AdminUsersModal';
 import ReqDetailsModal from './modal/ReqDetailsModal';
 import StatsModal from './modal/StatsModal';
 
@@ -25,6 +26,8 @@ export default function Inspector() {
   const [updatingId, setUpdatingId] = useState<string | null>(null);
 
   const [isStatsModalOpen, setIsStatsModalOpen] = useState(false);
+  const [isUsersModalOpen, setIsUsersModalOpen] = useState(false);
+  const [currentAdmin, setCurrentAdmin] = useState<AdminAccount | null>(null);
 
   const bases = Array.from(new Set(requerimentos.map(r => r.unidade).filter(Boolean) as string[]));
   const assuntosUnicos = Array.from(new Set(requerimentos.map(r => r.assunto).filter(Boolean)));
@@ -44,8 +47,14 @@ export default function Inspector() {
     }
   };
 
-  // eslint-disable-next-line react-hooks/set-state-in-effect
-  useEffect(() => { fetchRequerimentos(); }, []);
+  useEffect(() => {
+    // A carga inicial sincroniza o painel com os dados externos.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    void fetchRequerimentos();
+    void fetch('/api/auth/session')
+      .then((res) => res.json())
+      .then((session) => setCurrentAdmin(session.admin ?? null));
+  }, []);
 
   const updateStatus = async (id: string, novoStatus: 'FINALIZADO' | 'ARQUIVADO' | 'EM_ANALISE' | 'TERMINADO') => {
     if (novoStatus === 'FINALIZADO') {
@@ -187,12 +196,13 @@ export default function Inspector() {
     const aPending = !a.finalizarArquivar || a.finalizarArquivar === 'EM_ANALISE';
     const bPending = !b.finalizarArquivar || b.finalizarArquivar === 'EM_ANALISE';
 
-
-
     if (aPending && !bPending) return -1;
     if (!aPending && bPending) return 1;
 
-    return 0;
+    const aDate = a.dataCriacao ? new Date(a.dataCriacao).getTime() : Number.MAX_SAFE_INTEGER;
+    const bDate = b.dataCriacao ? new Date(b.dataCriacao).getTime() : Number.MAX_SAFE_INTEGER;
+
+    return aDate - bDate;
   });
 
   const renderStatus = (status?: 'FINALIZADO' | 'ARQUIVADO' | 'EM_ANALISE' | 'TERMINADO') => {
@@ -258,6 +268,19 @@ export default function Inspector() {
                     >
                       <BarChartIcon size={16} style={{ marginRight: '6px' }} /> Relatórios
                     </Button>
+                    {currentAdmin?.acessoTotal && (
+                      <Button
+                        size={{ base: "md", md: "sm" }}
+                        bg="blue.500"
+                        color="white"
+                        _hover={{ bg: "blue.600" }}
+                        onClick={() => setIsUsersModalOpen(true)}
+                        borderRadius="full"
+                        fontWeight="bold"
+                      >
+                        <Users size={16} style={{ marginRight: '6px' }} /> Usuários
+                      </Button>
+                    )}
                     <Button
                       size={{ base: "md", md: "sm" }}
                       bg={isArchiveMode ? "white" : "slate.600"}
@@ -506,7 +529,7 @@ export default function Inspector() {
                       <Table.Root variant="line" size="lg">
                         <Table.Header bg={{ base: "gray.50", _dark: "slate.800" }}>
                           <Table.Row>
-                            <Table.ColumnHeader fontWeight="black" color={{ base: "slate.900", _dark: "slate.200" }} py={6} px={6}>ID <ArrowUpDown size={12} style={{ display: 'inline', marginLeft: '4px' }} /></Table.ColumnHeader>
+                            <Table.ColumnHeader fontWeight="black" color={{ base: "slate.900", _dark: "slate.200" }} py={6} px={6}>ID</Table.ColumnHeader>
                             <Table.ColumnHeader fontWeight="black" color={{ base: "slate.900", _dark: "slate.200" }}>COLABORADOR</Table.ColumnHeader>
                             <Table.ColumnHeader fontWeight="black" color={{ base: "slate.900", _dark: "slate.200" }}>ASSUNTO</Table.ColumnHeader>
                             <Table.ColumnHeader fontWeight="black" color={{ base: "slate.900", _dark: "slate.200" }}>STATUS</Table.ColumnHeader>
@@ -592,6 +615,11 @@ export default function Inspector() {
         isOpen={isStatsModalOpen}
         onClose={() => setIsStatsModalOpen(false)}
         bases={bases}
+      />
+      <AdminUsersModal
+        isOpen={isUsersModalOpen}
+        onClose={() => setIsUsersModalOpen(false)}
+        currentUsername={currentAdmin?.username ?? ''}
       />
     </>
   );
