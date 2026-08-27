@@ -8,7 +8,7 @@ import { useRouter } from 'next/navigation';
 import { ChangeEvent, useEffect, useState } from 'react';
 import Header from './Header';
 import AdminUsersModal, { AdminAccount } from './modal/AdminUsersModal';
-import ReqDetailsModal from './modal/ReqDetailsModal';
+import ReqDetailsModal, { formatarDataCriacao } from './modal/ReqDetailsModal';
 import StatsModal from './modal/StatsModal';
 
 const StyledInput = chakra('input');
@@ -518,6 +518,7 @@ export default function Inspector() {
                         <Table.Header bg={{ base: "gray.50", _dark: "slate.800" }}>
                           <Table.Row>
                             <Table.ColumnHeader fontWeight="black" color={{ base: "slate.900", _dark: "slate.200" }} py={6} px={6}>ID</Table.ColumnHeader>
+                            <Table.ColumnHeader fontWeight="black" color={{ base: "slate.900", _dark: "slate.200" }}>ABERTURA</Table.ColumnHeader>
                             <Table.ColumnHeader fontWeight="black" color={{ base: "slate.900", _dark: "slate.200" }}>COLABORADOR</Table.ColumnHeader>
                             <Table.ColumnHeader fontWeight="black" color={{ base: "slate.900", _dark: "slate.200" }}>ASSUNTO</Table.ColumnHeader>
                             <Table.ColumnHeader fontWeight="black" color={{ base: "slate.900", _dark: "slate.200" }}>STATUS</Table.ColumnHeader>
@@ -530,7 +531,11 @@ export default function Inspector() {
                               <Table.Cell px={6}>
                                 <Text fontWeight="black" color={{ base: "blue.600", _dark: "blue.400" }} fontSize="sm">{r.id}</Text>
                               </Table.Cell>
+                              <Table.Cell px={6}>
+                                <Text fontWeight="black" color={{ base: "slate.600", _dark: "slate.400" }} fontSize="sm">{formatarDataCriacao(r.dataCriacao)}</Text>
+                              </Table.Cell>
                               <Table.Cell>
+
                                 <HStack gap={3}>
                                   <Box bg={{ base: "slate.100", _dark: "slate.800" }} p={2} borderRadius="xl" color={{ base: "slate.600", _dark: "slate.400" }}>
                                     <User size={20} />

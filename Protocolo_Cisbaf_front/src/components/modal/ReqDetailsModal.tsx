@@ -49,7 +49,7 @@ interface ReqDetailsModalProps {
     onDownload: (arquivoPath: string) => void;
 }
 
-function formatarDataCriacao(dataCriacao?: string) {
+export function formatarDataCriacao(dataCriacao?: string) {
     if (!dataCriacao) return "—";
 
     const dataObj = new Date(dataCriacao);
