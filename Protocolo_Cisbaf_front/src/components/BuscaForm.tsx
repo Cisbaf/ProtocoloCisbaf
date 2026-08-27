@@ -32,12 +32,14 @@ import {
     Download,
     MessageCircle,
     ChevronDown,
+    PenLine,
 } from "lucide-react";
 import { useState } from "react";
 import Header from "./Header";
 import { toaster } from "@/components/ui/toaster";
 import { Formulario } from '@/components/types';
 import ChatPanel from '@/components/modal/ChatPanel';
+import { formatarDataCriacao } from '@/components/modal/ReqDetailsModal';
 
 export default function BuscaForm() {
     const [codigo, setCodigo] = useState('');
@@ -296,6 +298,14 @@ export default function BuscaForm() {
                                         {data.beneficio && (
                                             <DetailCard icon={<Gift size={20} />} label="DETALHE" value={data.beneficio} />
                                         )}
+                                        {data.historicoAssinaturas?.map((evento, index) => (
+                                            <DetailCard
+                                                key={`${evento.acao}-${evento.data}-${index}`}
+                                                icon={<PenLine size={20} />}
+                                                label={evento.acao === 'FINALIZADO' ? 'FINALIZOU' : 'REABRIU'}
+                                                value={`${evento.nome} em ${formatarDataCriacao(evento.data)}`}
+                                            />
+                                        ))}
 
                                     </SimpleGrid>
 

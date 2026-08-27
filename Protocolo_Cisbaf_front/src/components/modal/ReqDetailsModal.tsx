@@ -27,6 +27,7 @@ import {
     MailPlus,
     MessageCircle,
     Paperclip,
+    PenLine,
     Phone,
     Printer,
     Smartphone,
@@ -123,6 +124,7 @@ export default function ReqDetailsModal({
         });
 
         // Tabela com os dados do Requerimento
+        let detalhesFinalY = dadosSolicitanteFinalY + 10;
         autoTable(doc, {
             startY: dadosSolicitanteFinalY + 10,
             head: [['Detalhes da Solicitação', '']],
@@ -135,8 +137,84 @@ export default function ReqDetailsModal({
             theme: 'grid',
             headStyles: { fillColor: [59, 130, 246] },
             columnStyles: { 0: { cellWidth: 50, fontStyle: 'bold' } },
-            styles: { cellPadding: 3, overflow: 'linebreak' }
+            styles: { cellPadding: 3, overflow: 'linebreak' },
+            didDrawPage: ({ cursor }) => {
+                if (cursor) detalhesFinalY = cursor.y;
+            }
         });
+
+        const historico = req.historicoAssinaturas || [];
+        if (historico.length > 0) {
+            autoTable(doc, {
+                startY: detalhesFinalY + 10,
+                head: [
+                    [{
+                        content: 'HISTÓRICO DE MOVIMENTAÇÕES',
+                        colSpan: 4,
+                        styles: {
+                            fillColor: [59, 130, 246],
+                            textColor: [255, 255, 255],
+                            fontStyle: 'bold',
+                            halign: 'left',
+                            cellPadding: 4,
+                        },
+                    }],
+                    ['#', 'MOVIMENTAÇÃO', 'RESPONSÁVEL', 'DATA E HORA'],
+                ],
+                body: historico.map((evento, index) => [
+                    String(index + 1).padStart(2, '0'),
+                    evento.acao === 'FINALIZADO' ? 'FINALIZAÇÃO' : 'REABERTURA',
+                    evento.nome,
+                    formatarDataCriacao(evento.data),
+                ]),
+                theme: 'grid',
+                headStyles: {
+                    fillColor: [71, 85, 200],
+                    textColor: [255, 255, 255],
+                    fontStyle: 'bold',
+                    fontSize: 9,
+                },
+                bodyStyles: {
+                    textColor: [51, 65, 85],
+                    fontSize: 9,
+                    cellPadding: 4,
+                    valign: 'middle',
+                },
+                alternateRowStyles: { fillColor: [248, 250, 252] },
+                columnStyles: {
+                    0: { cellWidth: 12, halign: 'center', fontStyle: 'bold' },
+                    1: { cellWidth: 38, fontStyle: 'bold' },
+                    2: { cellWidth: 70 },
+                    3: { cellWidth: 48 },
+                },
+                didParseCell: (data) => {
+                    if (data.section !== 'body' || data.column.index !== 1) return;
+
+                    const evento = historico[data.row.index];
+                    if (evento?.acao === 'FINALIZADO') {
+                        data.cell.styles.fillColor = [220, 252, 231];
+                        data.cell.styles.textColor = [21, 128, 61];
+                    } else {
+                        data.cell.styles.fillColor = [219, 234, 254];
+                        data.cell.styles.textColor = [29, 78, 216];
+                    }
+                },
+                margin: { bottom: 18 },
+            });
+        }
+
+        const totalPaginas = doc.getNumberOfPages();
+        for (let pagina = 1; pagina <= totalPaginas; pagina += 1) {
+            doc.setPage(pagina);
+            doc.setFontSize(8);
+            doc.setTextColor(100, 116, 139);
+            doc.text(
+                `Página ${pagina} de ${totalPaginas}`,
+                doc.internal.pageSize.getWidth() - 14,
+                doc.internal.pageSize.getHeight() - 8,
+                { align: 'right' }
+            );
+        }
 
         // Salva o PDF com o ID do protocolo no nome
         doc.save(`Requerimento_${req.id}.pdf`);
@@ -324,7 +402,45 @@ export default function ReqDetailsModal({
                                     <Text color={{ base: "slate.700", _dark: "slate.300" }} whiteSpace="pre-wrap" fontSize={{ base: "sm", md: "md" }}>{req.descricao}</Text>
                                 </Box>
                             </VStack>
+
                         </Box>
+                        {(req.historicoAssinaturas?.length ?? 0) > 0 && (
+                            <VStack
+                                mt={5}
+                                p={4}
+                                w="full"
+                                bg={{ base: "green.50", _dark: "green.900/20" }}
+                                borderRadius="lg"
+                                borderWidth="1px"
+                                borderColor={{ base: "green.200", _dark: "green.800" }}
+                                gap={3}
+                                align="stretch"
+                            >
+                                <HStack color={{ base: "green.700", _dark: "green.400" }}>
+                                    <PenLine size={20} />
+                                    <Text fontSize="xs" fontWeight="black">HISTÓRICO DE ASSINATURAS</Text>
+                                </HStack>
+                                {req.historicoAssinaturas?.map((evento, index) => (
+                                    <HStack
+                                        key={`${evento.acao}-${evento.data}-${index}`}
+                                        p={3}
+                                        bg={{ base: "white", _dark: "slate.900" }}
+                                        borderRadius="lg"
+                                        borderWidth="1px"
+                                        borderColor={{ base: "gray.200", _dark: "slate.700" }}
+                                        align="start"
+                                    >
+                                        <Badge colorPalette={evento.acao === 'FINALIZADO' ? 'green' : 'blue'}>
+                                            {evento.acao === 'FINALIZADO' ? 'FINALIZOU' : 'REABRIU'}
+                                        </Badge>
+                                        <Box flex={1}>
+                                            <Text fontWeight="bold" color={{ base: "slate.700", _dark: "slate.200" }}>{evento.nome}</Text>
+                                            <Text fontSize="xs" color={{ base: "gray.500", _dark: "slate.400" }}>{formatarDataCriacao(evento.data)}</Text>
+                                        </Box>
+                                    </HStack>
+                                ))}
+                            </VStack>
+                        )}
 
                         {/* CARD 4: Arquivos Anexados (Condicional) */}
                         {req.arquivoPath && (
