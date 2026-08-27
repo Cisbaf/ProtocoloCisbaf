@@ -1,6 +1,6 @@
 'use client';
 
-import { FormValues, assuntos, beneficios, unidades } from '@/components/types';
+import { FormValues, assuntos, beneficios, responsaveis_tec, unidades } from '@/components/types';
 import { toaster } from "@/components/ui/toaster";
 import {
   Badge, Box, Button, Card, Center, Container, Field, Flex,
@@ -742,6 +742,55 @@ export default function RequerimentoForm() {
                                   <Select.Positioner>
                                     <Select.Content color={COLORS.headingDark}>
                                       {beneficios.items.map((item) => (
+                                        <Select.Item key={item.value} item={item}>
+                                          {item.label}
+                                        </Select.Item>
+                                      ))}
+
+                                    </Select.Content>
+                                  </Select.Positioner>
+                                </Portal>
+                              </Select.Root>)} />
+                          <Field.ErrorText style={{ color: '#DC2626', fontSize: '12px' }}>
+                            {errors.beneficio?.message}
+                          </Field.ErrorText>
+                        </Field.Root>
+                      )}
+                      {watchAssunto === 'Responsáveis Técnicos' && (
+                        <Field.Root required invalid={!!errors.beneficio}>
+                          <Field.Label
+                            fontWeight="700"
+                            fontSize="sm"
+                            display="flex"
+                            alignItems="center"
+                            gap={2}
+                            color={COLORS.headingDark}
+                          >
+                            <CreditCard size={18} color={COLORS.btnBg} /> Responsáveis Técnicos*
+                          </Field.Label>
+                          <Controller control={control} name="beneficio"
+                            rules={{
+                              required: {
+                                value: watchAssunto === 'Responsáveis Técnicos',
+                                message: "Selecione o tipo assunto para Responsáveis Técnicos"
+                              }
+                            }}
+                            render={({ field }) => (
+                              <Select.Root
+                                collection={responsaveis_tec}
+                                value={field.value ? [field.value] : []}
+                                onValueChange={(details) =>
+                                  setValue('beneficio', details.value[0], { shouldValidate: true })
+                                }
+                              >
+                                <Select.Trigger {...inputStyle}>
+                                  <Select.ValueText placeholder="Selecione o assunto" />
+                                  <Select.Indicator />
+                                </Select.Trigger>
+                                <Portal>
+                                  <Select.Positioner>
+                                    <Select.Content color={COLORS.headingDark}>
+                                      {responsaveis_tec.items.map((item) => (
                                         <Select.Item key={item.value} item={item}>
                                           {item.label}
                                         </Select.Item>

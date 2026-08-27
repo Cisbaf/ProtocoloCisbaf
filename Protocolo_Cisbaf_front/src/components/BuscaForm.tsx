@@ -294,7 +294,7 @@ export default function BuscaForm() {
                                         )}
                                         <DetailCard icon={<FileText size={20} />} label="ASSUNTO" value={data.assunto} />
                                         {data.beneficio && (
-                                            <DetailCard icon={<Gift size={20} />} label="BENEFÍCIO" value={data.beneficio} />
+                                            <DetailCard icon={<Gift size={20} />} label="DETALHE" value={data.beneficio} />
                                         )}
 
                                     </SimpleGrid>

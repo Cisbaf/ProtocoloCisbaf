@@ -135,7 +135,7 @@ public class EmailService {
 
         // Só renderiza a linha se o benefício existir e não estiver em branco
         String blocoBeneficio = (formulario.getBeneficio() != null && !formulario.getBeneficio().isBlank())
-                ? "<tr><td style='padding: 12px 0; border-bottom: 1px solid #e2e8f0; color: #64748b;'><strong>Benefício Solicitado:</strong></td><td style='padding: 12px 0; border-bottom: 1px solid #e2e8f0; color: #1e293b; font-weight: 500;'>" + safe(formulario.getBeneficio()) + "</td></tr>"
+                ? "<tr><td style='padding: 12px 0; border-bottom: 1px solid #e2e8f0; color: #64748b;'><strong>Detalhe:</strong></td><td style='padding: 12px 0; border-bottom: 1px solid #e2e8f0; color: #1e293b; font-weight: 500;'>" + safe(formulario.getBeneficio()) + "</td></tr>"
                 : "";
 
         return "<div style='font-family: Arial, sans-serif; background-color: #f8fafc; padding: 40px 20px; margin: 0;'>" +
@@ -194,7 +194,7 @@ public class EmailService {
 
         // Só renderiza a linha se o benefício existir e não estiver em branco
         String blocoBeneficio = (formulario.getBeneficio() != null && !formulario.getBeneficio().isBlank())
-                ? "<tr><td style='padding: 12px 0; border-bottom: 1px solid #e2e8f0; color: #64748b;'><strong>Benefício Solicitado:</strong></td><td style='padding: 12px 0; border-bottom: 1px solid #e2e8f0; color: #1e293b; font-weight: 500;'>" + safe(formulario.getBeneficio()) + "</td></tr>"
+                ? "<tr><td style='padding: 12px 0; border-bottom: 1px solid #e2e8f0; color: #64748b;'><strong>Detalhe:</strong></td><td style='padding: 12px 0; border-bottom: 1px solid #e2e8f0; color: #1e293b; font-weight: 500;'>" + safe(formulario.getBeneficio()) + "</td></tr>"
                 : "";
 
         // Mesma proteção para prioridade
@@ -235,7 +235,7 @@ public class EmailService {
         String bgHeader = "#15803d";  // Verde escuro para o cabeçalho
 
         String blocoBeneficio = (formulario.getBeneficio() != null && !formulario.getBeneficio().isBlank())
-                ? "<tr><td style='padding: 12px 0; border-bottom: 1px solid #e2e8f0; color: #64748b;'><strong>Benefício:</strong></td><td style='padding: 12px 0; border-bottom: 1px solid #e2e8f0; color: #1e293b; font-weight: 500;'>" + safe(formulario.getBeneficio()) + "</td></tr>"
+                ? "<tr><td style='padding: 12px 0; border-bottom: 1px solid #e2e8f0; color: #64748b;'><strong>Detalhe:</strong></td><td style='padding: 12px 0; border-bottom: 1px solid #e2e8f0; color: #1e293b; font-weight: 500;'>" + safe(formulario.getBeneficio()) + "</td></tr>"
                 : "";
 
         return "<div style='font-family: Arial, sans-serif; background-color: #f8fafc; padding: 40px 20px; margin: 0;'>" +

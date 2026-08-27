@@ -77,6 +77,7 @@ export const assuntos = createListCollection({
     { label: 'Desligamento', value: 'Desligamento' },
     { label: 'Folha de Pagamento', value: 'Folha de Pagamento' },
     { label: 'Ouvidoria', value: 'Ouvidoria' },
+    { label: 'Responsáveis Técnicos', value: 'Responsáveis Técnicos' },
     { label: 'Outros Assuntos (Administrativos)', value: 'Assuntos Administrativos' },
   ],
 });
@@ -86,6 +87,18 @@ export const beneficios = createListCollection({
   items: [
     { label: 'Refeição', value: 'Refeição' },
     { label: 'Transporte', value: 'Transporte' },
+  ],
+});
+export const responsaveis_tec = createListCollection({
+  items: [
+    { label: 'NEP', value: 'NEP' },
+    { label: 'Assuntos Administrativos', value: 'Assuntos Administrativos' },
+    { label: 'Fechamento Benefícios', value: 'Fechamento Benefícios' },
+    { label: 'OFÍCIO DE DESLIGAMENTO', value: 'OFÍCIO DE DESLIGAMENTO' },
+    { label: 'Ofício de Fechamento da Folha', value: 'Ofício de Fechamento da Folha' },
+    { label: 'Ofício Férias', value: 'Ofício Férias' },
+    { label: 'Ofício Plantão Extra', value: 'Ofício Plantão Extra' },
+    { label: 'Ofício Troca de Plantão/Escala', value: 'Ofício Troca de Plantão/Escala' },
   ],
 });
 

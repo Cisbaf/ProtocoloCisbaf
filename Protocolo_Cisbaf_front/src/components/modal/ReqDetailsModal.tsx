@@ -126,7 +126,7 @@ export default function ReqDetailsModal({
             body: [
                 ['Status Atual', statusMap[req.finalizarArquivar || 'EM_ANALISE'] || 'Em Análise'],
                 ['Assunto', req.assunto || '—'],
-                ['Benefício', req.beneficio || '—'],
+                ['Detalhe', req.beneficio || '—'],
                 ['Descrição', req.descricao || '—'],
             ],
             theme: 'grid',
@@ -311,7 +311,7 @@ export default function ReqDetailsModal({
                                 </VStack>
                                 {req.beneficio && (
                                     <VStack align="start" gap={1} flex={1}>
-                                        <Text fontSize="xs" fontWeight="black" color={{ base: "gray.400", _dark: "slate.500" }}>BENEFÍCIO</Text>
+                                        <Text fontSize="xs" fontWeight="black" color={{ base: "gray.400", _dark: "slate.500" }}>DETALHE</Text>
                                         <Badge size="lg" colorPalette="purple" px={3} py={1} borderRadius="md">{req.beneficio}</Badge>
                                     </VStack>
                                 )}
