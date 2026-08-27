@@ -194,6 +194,20 @@ public class FormularioController {
         }
     }
 
+    @PutMapping("/{id}/status")
+    public ResponseEntity<Formulario> updateStatus(
+            @PathVariable String id,
+            @RequestBody @Valid AtualizarStatusRequestDTO request,
+            Principal principal
+    ) {
+        return ResponseEntity.ok(service.updateStatusByAdmin(
+                id,
+                request.finalizarArquivar(),
+                request.assinatura(),
+                principal
+        ));
+    }
+
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> deleteById(@PathVariable String id, Principal principal) {
         service.deleteById(id, principal);

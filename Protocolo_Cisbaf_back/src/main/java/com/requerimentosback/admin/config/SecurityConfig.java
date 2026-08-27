@@ -70,6 +70,7 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.POST, "/form").permitAll()
 
                         .requestMatchers(HttpMethod.PUT, "/form/{id}").authenticated()
+                        .requestMatchers(HttpMethod.PUT, "/form/{id}/status").authenticated()
 
                         .requestMatchers(HttpMethod.DELETE, "/form/{id}").authenticated()
 

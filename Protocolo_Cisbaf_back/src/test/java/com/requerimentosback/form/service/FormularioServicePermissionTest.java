@@ -4,6 +4,7 @@ import com.requerimentosback.admin.model.AdminEntity;
 import com.requerimentosback.admin.repository.AdminRepository;
 import com.requerimentosback.form.model.Formulario;
 import com.requerimentosback.form.model.Usuarios;
+import com.requerimentosback.form.model.enuns.FinArq;
 import com.requerimentosback.form.model.enuns.Unidades;
 import com.requerimentosback.form.model.erros.CampoDuplicadoException;
 import com.requerimentosback.form.repository.FormularioRepository;
@@ -26,6 +27,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+import static org.mockito.ArgumentMatchers.any;
 
 @ExtendWith(MockitoExtension.class)
 class FormularioServicePermissionTest {
@@ -46,6 +48,12 @@ class FormularioServicePermissionTest {
     private FormularioService service;
 
     private final Principal principal = () -> "jardim.iris";
+
+    private void prepararAtualizacaoStatus(Formulario formulario) {
+        var admin = AdminEntity.builder().username("jardim.iris").acessoTotal(true).build();
+        when(adminRepository.findByUsername("jardim.iris")).thenReturn(Optional.of(admin));
+        when(repository.findById("123")).thenReturn(Optional.of(formulario));
+    }
 
     @Test
     void usuarioRestritoBuscaSomenteAssuntosSelecionados() {
@@ -95,6 +103,127 @@ class FormularioServicePermissionTest {
         assertThrows(org.springframework.security.access.AccessDeniedException.class,
                 () -> service.updateByAdmin("123", formulario, principal));
         verify(repository, never()).saveAndFlush(org.mockito.ArgumentMatchers.any());
+    }
+
+    @Test
+    void usuarioRestritoNaoPodeExcluirRequerimento() {
+        var admin = AdminEntity.builder().username("jardim.iris").acessoTotal(false).build();
+        when(adminRepository.findByUsername("jardim.iris")).thenReturn(Optional.of(admin));
+
+        assertThrows(org.springframework.security.access.AccessDeniedException.class,
+                () -> service.deleteById("123", principal));
+
+        verify(mensagemRepository, never()).deleteByFormularioId("123");
+        verify(repository, never()).deleteById("123");
+    }
+
+    @Test
+    void usuarioComAcessoTotalPodeExcluirRequerimento() {
+        var admin = AdminEntity.builder().username("jardim.iris").acessoTotal(true).build();
+        when(adminRepository.findByUsername("jardim.iris")).thenReturn(Optional.of(admin));
+
+        service.deleteById("123", principal);
+
+        verify(mensagemRepository).deleteByFormularioId("123");
+        verify(repository).deleteById("123");
+    }
+
+    @Test
+    void exigeAssinaturaAoFinalizarRequerimento() {
+        var existente = Formulario.builder().id("123").finalizarArquivar(FinArq.EM_ANALISE).build();
+        prepararAtualizacaoStatus(existente);
+
+        var exception = assertThrows(IllegalArgumentException.class,
+                () -> service.updateStatusByAdmin("123", FinArq.FINALIZADO, "   ", principal));
+
+        assertEquals("A assinatura é obrigatória para finalizar o requerimento", exception.getMessage());
+        verify(repository, never()).saveAndFlush(any());
+    }
+
+    @Test
+    void salvaAssinaturaNormalizadaAoFinalizarRequerimento() {
+        var existente = Formulario.builder().id("123").finalizarArquivar(FinArq.EM_ANALISE).build();
+        prepararAtualizacaoStatus(existente);
+        when(repository.saveAndFlush(any(Formulario.class))).thenAnswer(invocation -> invocation.getArgument(0));
+
+        var resultado = service.updateStatusByAdmin(
+                "123",
+                FinArq.FINALIZADO,
+                "  Maria da Silva  ",
+                principal
+        );
+
+        assertEquals("Maria da Silva", resultado.getHistoricoAssinaturas().getFirst().getNome());
+        assertEquals("FINALIZADO", resultado.getHistoricoAssinaturas().getFirst().getAcao());
+        org.junit.jupiter.api.Assertions.assertNotNull(resultado.getHistoricoAssinaturas().getFirst().getData());
+        assertEquals(FinArq.FINALIZADO, resultado.getFinalizarArquivar());
+    }
+
+    @Test
+    void exigeNoMinimoTresLetrasNaAssinatura() {
+        var existente = Formulario.builder().id("123").finalizarArquivar(FinArq.EM_ANALISE).build();
+        prepararAtualizacaoStatus(existente);
+
+        var exception = assertThrows(IllegalArgumentException.class,
+                () -> service.updateStatusByAdmin("123", FinArq.FINALIZADO, "A B", principal));
+
+        assertEquals("A assinatura deve ter no mínimo 3 letras", exception.getMessage());
+        verify(repository, never()).saveAndFlush(any());
+    }
+
+    @Test
+    void rejeitaNumerosNaAssinatura() {
+        var existente = Formulario.builder().id("123").finalizarArquivar(FinArq.EM_ANALISE).build();
+        prepararAtualizacaoStatus(existente);
+
+        var exception = assertThrows(IllegalArgumentException.class,
+                () -> service.updateStatusByAdmin("123", FinArq.FINALIZADO, "Maria 123", principal));
+
+        assertEquals("A assinatura deve conter apenas letras e espaços", exception.getMessage());
+        verify(repository, never()).saveAndFlush(any());
+    }
+
+    @Test
+    void rejeitaCaracteresEspeciaisNaAssinatura() {
+        var existente = Formulario.builder().id("123").finalizarArquivar(FinArq.EM_ANALISE).build();
+        prepararAtualizacaoStatus(existente);
+
+        var exception = assertThrows(IllegalArgumentException.class,
+                () -> service.updateStatusByAdmin("123", FinArq.FINALIZADO, "Maria@Silva", principal));
+
+        assertEquals("A assinatura deve conter apenas letras e espaços", exception.getMessage());
+        verify(repository, never()).saveAndFlush(any());
+    }
+
+    @Test
+    void mantemDezReaberturasNoHistoricoComNomeEData() {
+        var existente = Formulario.builder().id("123").finalizarArquivar(FinArq.EM_ANALISE).build();
+        prepararAtualizacaoStatus(existente);
+        when(repository.saveAndFlush(any(Formulario.class))).thenAnswer(invocation -> invocation.getArgument(0));
+
+        for (int i = 1; i <= 10; i++) {
+            service.updateStatusByAdmin("123", FinArq.FINALIZADO, "Maria Silva", principal);
+            service.updateStatusByAdmin("123", FinArq.EM_ANALISE, "João Souza", principal);
+        }
+
+        assertEquals(20, existente.getHistoricoAssinaturas().size());
+        assertEquals(10, existente.getHistoricoAssinaturas().stream()
+                .filter(evento -> "REABRIU".equals(evento.getAcao()))
+                .count());
+        org.junit.jupiter.api.Assertions.assertTrue(existente.getHistoricoAssinaturas().stream()
+                .allMatch(evento -> evento.getNome() != null && evento.getData() != null));
+    }
+
+    @Test
+    void exigeAssinaturaAoReabrirRequerimento() {
+        var existente = Formulario.builder().id("123").finalizarArquivar(FinArq.FINALIZADO).build();
+        prepararAtualizacaoStatus(existente);
+
+        var exception = assertThrows(IllegalArgumentException.class,
+                () -> service.updateStatusByAdmin("123", FinArq.EM_ANALISE, null, principal));
+
+        assertEquals("A assinatura é obrigatória para reabrir o requerimento", exception.getMessage());
+        verify(repository, never()).saveAndFlush(any());
     }
 
     @Test

@@ -7,7 +7,9 @@ import lombok.*;
 
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
 import java.util.Date;
+import java.util.List;
 import java.util.concurrent.ThreadLocalRandom;
 
 @Entity
@@ -40,6 +42,12 @@ public class Formulario {
 
     @Column(length = 1000)
     private String arquivoPath;
+
+    @Builder.Default
+    @ElementCollection(fetch = FetchType.EAGER)
+    @CollectionTable(name = "formulario_historico_assinaturas", joinColumns = @JoinColumn(name = "formulario_id"))
+    @OrderColumn(name = "ordem")
+    private List<AssinaturaProcesso> historicoAssinaturas = new ArrayList<>();
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)

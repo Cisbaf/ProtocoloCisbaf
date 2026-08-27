@@ -1,6 +1,7 @@
 package com.requerimentosback.form.service;
 
 import com.requerimentosback.admin.repository.AdminRepository;
+import com.requerimentosback.form.model.AssinaturaProcesso;
 import com.requerimentosback.form.model.DadoGraficoDTO;
 import com.requerimentosback.form.model.Formulario;
 import com.requerimentosback.form.model.Usuarios;
@@ -18,6 +19,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.context.event.ApplicationReadyEvent;
 import org.springframework.context.event.EventListener;
 import org.springframework.scheduling.annotation.Scheduled;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -93,6 +95,7 @@ public class FormularioService {
         formulario.setUsuario(usuario);
         formulario.setDataCriacao(new Date());
         formulario.setFinalizarArquivar(FinArq.EM_ANALISE);
+        formulario.setHistoricoAssinaturas(new java.util.ArrayList<>());
         formulario.setUnidade(formulario.getUnidade() != null ? formulario.getUnidade() : Unidades.OUVIDORIA);
 
         formulario = repository.saveAndFlush(formulario);
@@ -125,7 +128,10 @@ public class FormularioService {
 
     @Transactional
     public void deleteById(String id, Principal principal) {
-        validarAcessoAoFormulario(id, principal);
+        var admin = adminRepository.findByUsername(principal.getName()).orElseThrow(EntityNotFoundException::new);
+        if (!admin.podeVerTudo()) {
+            throw new AccessDeniedException("Apenas administradores com acesso total podem excluir requerimentos");
+        }
         mensagemRepository.deleteByFormularioId(id);
         repository.deleteById(id);
     }
@@ -144,33 +150,96 @@ public class FormularioService {
         existing.setArquivoPath(formDaRequisicao.getArquivoPath() != null ? formDaRequisicao.getArquivoPath() : existing.getArquivoPath());
         existing.setUnidade(formDaRequisicao.getUnidade() != null ? formDaRequisicao.getUnidade() : existing.getUnidade());
 
-        existing.setFinalizarArquivar(statusNovo);
+        String assinatura = obterUltimaAssinaturaEnviada(formDaRequisicao, statusNovo);
+        return atualizarStatus(existing, statusAntigo, statusNovo, assinatura);
+    }
 
+    @Transactional
+    public Formulario updateStatusByAdmin(
+            String id,
+            FinArq novoStatus,
+            String assinatura,
+            Principal principal
+    ) {
+        validarAcessoAoFormulario(id, principal);
+        Formulario existing = repository.findById(id)
+                .orElseThrow(() -> new EntityNotFoundException("Formulário não encontrado para o ID: " + id));
+        return atualizarStatus(existing, existing.getFinalizarArquivar(), novoStatus, assinatura);
+    }
+
+    private Formulario atualizarStatus(
+            Formulario formulario,
+            FinArq statusAntigo,
+            FinArq statusNovo,
+            String assinatura
+    ) {
         boolean mudouParaFinalizado = false;
 
         if (statusAntigo != statusNovo) {
-            if(statusNovo == FinArq.EM_ANALISE){
-                existing.setDataMudanca(null);
-            }else{
-                existing.setDataMudanca(new Date());
+            if (statusNovo == FinArq.EM_ANALISE) {
+                adicionarEventoAssinado(formulario, "REABRIU", validarAssinatura(assinatura, "reabrir"));
+                formulario.setDataMudanca(null);
+            } else {
+                formulario.setDataMudanca(new Date());
             }
 
             if (statusNovo == FinArq.FINALIZADO) {
+                adicionarEventoAssinado(formulario, "FINALIZADO", validarAssinatura(assinatura, "finalizar"));
                 mudouParaFinalizado = true;
             }
         }
 
-        var salvo = repository.saveAndFlush(existing);
+        formulario.setFinalizarArquivar(statusNovo);
+        var salvo = repository.saveAndFlush(formulario);
 
         if (mudouParaFinalizado) {
             try {
-                emailService.enviarEmailFinalizacaoFormulario(existing);
+                emailService.enviarEmailFinalizacaoFormulario(formulario);
             } catch (Exception e) {
-                log.error("Erro ao enviar email de finalização para o form {}", id, e);
+                log.error("Erro ao enviar email de finalização para o form {}", formulario.getId(), e);
             }
         }
 
         return salvo;
+    }
+
+    private String obterUltimaAssinaturaEnviada(Formulario formulario, FinArq statusNovo) {
+        if (formulario.getHistoricoAssinaturas() == null || formulario.getHistoricoAssinaturas().isEmpty()) {
+            return null;
+        }
+        String acao = statusNovo == FinArq.FINALIZADO ? "FINALIZADO" : "REABRIU";
+        return formulario.getHistoricoAssinaturas().reversed().stream()
+                .filter(evento -> acao.equals(evento.getAcao()))
+                .map(AssinaturaProcesso::getNome)
+                .findFirst()
+                .orElse(null);
+    }
+
+    private String validarAssinatura(String assinatura, String verbo) {
+        if (assinatura == null || assinatura.isBlank()) {
+            throw new IllegalArgumentException("A assinatura é obrigatória para " + verbo + " o requerimento");
+        }
+        String assinaturaNormalizada = assinatura.trim();
+        if (!assinaturaNormalizada.matches("[\\p{L} ]+")) {
+            throw new IllegalArgumentException("A assinatura deve conter apenas letras e espaços");
+        }
+        assinaturaNormalizada = assinaturaNormalizada.replaceAll(" +", " ");
+        long quantidadeLetras = assinaturaNormalizada.codePoints().filter(Character::isLetter).count();
+        if (quantidadeLetras < 3) {
+            throw new IllegalArgumentException("A assinatura deve ter no mínimo 3 letras");
+        }
+        return assinaturaNormalizada;
+    }
+
+    private void adicionarEventoAssinado(Formulario formulario, String acao, String assinatura) {
+        if (formulario.getHistoricoAssinaturas() == null) {
+            formulario.setHistoricoAssinaturas(new java.util.ArrayList<>());
+        }
+        formulario.getHistoricoAssinaturas().add(AssinaturaProcesso.builder()
+                .acao(acao)
+                .nome(assinatura)
+                .data(LocalDateTime.now(ZoneId.of("America/Sao_Paulo")))
+                .build());
     }
 
     @Transactional
