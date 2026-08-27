@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { cookies } from 'next/headers';
 
 // GET /api/requerimentos/[id]/mensagens
 export async function GET(
@@ -24,19 +25,26 @@ export async function POST(
 ) {
   const { id } = await params;
   try {
+    const cookieStore = await cookies();
+    const session = cookieStore.get('loginToken');
+    const authHeaders = session ? { Cookie: `loginToken=${session.value}` } : undefined;
     const contentType = request.headers.get('content-type') || '';
     let res;
     if (contentType.includes('multipart/form-data')) {
       const formData = await request.formData();
       res = await fetch(`${process.env.BACKEND_INTERNAL_URL}/form/${id}/mensagens`, {
         method: 'POST',
+        headers: authHeaders,
         body: formData,
       });
     } else {
       const body = await request.json();
       res = await fetch(`${process.env.BACKEND_INTERNAL_URL}/form/${id}/mensagens`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          ...authHeaders,
+        },
         body: JSON.stringify(body),
       });
     }

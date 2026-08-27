@@ -17,7 +17,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 interface ChatPanelProps {
     formularioId: string;
     remetente: 'ADMIN' | 'SOLICITANTE';
-    nomeRemetente: string;
+    nomeRemetente?: string;
 }
 
 // ── Funções Auxiliares Movidas Para Fora do Componente ──
@@ -141,7 +141,9 @@ export default function ChatPanel({ formularioId, remetente, nomeRemetente }: Ch
             const formData = new FormData();
             formData.append('conteudo', texto);
             formData.append('remetente', remetente);
-            formData.append('nomeRemetente', nomeRemetente);
+            if (nomeRemetente) {
+                formData.append('nomeRemetente', nomeRemetente);
+            }
             arquivosSelecionados.forEach((file) => {
                 formData.append('arquivos', file);
             });

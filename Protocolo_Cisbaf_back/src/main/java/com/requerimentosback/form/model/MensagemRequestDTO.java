@@ -7,6 +7,5 @@ import jakarta.validation.constraints.NotNull;
 public record MensagemRequestDTO(
         @NotBlank String conteudo,
         @NotNull TipoRemetente remetente,
-        @NotBlank String nomeRemetente
+        String nomeRemetente
 ) {}
-

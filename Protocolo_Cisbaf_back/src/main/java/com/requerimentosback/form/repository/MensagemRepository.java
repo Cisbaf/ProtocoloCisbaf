@@ -1,6 +1,7 @@
 package com.requerimentosback.form.repository;
 
 import com.requerimentosback.form.model.Mensagem;
+import com.requerimentosback.form.model.enuns.TipoRemetente;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
@@ -11,7 +12,10 @@ import java.util.Optional;
 public interface MensagemRepository extends JpaRepository<Mensagem, Long> {
     List<Mensagem> findByFormularioIdOrderByDataEnvioAsc(String formularioId);
     
-   Optional<Mensagem> findFirstByFormularioIdAndNomeRemetenteOrderByDataEnvioDesc(String formularioId, String nomeRemetente);
+    Optional<Mensagem> findFirstByFormularioIdAndRemetenteOrderByDataEnvioDesc(
+            String formularioId,
+            TipoRemetente remetente
+    );
 
     void deleteByFormularioId(String formularioId);
 }

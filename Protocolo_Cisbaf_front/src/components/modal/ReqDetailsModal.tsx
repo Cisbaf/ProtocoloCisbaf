@@ -263,7 +263,6 @@ export default function ReqDetailsModal({
                                     <ChatPanel
                                         formularioId={req.id!}
                                         remetente="ADMIN"
-                                        nomeRemetente="Administrador"
                                     />
                                 </Box>
                             )}

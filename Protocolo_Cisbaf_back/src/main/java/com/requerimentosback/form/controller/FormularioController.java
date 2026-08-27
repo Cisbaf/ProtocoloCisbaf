@@ -210,9 +210,10 @@ public class FormularioController {
     @PostMapping(value = "/{id}/mensagens", consumes = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<Mensagem> enviarMensagemJson(
             @PathVariable String id,
-            @RequestBody @Valid MensagemRequestDTO dto) {
+            @RequestBody @Valid MensagemRequestDTO dto,
+            Principal principal) {
         try {
-            return ResponseEntity.ok(mensagemService.enviar(id, dto));
+            return ResponseEntity.ok(mensagemService.enviar(id, dto, null, principal));
         } catch (jakarta.persistence.EntityNotFoundException e) {
             return ResponseEntity.notFound().build();
         }
@@ -223,14 +224,15 @@ public class FormularioController {
             @PathVariable String id,
             @RequestParam(value = "conteudo", required = false) String conteudo,
             @RequestParam("remetente") TipoRemetente remetente,
-            @RequestParam("nomeRemetente") String nomeRemetente,
-            @RequestPart(value = "arquivos", required = false) List<MultipartFile> arquivos) {
+            @RequestParam(value = "nomeRemetente", required = false) String nomeRemetente,
+            @RequestPart(value = "arquivos", required = false) List<MultipartFile> arquivos,
+            Principal principal) {
         try {
             if ((conteudo == null || conteudo.trim().isEmpty()) && (arquivos == null || arquivos.isEmpty())) {
                 return ResponseEntity.badRequest().build();
             }
             MensagemRequestDTO dto = new MensagemRequestDTO(conteudo, remetente, nomeRemetente);
-            return ResponseEntity.ok(mensagemService.enviar(id, dto, arquivos));
+            return ResponseEntity.ok(mensagemService.enviar(id, dto, arquivos, principal));
         } catch (jakarta.persistence.EntityNotFoundException e) {
             return ResponseEntity.notFound().build();
         }
