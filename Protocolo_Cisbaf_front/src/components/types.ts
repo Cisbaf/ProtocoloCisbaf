@@ -23,6 +23,12 @@ export interface Mensagem {
   arquivoPath?: string;
 }
 
+export interface AssinaturaProcesso {
+  acao: 'FINALIZADO' | 'REABRIU';
+  nome: string;
+  data: string;
+}
+
 // ─── Formulário (@Entity Formulario) ─────────────────────────────────────────
 export interface Formulario {
   id?: string;            // gerado pelo @PrePersist, não enviado pelo form
@@ -31,6 +37,7 @@ export interface Formulario {
   descricao: string;
   finalizarArquivar?: 'FINALIZADO' | 'ARQUIVADO' | 'EM_ANALISE' | 'TERMINADO';
   motivo?: string;        // preenchido pelo RH na recusa
+  historicoAssinaturas?: AssinaturaProcesso[];
   arquivoPath?: string;   // preenchido pelo backend após upload
   unidade?: string;
   dataCriacao: string;

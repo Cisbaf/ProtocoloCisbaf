@@ -48,7 +48,8 @@ export async function DELETE(
     }
 
     if (!res.ok) {
-      throw new Error('Erro ao deletar o requerimento');
+      const error = await res.json().catch(() => ({ error: 'Erro ao deletar o requerimento' }));
+      return NextResponse.json(error, { status: res.status });
     }
 
     // Como o Spring retorna .noContent() (status 204), não há JSON para ler com res.json()

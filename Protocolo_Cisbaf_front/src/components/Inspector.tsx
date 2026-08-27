@@ -8,6 +8,7 @@ import { useRouter } from 'next/navigation';
 import { ChangeEvent, useEffect, useState } from 'react';
 import Header from './Header';
 import AdminUsersModal, { AdminAccount } from './modal/AdminUsersModal';
+import ProcessSignatureModal from './modal/ProcessSignatureModal';
 import ReqDetailsModal, { formatarDataCriacao } from './modal/ReqDetailsModal';
 import StatsModal from './modal/StatsModal';
 
@@ -27,6 +28,10 @@ export default function Inspector() {
 
   const [selectedReq, setSelectedReq] = useState<Formulario | null>(null);
   const [updatingId, setUpdatingId] = useState<string | null>(null);
+  const [signatureAction, setSignatureAction] = useState<{
+    id: string;
+    status: 'FINALIZADO' | 'EM_ANALISE';
+  } | null>(null);
 
   const [isStatsModalOpen, setIsStatsModalOpen] = useState(false);
   const [isUsersModalOpen, setIsUsersModalOpen] = useState(false);
@@ -59,11 +64,13 @@ export default function Inspector() {
       .then((session) => setCurrentAdmin(session.admin ?? null));
   }, []);
 
-  const updateStatus = async (id: string, novoStatus: 'FINALIZADO' | 'ARQUIVADO' | 'EM_ANALISE' | 'TERMINADO') => {
-    if (novoStatus === 'FINALIZADO') {
-      if (!window.confirm("Tem certeza que deseja finalizar este requerimento?")) return;
-    } else if (novoStatus === 'ARQUIVADO') {
-      if (!window.confirm("Tem certeza que deseja arquivar este requerimento?")) return;
+  const updateStatus = async (
+    id: string,
+    novoStatus: 'FINALIZADO' | 'ARQUIVADO' | 'EM_ANALISE' | 'TERMINADO',
+    assinatura?: string
+  ) => {
+    if (novoStatus === 'ARQUIVADO') {
+      if (!window.confirm("Tem certeza que deseja arquivar este requerimento?")) return false;
     }
 
     try {
@@ -74,22 +81,28 @@ export default function Inspector() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           finalizarArquivar: novoStatus,
+          ...(assinatura ? { assinatura } : {}),
         })
       });
 
       if (!res.ok) {
-        throw new Error("Erro ao atualizar status");
+        const errorBody = await res.json().catch(() => null);
+        throw new Error(errorBody?.error || "Erro ao atualizar status");
       }
 
+      const updated: Formulario = await res.json();
       toaster.create({ title: 'Sucesso', type: 'success' });
 
       setRequerimentos(prev =>
-        prev.map(req => req.id === id ? { ...req, finalizarArquivar: novoStatus } : req)
+        prev.map(req => req.id === id ? updated : req)
       );
+      setSelectedReq(prev => prev?.id === id ? updated : prev);
+      return true;
 
     } catch (err: unknown) {
       const errorMessage = err instanceof Error ? err.message : 'Erro interno';
       toaster.create({ title: 'Erro', description: errorMessage, type: 'error' });
+      return false;
     } finally {
       setUpdatingId(null);
     }
@@ -487,7 +500,7 @@ export default function Inspector() {
                               <Eye size={18} />
                             </Button>
 
-                            <Button size="sm" colorPalette="green" borderRadius="lg" onClick={() => r.id && updateStatus(r.id, 'FINALIZADO')} disabled={r.finalizarArquivar === 'FINALIZADO'
+                            <Button size="sm" colorPalette="green" borderRadius="lg" onClick={() => r.id && setSignatureAction({ id: r.id, status: 'FINALIZADO' })} disabled={r.finalizarArquivar === 'FINALIZADO'
                               || r.finalizarArquivar === 'TERMINADO' || updatingId === r.id} loading={updatingId === r.id ? true : undefined} flex={1}>
                               <CheckCircle size={18} />
                             </Button>
@@ -497,12 +510,14 @@ export default function Inspector() {
                               <Archive size={18} />
                             </Button>
 
-                            <Button size="sm" colorPalette="gray" borderRadius="lg" onClick={() => r.id && deleteForm(r.id)} disabled={updatingId !== null && updatingId !== r.id}
-                              loading={updatingId === r.id} flex={1}>
-                              <Trash size={18} />
-                            </Button>
+                            {currentAdmin?.acessoTotal && (
+                              <Button size="sm" colorPalette="gray" borderRadius="lg" onClick={() => r.id && deleteForm(r.id)} disabled={updatingId !== null && updatingId !== r.id}
+                                loading={updatingId === r.id} flex={1}>
+                                <Trash size={18} />
+                              </Button>
+                            )}
 
-                            <Button size="sm" colorPalette="blue" borderRadius="lg" onClick={() => r.id && updateStatus(r.id, 'EM_ANALISE')} disabled={r.finalizarArquivar === 'EM_ANALISE'
+                            <Button size="sm" colorPalette="blue" borderRadius="lg" onClick={() => r.id && setSignatureAction({ id: r.id, status: 'EM_ANALISE' })} disabled={r.finalizarArquivar === 'EM_ANALISE'
                               || updatingId === r.id} loading={updatingId === r.id ? true : undefined} flex={1}>
                               <Undo2 size={18} />
                             </Button>
@@ -568,10 +583,12 @@ export default function Inspector() {
                               <Table.Cell textAlign="right" px={6}>
                                 <HStack gap={2} justify="flex-end">
                                   <Button size="sm" colorPalette="blue" borderRadius="lg" onClick={() => setSelectedReq(r)} disabled={!!updatingId}><Eye size={18} /></Button>
-                                  <Button size="sm" colorPalette="green" borderRadius="lg" onClick={() => r.id && updateStatus(r.id, 'FINALIZADO')} disabled={r.finalizarArquivar === 'FINALIZADO' || r.finalizarArquivar === 'TERMINADO' || !!updatingId} loading={updatingId === r.id} shadow="sm"><CheckCircle size={18} /></Button>
+                                  <Button size="sm" colorPalette="green" borderRadius="lg" onClick={() => r.id && setSignatureAction({ id: r.id, status: 'FINALIZADO' })} disabled={r.finalizarArquivar === 'FINALIZADO' || r.finalizarArquivar === 'TERMINADO' || !!updatingId} loading={updatingId === r.id} shadow="sm"><CheckCircle size={18} /></Button>
                                   <Button size="sm" colorPalette="red" borderRadius="lg" onClick={() => r.id && updateStatus(r.id, 'ARQUIVADO')} disabled={r.finalizarArquivar === 'ARQUIVADO' || !!updatingId} loading={updatingId === r.id} shadow="sm"><Archive size={18} /></Button>
-                                  <Button size="sm" colorPalette="gray" borderRadius="lg" onClick={() => r.id && deleteForm(r.id)} disabled={!!updatingId && updatingId !== r.id} loading={updatingId === r.id} shadow="sm"><Trash size={18} /></Button>
-                                  <Button size="sm" colorPalette="blue" borderRadius="lg" onClick={() => r.id && updateStatus(r.id, 'EM_ANALISE')} disabled={r.finalizarArquivar === 'EM_ANALISE' || !!updatingId} loading={updatingId === r.id} shadow="sm"><Undo2 size={18} /></Button>
+                                  {currentAdmin?.acessoTotal && (
+                                    <Button size="sm" colorPalette="gray" borderRadius="lg" onClick={() => r.id && deleteForm(r.id)} disabled={!!updatingId && updatingId !== r.id} loading={updatingId === r.id} shadow="sm"><Trash size={18} /></Button>
+                                  )}
+                                  <Button size="sm" colorPalette="blue" borderRadius="lg" onClick={() => r.id && setSignatureAction({ id: r.id, status: 'EM_ANALISE' })} disabled={r.finalizarArquivar === 'EM_ANALISE' || !!updatingId} loading={updatingId === r.id} shadow="sm"><Undo2 size={18} /></Button>
                                 </HStack>
                               </Table.Cell>
                             </Table.Row>
@@ -592,15 +609,25 @@ export default function Inspector() {
         req={selectedReq}
         onClose={() => setSelectedReq(null)}
         renderStatus={renderStatus}
-        onApprove={(id) => {
-          updateStatus(id, 'FINALIZADO');
-          setSelectedReq(null);
-        }}
+        onApprove={(id) => setSignatureAction({ id, status: 'FINALIZADO' })}
         onArchive={(id) => {
           updateStatus(id, 'ARQUIVADO');
           setSelectedReq(null);
         }}
         onDownload={handleDownloadArquivo}
+      />
+
+      <ProcessSignatureModal
+        key={signatureAction ? `${signatureAction.id}-${signatureAction.status}` : 'closed'}
+        isOpen={signatureAction !== null}
+        action={signatureAction?.status === 'EM_ANALISE' ? 'REABRIR' : 'FINALIZAR'}
+        loading={signatureAction !== null && updatingId === signatureAction.id}
+        onCancel={() => setSignatureAction(null)}
+        onConfirm={async (assinatura) => {
+          if (!signatureAction) return;
+          const atualizado = await updateStatus(signatureAction.id, signatureAction.status, assinatura);
+          if (atualizado) setSignatureAction(null);
+        }}
       />
 
       {/* ── Modal de Estatísticas e Gráficos ── */}
