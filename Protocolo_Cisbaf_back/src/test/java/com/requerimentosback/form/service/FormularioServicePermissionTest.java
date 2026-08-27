@@ -3,7 +3,9 @@ package com.requerimentosback.form.service;
 import com.requerimentosback.admin.model.AdminEntity;
 import com.requerimentosback.admin.repository.AdminRepository;
 import com.requerimentosback.form.model.Formulario;
+import com.requerimentosback.form.model.Usuarios;
 import com.requerimentosback.form.model.enuns.Unidades;
+import com.requerimentosback.form.model.erros.CampoDuplicadoException;
 import com.requerimentosback.form.repository.FormularioRepository;
 import com.requerimentosback.form.repository.MensagemRepository;
 import com.requerimentosback.form.repository.UsuariosRepository;
@@ -20,6 +22,7 @@ import java.util.Set;
 
 import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -91,6 +94,29 @@ class FormularioServicePermissionTest {
 
         assertThrows(org.springframework.security.access.AccessDeniedException.class,
                 () -> service.updateByAdmin("123", formulario, principal));
+        verify(repository, never()).saveAndFlush(org.mockito.ArgumentMatchers.any());
+    }
+
+    @Test
+    void informaOCampoQuandoEmailPertenceAOutroUsuario() {
+        var usuarioRequest = Usuarios.builder()
+                .cpf("12345678909")
+                .email("teste@gmail.com")
+                .build();
+        var usuarioCadastrado = Usuarios.builder()
+                .cpf("98765432100")
+                .email("teste@gmail.com")
+                .build();
+        var formulario = Formulario.builder().usuario(usuarioRequest).build();
+        when(usuariosRepository.findByEmailIgnoreCase("teste@gmail.com"))
+                .thenReturn(Optional.of(usuarioCadastrado));
+
+        var exception = assertThrows(CampoDuplicadoException.class,
+                () -> service.save(formulario, List.of()));
+
+        assertEquals("email", exception.getCampo());
+        assertEquals("Este e-mail já está cadastrado para outro usuário.", exception.getMessage());
+        verify(usuariosRepository, never()).save(org.mockito.ArgumentMatchers.any());
         verify(repository, never()).saveAndFlush(org.mockito.ArgumentMatchers.any());
     }
 }

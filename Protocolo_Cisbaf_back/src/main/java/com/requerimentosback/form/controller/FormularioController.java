@@ -5,6 +5,8 @@ import com.requerimentosback.form.model.*;
 import com.requerimentosback.form.model.enuns.TipoGrafico;
 import com.requerimentosback.form.model.enuns.TipoRemetente;
 import com.requerimentosback.form.model.enuns.Unidades;
+import com.requerimentosback.form.model.erros.CampoDuplicadoException;
+import com.requerimentosback.form.model.erros.ErroDeValidacaoDto;
 import com.requerimentosback.form.service.CepClient;
 import com.requerimentosback.form.service.FormularioService;
 import com.requerimentosback.form.service.MensagemService;
@@ -124,25 +126,29 @@ public class FormularioController {
             @RequestPart("formulario") String formularioJson,
             @RequestPart(value = "arquivos", required = false) List<MultipartFile> arquivos) {
 
+        Formulario formulario = null;
         try {
             if (arquivos != null && arquivos.size() > 3) {
                 return ResponseEntity.badRequest().body(java.util.Map.of("error", "Você só pode enviar no máximo 3 arquivos por solicitação."));
             }
 
             ObjectMapper mapper = new ObjectMapper();
-            Formulario formulario = mapper.readValue(formularioJson, Formulario.class);
+            formulario = mapper.readValue(formularioJson, Formulario.class);
 
             return ResponseEntity.ok(service.save(formulario, arquivos));
+
+        } catch (CampoDuplicadoException e) {
+            return ResponseEntity.status(409)
+                    .body(List.of(new ErroDeValidacaoDto(e.getCampo(), e.getMessage())));
 
         } catch (IllegalArgumentException e) {
             log.warn("Dados inválidos ao salvar formulário", e);
             return ResponseEntity.badRequest().body(java.util.Map.of("error", e.getMessage()));
 
         } catch (org.springframework.dao.DataIntegrityViolationException e) {
-            e.getMostSpecificCause();
             String msg = e.getMostSpecificCause().getMessage();
             log.warn("Erro de integridade ao salvar formulário: {}", msg, e);
-            return ResponseEntity.badRequest().body(java.util.Map.of("error", "Erro de integridade (banco de dados): " + msg));
+            return ResponseEntity.status(409).body(List.of(identificarCampoDuplicado(formulario, msg)));
 
         } catch (Exception e) {
             log.error("Erro inesperado ao salvar formulário", e);
@@ -157,6 +163,25 @@ public class FormularioController {
 
             return ResponseEntity.internalServerError().body(java.util.Map.of("error", "Erro interno no servidor: " + e.getMessage()));
         }
+    }
+
+    private ErroDeValidacaoDto identificarCampoDuplicado(Formulario formulario, String mensagemBanco) {
+        Usuarios usuario = formulario != null ? formulario.getUsuario() : null;
+        if (usuario != null && valorDuplicado(mensagemBanco, usuario.getEmail())) {
+            return new ErroDeValidacaoDto("email", "Este e-mail já está cadastrado para outro usuário.");
+        }
+        if (usuario != null && valorDuplicado(mensagemBanco, usuario.getMatricula())) {
+            return new ErroDeValidacaoDto("matricula", "Esta matrícula já está cadastrada para outro usuário.");
+        }
+        if (usuario != null && valorDuplicado(mensagemBanco, usuario.getCpf())) {
+            return new ErroDeValidacaoDto("cpf", "Este CPF já está cadastrado.");
+        }
+        return new ErroDeValidacaoDto("cpf", "Já existe um usuário com os dados informados.");
+    }
+
+    private boolean valorDuplicado(String mensagemBanco, String valor) {
+        return mensagemBanco != null && valor != null && !valor.isBlank()
+                && mensagemBanco.contains("Duplicate entry '" + valor + "'");
     }
 
     @PutMapping("/{id}")

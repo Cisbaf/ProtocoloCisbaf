@@ -20,13 +20,17 @@ import {
   Smartphone, Upload, User
 } from 'lucide-react';
 import { useEffect, useState } from 'react';
+import type { ComponentProps } from 'react';
 import { Controller, useForm, useWatch } from 'react-hook-form';
 import Header from './Header';
 
 
 // ─── Sub-componente: cabeçalho de seção ──────────────────────────────────────
 function SectionHeader({ step, title, badgeBg, badgeColor, }: {
-  step: string; title: string; badgeBg: any; badgeColor: any;
+  step: string;
+  title: string;
+  badgeBg: ComponentProps<typeof Badge>['bg'];
+  badgeColor: ComponentProps<typeof Badge>['color'];
 }) {
   return (
     <Center flexDir="column" gap={2}>
@@ -47,6 +51,30 @@ function SectionHeader({ step, title, badgeBg, badgeColor, }: {
       </Heading>
     </Center>
   );
+}
+
+interface ValidationError {
+  campo: string;
+  mensagem: string;
+}
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === 'object' && value !== null;
+}
+
+function getValidationErrors(error: unknown): ValidationError[] | null {
+  const candidate = Array.isArray(error)
+    ? error
+    : isRecord(error) && Array.isArray(error.error)
+      ? error.error
+      : null;
+
+  if (!candidate) return null;
+
+  const validationErrors = candidate.filter((item): item is ValidationError =>
+    isRecord(item) && typeof item.campo === 'string' && typeof item.mensagem === 'string'
+  );
+  return validationErrors.length > 0 ? validationErrors : null;
 }
 
 // Validador de CPF brasileiro
@@ -178,7 +206,7 @@ export default function RequerimentoForm() {
       });
 
       const responseText = await res.text();
-      let responseData: any = null;
+      let responseData: unknown = null;
 
       try {
         responseData = responseText ? JSON.parse(responseText) : null;
@@ -193,34 +221,32 @@ export default function RequerimentoForm() {
         throw responseData;
       }
 
-      const result = responseData;
+      if (!isRecord(responseData) || (typeof responseData.id !== 'string' && typeof responseData.id !== 'number')) {
+        throw new Error('O servidor não retornou o protocolo do requerimento.');
+      }
 
-      setSubmittedId(result.id);
+      setSubmittedId(String(responseData.id));
       reset();
       setResetKey((prev) => prev + 1);
 
-    } catch (error: any) {
+    } catch (error: unknown) {
 
       // Tenta achar o array de erros, seja ele a própria resposta ou dentro de error.error
-      const listaDeErros = Array.isArray(error)
-        ? error
-        : (error && Array.isArray(error.error) ? error.error : null);
+      const listaDeErros = getValidationErrors(error);
 
       // 1. Se encontrou a lista de erros de validação
       if (listaDeErros) {
-        listaDeErros.forEach((e: any) => {
-          if (e.campo && e.mensagem) {
-            // O react-hook-form liga o "e.campo" direto com o seu <Field.Root invalid={...}>
-            setError(e.campo as keyof FormValues, {
-              type: 'server',
-              message: e.mensagem
-            });
-          }
+        listaDeErros.forEach((validationError) => {
+          // O react-hook-form liga o campo retornado diretamente ao Field correspondente.
+          setError(validationError.campo as keyof FormValues, {
+            type: 'server',
+            message: validationError.mensagem
+          });
         });
 
         toaster.create({
           title: 'Dados inválidos',
-          description: 'Verifique as marcações em vermelho no formulário.',
+          description: listaDeErros.map((validationError) => validationError.mensagem).join(' '),
           type: 'error',
         });
 
@@ -230,20 +256,23 @@ export default function RequerimentoForm() {
       // 2. Fallback: Erros gerais (500, servidor fora, etc)
       let errorMessage = 'Ocorreu um erro ao enviar.';
 
-      if (error && typeof error === 'object') {
-        if (error.message) {
+      if (error instanceof Error) {
+        errorMessage = error.message;
+      } else if (isRecord(error)) {
+        if (typeof error.message === 'string') {
           errorMessage = error.message;
-        } else if (error.error && typeof error.error === 'string') {
+        } else if (typeof error.error === 'string') {
           errorMessage = error.error;
-        } else if (error.requestId) {
+        } else if (typeof error.requestId === 'string') {
           errorMessage = `Erro registrado com o código ${error.requestId}.`;
         }
       } else if (typeof error === 'string') {
         errorMessage = error;
       }
 
-      if (error?.requestId && !errorMessage.includes(error.requestId)) {
-        errorMessage = `${errorMessage} Código: ${error.requestId}`;
+      const requestId = isRecord(error) && typeof error.requestId === 'string' ? error.requestId : null;
+      if (requestId && !errorMessage.includes(requestId)) {
+        errorMessage = `${errorMessage} Código: ${requestId}`;
       }
 
       toaster.create({

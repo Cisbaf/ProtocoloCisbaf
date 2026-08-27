@@ -7,6 +7,7 @@ import com.requerimentosback.form.model.Usuarios;
 import com.requerimentosback.form.model.enuns.FinArq;
 import com.requerimentosback.form.model.enuns.TipoGrafico;
 import com.requerimentosback.form.model.enuns.Unidades;
+import com.requerimentosback.form.model.erros.CampoDuplicadoException;
 import com.requerimentosback.form.repository.FormularioRepository;
 import com.requerimentosback.form.repository.MensagemRepository;
 import com.requerimentosback.form.repository.UsuariosRepository;
@@ -68,6 +69,7 @@ public class FormularioService {
         }
 
         Usuarios usuarioRequest = formulario.getUsuario();
+        normalizarEValidarUsuario(usuarioRequest);
 
         Usuarios usuario = usuariosRepository
                 .findById(usuarioRequest.getCpf())
@@ -97,6 +99,28 @@ public class FormularioService {
 
         emailService.enviarEmailNovoFormulario(formulario);
         return formulario;
+    }
+
+    private void normalizarEValidarUsuario(Usuarios usuario) {
+        if (usuario.getEmail() != null) {
+            usuario.setEmail(usuario.getEmail().trim());
+            usuariosRepository.findByEmailIgnoreCase(usuario.getEmail())
+                    .filter(cadastrado -> !cadastrado.getCpf().equals(usuario.getCpf()))
+                    .ifPresent(cadastrado -> {
+                        throw new CampoDuplicadoException("email", "Este e-mail já está cadastrado para outro usuário.");
+                    });
+        }
+
+        if (usuario.getMatricula() != null && usuario.getMatricula().isBlank()) {
+            usuario.setMatricula(null);
+        } else if (usuario.getMatricula() != null) {
+            usuario.setMatricula(usuario.getMatricula().trim());
+            usuariosRepository.findByMatricula(usuario.getMatricula())
+                    .filter(cadastrado -> !cadastrado.getCpf().equals(usuario.getCpf()))
+                    .ifPresent(cadastrado -> {
+                        throw new CampoDuplicadoException("matricula", "Esta matrícula já está cadastrada para outro usuário.");
+                    });
+        }
     }
 
     @Transactional

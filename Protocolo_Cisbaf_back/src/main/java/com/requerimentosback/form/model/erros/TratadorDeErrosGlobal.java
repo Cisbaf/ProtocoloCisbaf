@@ -2,6 +2,7 @@ package com.requerimentosback.form.model.erros;
 
 import jakarta.validation.ConstraintViolationException;
 import org.springframework.http.ResponseEntity;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
@@ -30,6 +31,18 @@ public class TratadorDeErrosGlobal {
     @ExceptionHandler(IllegalArgumentException.class)
     public ResponseEntity<Map<String, String>> tratarDadosInvalidos(IllegalArgumentException ex) {
         return ResponseEntity.badRequest().body(Map.of("error", ex.getMessage()));
+    }
+
+    @ExceptionHandler(CampoDuplicadoException.class)
+    public ResponseEntity<List<ErroDeValidacaoDto>> tratarCampoDuplicado(CampoDuplicadoException ex) {
+        return ResponseEntity.status(409).body(List.of(new ErroDeValidacaoDto(ex.getCampo(), ex.getMessage())));
+    }
+
+    @ExceptionHandler(DataIntegrityViolationException.class)
+    public ResponseEntity<Map<String, String>> tratarErroDeIntegridade() {
+        return ResponseEntity.status(409).body(Map.of(
+                "error", "Já existe um cadastro com um dos dados informados."
+        ));
     }
 
     @ExceptionHandler(AccessDeniedException.class)

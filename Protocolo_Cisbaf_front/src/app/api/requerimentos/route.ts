@@ -115,7 +115,10 @@ export async function POST(request: Request) {
         bodyPreview: text.slice(0, ERROR_PREVIEW_LIMIT),
       });
 
-      return NextResponse.json({ error: data, requestId }, { status: res.status });
+      const backendError = data && typeof data === 'object' && !Array.isArray(data) && 'error' in data
+        ? data.error
+        : data;
+      return NextResponse.json({ error: backendError, requestId }, { status: res.status });
     }
 
     return NextResponse.json(data);
