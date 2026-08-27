@@ -73,9 +73,12 @@ export default function ChatPanel({ formularioId, remetente, nomeRemetente }: Ch
 
     // Carregamento inicial + polling a cada 8 segundos
     useEffect(() => {
-        fetchMensagens();
+        const initialFetch = window.setTimeout(fetchMensagens, 0);
         const interval = setInterval(fetchMensagens, 8000);
-        return () => clearInterval(interval);
+        return () => {
+            clearTimeout(initialFetch);
+            clearInterval(interval);
+        };
     }, [fetchMensagens]);
 
     // Auto-scroll apenas quando uma NOVA mensagem chega dentro do container de chat

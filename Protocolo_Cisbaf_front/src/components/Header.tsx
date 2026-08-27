@@ -3,6 +3,7 @@
 import { Box, Container, Flex, Heading, Link, HStack, Text, VStack, Button } from "@chakra-ui/react";
 import { LayoutDashboard, UserCircle, Ticket, Menu as MenuIcon, X } from "lucide-react";
 import NextLink from "next/link";
+import Image from "next/image";
 import { useEffect, useState } from "react";
 import { ColorModeButton } from "@/components/ui/color-mode";
 
@@ -48,7 +49,7 @@ export default function Header() {
           <Link as={NextLink} href="/" _hover={{ textDecoration: "none" }} onClick={() => setIsMobileMenuOpen(false)}>
             <HStack gap={3}>
               <Box display="flex" alignItems="center" justifyContent="center">
-                <img src="/cisbaf.png" alt="Logo Cisbaf" style={{ height: '60px', width: 'auto', objectFit: 'contain' }} />
+                <Image src="/cisbaf.png" alt="Logo Cisbaf" width={60} height={60} style={{ height: '60px', width: 'auto', objectFit: 'contain' }} priority />
               </Box>
               <VStack align="start" gap={0}>
                 <Heading size={{ base: "sm", md: "md" }} fontWeight="black" color={{ base: "red.700", _dark: "red.400" }} letterSpacing="tight">

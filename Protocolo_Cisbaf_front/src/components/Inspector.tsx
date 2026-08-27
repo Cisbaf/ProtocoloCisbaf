@@ -2,14 +2,17 @@
 
 import { Formulario } from '@/components/types';
 import { toaster } from '@/components/ui/toaster';
-import { Badge, Box, Button, Card, Center, Container, HStack, Heading, SimpleGrid, Spinner, Table, Text, VStack } from '@chakra-ui/react';
+import { Badge, Box, Button, Card, Center, Container, HStack, Heading, SimpleGrid, Spinner, Table, Text, VStack, chakra } from '@chakra-ui/react';
 import { AlertCircle, Archive, ArchiveRestore, BarChartIcon, CheckCircle, Eye, RefreshCw, Search, Trash, Undo2, User, Users } from 'lucide-react';
 import { useRouter } from 'next/navigation';
-import { useEffect, useState } from 'react';
+import { ChangeEvent, useEffect, useState } from 'react';
 import Header from './Header';
 import AdminUsersModal, { AdminAccount } from './modal/AdminUsersModal';
 import ReqDetailsModal from './modal/ReqDetailsModal';
 import StatsModal from './modal/StatsModal';
+
+const StyledInput = chakra('input');
+const StyledSelect = chakra('select');
 
 export default function Inspector() {
   const router = useRouter();
@@ -319,13 +322,10 @@ export default function Inspector() {
                         <Box position="absolute" left={3} top="50%" transform="translateY(-50%)" zIndex={10} color={{ base: "gray.400", _dark: "slate.500" }}>
                           <Search size={16} />
                         </Box>
-                        <Box
-                          as="input"
-                          {...({
-                            placeholder: "Buscar...",
-                            value: nameFilter,
-                            onChange: (e: any) => setNameFilter(e.target.value)
-                          } as any)}
+                        <StyledInput
+                          placeholder="Buscar..."
+                          value={nameFilter}
+                          onChange={(event: ChangeEvent<HTMLInputElement>) => setNameFilter(event.target.value)}
                           w="full"
                           p="10px 10px 10px 36px"
                           borderRadius="12px"
@@ -343,12 +343,9 @@ export default function Inspector() {
                     {bases.length > 1 && (
                       <VStack align="start" gap={1}>
                         <Text fontSize="xs" fontWeight="black" color={{ base: "gray.500", _dark: "slate.400" }}>BASE / UNIDADE</Text>
-                        <Box
-                          as="select"
-                          {...({
-                            value: baseFilter,
-                            onChange: (e: any) => setBaseFilter(e.target.value)
-                          } as any)}
+                        <StyledSelect
+                          value={baseFilter}
+                          onChange={(event: ChangeEvent<HTMLSelectElement>) => setBaseFilter(event.target.value)}
                           w="full"
                           p="10px"
                           borderRadius="12px"
@@ -362,18 +359,15 @@ export default function Inspector() {
                         >
                           <option value="all">Todas as Bases</option>
                           {bases.map(b => <option key={b} value={b}>{b}</option>)}
-                        </Box>
+                        </StyledSelect>
                       </VStack>
                     )}
 
                     <VStack align="start" gap={1}>
                       <Text fontSize="xs" fontWeight="black" color={{ base: "gray.500", _dark: "slate.400" }}>ASSUNTO</Text>
-                      <Box
-                        as="select"
-                        {...({
-                          value: assuntoFilter,
-                          onChange: (e: any) => setAssuntoFilter(e.target.value)
-                        } as any)}
+                      <StyledSelect
+                        value={assuntoFilter}
+                        onChange={(event: ChangeEvent<HTMLSelectElement>) => setAssuntoFilter(event.target.value)}
                         w="full"
                         p="10px"
                         borderRadius="12px"
@@ -387,18 +381,15 @@ export default function Inspector() {
                       >
                         <option value="all">Todos os Assuntos</option>
                         {assuntosUnicos.map(a => <option key={a} value={a}>{a}</option>)}
-                      </Box>
+                      </StyledSelect>
                     </VStack>
 
                     <VStack align="start" gap={1}>
                       <Text fontSize="xs" fontWeight="black" color={{ base: "gray.500", _dark: "slate.400" }}>STATUS</Text>
                       {isArchiveMode ? (
-                        <Box
-                          as="select"
-                          {...({
-                            value: statusFilter,
-                            onChange: (e: any) => setStatusFilter(e.target.value)
-                          } as any)}
+                        <StyledSelect
+                          value={statusFilter}
+                          onChange={(event: ChangeEvent<HTMLSelectElement>) => setStatusFilter(event.target.value as typeof statusFilter)}
                           w="full"
                           p="10px"
                           borderRadius="12px"
@@ -413,14 +404,11 @@ export default function Inspector() {
                           <option value="all">Todos Ativos</option>
                           <option value="terminado">Terminado</option>
                           <option value="arquivado">Arquivado</option>
-                        </Box>
+                        </StyledSelect>
                       ) : (
-                        <Box
-                          as="select"
-                          {...({
-                            value: statusFilter,
-                            onChange: (e: any) => setStatusFilter(e.target.value)
-                          } as any)}
+                        <StyledSelect
+                          value={statusFilter}
+                          onChange={(event: ChangeEvent<HTMLSelectElement>) => setStatusFilter(event.target.value as typeof statusFilter)}
                           w="full"
                           p="10px"
                           borderRadius="12px"
@@ -435,7 +423,7 @@ export default function Inspector() {
                           <option value="all">Todos Ativos</option>
                           <option value="em_analise">Em Análise</option>
                           <option value="finalizado">Finalizados</option>
-                        </Box>
+                        </StyledSelect>
                       )}
                     </VStack>
                   </SimpleGrid>
@@ -467,7 +455,7 @@ export default function Inspector() {
                         >
                           <HStack justify="space-between" mb={3}>
                             <Text fontWeight="black" color={{ base: "blue.600", _dark: "blue.400" }} fontSize="xs">ID: {r.id}</Text>
-                            {renderStatus(r.finalizarArquivar as any)}
+                            {renderStatus(r.finalizarArquivar)}
                           </HStack>
 
                           <HStack gap={3} mb={3}>
@@ -570,7 +558,7 @@ export default function Inspector() {
                                 </VStack>
                               </Table.Cell>
                               <Table.Cell>
-                                {renderStatus(r.finalizarArquivar as any)}
+                                {renderStatus(r.finalizarArquivar)}
                               </Table.Cell>
                               <Table.Cell textAlign="right" px={6}>
                                 <HStack gap={2} justify="flex-end">
@@ -598,7 +586,7 @@ export default function Inspector() {
       <ReqDetailsModal
         req={selectedReq}
         onClose={() => setSelectedReq(null)}
-        renderStatus={renderStatus as any}
+        renderStatus={renderStatus}
         onApprove={(id) => {
           updateStatus(id, 'FINALIZADO');
           setSelectedReq(null);

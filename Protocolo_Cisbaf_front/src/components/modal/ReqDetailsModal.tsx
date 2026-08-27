@@ -33,7 +33,7 @@ import {
     User,
     X
 } from 'lucide-react';
-import { useMemo, useState } from 'react';
+import { useState } from 'react';
 import ChatPanel from './ChatPanel';
 
 // 2. Importe o jsPDF e o autoTable
@@ -45,8 +45,24 @@ interface ReqDetailsModalProps {
     onClose: () => void;
     onApprove: (id: string) => void;
     onArchive: (id: string) => void;
-    renderStatus: (finalizarArquivar: 'FINALIZADO' | 'ARQUIVADO' | 'EM_ANALISE' | 'TERMINADO') => React.ReactNode;
+    renderStatus: (finalizarArquivar?: Formulario['finalizarArquivar']) => React.ReactNode;
     onDownload: (arquivoPath: string) => void;
+}
+
+function formatarDataCriacao(dataCriacao?: string) {
+    if (!dataCriacao) return "—";
+
+    const dataObj = new Date(dataCriacao);
+    if (isNaN(dataObj.getTime())) return dataCriacao;
+
+    const dataFormatada = dataObj.toLocaleDateString('pt-BR', {
+        day: '2-digit', month: '2-digit', year: 'numeric'
+    });
+    const horaFormatada = dataObj.toLocaleTimeString('pt-BR', {
+        hour: '2-digit', minute: '2-digit'
+    });
+
+    return `${dataFormatada} às ${horaFormatada}`;
 }
 
 export default function ReqDetailsModal({
@@ -59,24 +75,7 @@ export default function ReqDetailsModal({
 }: ReqDetailsModalProps) {
     const [chatAberto, setChatAberto] = useState(false);
 
-    const dataCriacaoFormatada = useMemo(() => {
-        if (!req || !req.dataCriacao) return "—";
-        try {
-            const dataObj = new Date(req.dataCriacao);
-            if (isNaN(dataObj.getTime())) return req.dataCriacao;
-
-            const dataFormatada = dataObj.toLocaleDateString('pt-BR', {
-                day: '2-digit', month: '2-digit', year: 'numeric'
-            });
-            const horaFormatada = dataObj.toLocaleTimeString('pt-BR', {
-                hour: '2-digit', minute: '2-digit'
-            });
-
-            return `${dataFormatada} às ${horaFormatada}`;
-        } catch (e) {
-            return req.dataCriacao;
-        }
-    }, [req?.dataCriacao]);
+    const dataCriacaoFormatada = formatarDataCriacao(req?.dataCriacao);
 
     // 3. Função responsável por montar e baixar o PDF (INTACTA)
     const handleGerarPDF = () => {
@@ -102,6 +101,7 @@ export default function ReqDetailsModal({
         };
 
         // Tabela com os dados do Usuário
+        let dadosSolicitanteFinalY = 45;
         autoTable(doc, {
             startY: 45,
             head: [['Dados do Solicitante', '']],
@@ -116,12 +116,15 @@ export default function ReqDetailsModal({
             ],
             theme: 'grid',
             headStyles: { fillColor: [59, 130, 246] }, // Azul
-            columnStyles: { 0: { cellWidth: 50, fontStyle: 'bold' } }
+            columnStyles: { 0: { cellWidth: 50, fontStyle: 'bold' } },
+            didDrawPage: ({ cursor }) => {
+                if (cursor) dadosSolicitanteFinalY = cursor.y;
+            }
         });
 
         // Tabela com os dados do Requerimento
         autoTable(doc, {
-            startY: (doc as any).lastAutoTable.finalY + 10,
+            startY: dadosSolicitanteFinalY + 10,
             head: [['Detalhes da Solicitação', '']],
             body: [
                 ['Status Atual', statusMap[req.finalizarArquivar || 'EM_ANALISE'] || 'Em Análise'],

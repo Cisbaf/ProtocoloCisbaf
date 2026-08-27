@@ -3,13 +3,13 @@
 import { toaster } from '@/components/ui/toaster';
 import {
     Box, Button, Center,
-    HStack, SimpleGrid, Text, VStack
+    HStack, SimpleGrid, Text, VStack, chakra
 } from '@chakra-ui/react';
 import {
     BarChart as BarChartIcon,
     FileText, XCircle
 } from 'lucide-react';
-import { useEffect, useState } from 'react';
+import { ChangeEvent, useState } from 'react';
 import {
     Area, AreaChart, Bar, BarChart, CartesianGrid, Cell, Legend, Pie, PieChart, ResponsiveContainer, Tooltip, XAxis, YAxis
 } from 'recharts';
@@ -21,32 +21,101 @@ interface StatsModalProps {
 }
 
 const PIE_COLORS = ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4899', '#14b8a6', '#f97316'];
+const StyledInput = chakra('input');
+const StyledSelect = chakra('select');
+
+type ChartType = 'TODOS' | 'EVOLUCAO_DIARIA' | 'RANKING_UNIDADES' | 'VOLUME_CARGO';
+type ChartData = { label: string; value: number };
+
+interface Charts {
+    unidades: ChartData[];
+    evolucao: ChartData[];
+    cargos: ChartData[];
+}
+
+function GraficoEvolucao({ data }: { data: ChartData[] }) {
+    return (
+        <Box h="300px" w="full" p={4} borderRadius="xl" borderColor={{ base: "gray.100", _dark: "slate.700" }}>
+            <Text fontSize="sm" fontWeight="bold" color={{ base: "gray.500", _dark: "slate.400" }} mb={4}>EVOLUÇÃO DE SOLICITAÇÕES</Text>
+            <ResponsiveContainer width="100%" height="100%">
+                <AreaChart data={data} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
+                    <defs>
+                        <linearGradient id="colorValue" x1="0" y1="0" x2="0" y2="1">
+                            <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.3} />
+                            <stop offset="95%" stopColor="#3b82f6" stopOpacity={0} />
+                        </linearGradient>
+                    </defs>
+                    <CartesianGrid strokeDasharray="3 3" vertical={false} />
+                    <XAxis dataKey="label" tick={{ fill: '#64748b', fontSize: 12 }} />
+                    <YAxis tick={{ fill: '#64748b', fontSize: 12 }} />
+                    <Tooltip contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px rgba(0,0,0,0.1)' }} />
+                    <Area type="monotone" dataKey="value" stroke="#3b82f6" strokeWidth={3} fillOpacity={1} fill="url(#colorValue)" name="Solicitações" />
+                </AreaChart>
+            </ResponsiveContainer>
+        </Box>
+    );
+}
+
+function GraficoUnidades({ data }: { data: ChartData[] }) {
+    return (
+        <Box h="330px" w="full" p={4} borderRadius="xl">
+            <Text fontSize="sm" fontWeight="bold" color={{ base: "gray.500", _dark: "slate.400" }} mb={4}>VOLUME POR UNIDADE</Text>
+            <ResponsiveContainer width="100%" height="100%">
+                <PieChart>
+                    <Pie
+                        data={data}
+                        cx="50%"
+                        cy="50%"
+                        innerRadius={60}
+                        outerRadius={90}
+                        paddingAngle={4}
+                        dataKey="value"
+                        nameKey="label"
+                        label={({ percent }) => `${((percent ?? 0) * 100).toFixed(0)}%`}
+                    >
+                        {data.map((_, index) => (
+                            <Cell key={`cell-${index}`} fill={PIE_COLORS[index % PIE_COLORS.length]} />
+                        ))}
+                    </Pie>
+                    <Tooltip contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px rgba(0,0,0,0.1)' }} />
+                    <Legend verticalAlign="bottom" height={36} />
+                </PieChart>
+            </ResponsiveContainer>
+        </Box>
+    );
+}
+
+function GraficoCargos({ data }: { data: ChartData[] }) {
+    return (
+        <Box h="300px" w="full" p={4} borderRadius="xl">
+            <Text fontSize="sm" fontWeight="bold" color={{ base: "gray.500", _dark: "slate.400" }} mb={4}>VOLUME POR CARGO</Text>
+            <ResponsiveContainer width="100%" height="100%">
+                <BarChart data={data} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
+                    <CartesianGrid strokeDasharray="3 3" vertical={false} />
+                    <XAxis dataKey="label" tick={false} />
+                    <YAxis tick={{ fill: '#64748b', fontSize: 12 }} />
+                    <Tooltip cursor={{ fill: '#f1f5f9' }} contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px rgba(0,0,0,0.1)' }} />
+                    <Bar dataKey="value" fill="#8b5cf6" radius={[4, 4, 0, 0]} name="Quantidade" />
+                </BarChart>
+            </ResponsiveContainer>
+        </Box>
+    );
+}
 
 export default function StatsModal({ isOpen, onClose, bases }: StatsModalProps) {
     const [startDate, setStartDate] = useState("2000-01-01");
-    const [endDate, setEndDate] = useState("");
-    const [chartType, setChartType] = useState("TODOS");
-    const [unidade, setUnidade] = useState(bases.length === 1 ? bases[1] : "all");
+    const [endDate, setEndDate] = useState(() => new Date().toISOString().split('T')[0]);
+    const [chartType, setChartType] = useState<ChartType>("TODOS");
+    const [selectedUnidade, setSelectedUnidade] = useState("all");
     const [loadingStats, setLoadingStats] = useState(false);
-
-    useEffect(() => {
-        if (bases.length === 1) {
-            setUnidade(bases[0]); // Força a única base no estado
-        } else if (bases.length > 1 && unidade === "all") {
-            setUnidade("all");
-        }
-    }, [bases]);
-
-    useEffect(() => {
-        const hoje = new Date().toISOString().split('T')[0];
-        setEndDate(hoje);
-    }, []);
-
-    const [charts, setCharts] = useState({
-        unidades: [] as { label: string, value: number }[],
-        evolucao: [] as { label: string, value: number }[],
-        cargos: [] as { label: string, value: number }[]
+    const [charts, setCharts] = useState<Charts>({
+        unidades: [],
+        evolucao: [],
+        cargos: []
     });
+    const unidade = bases.length === 1
+        ? bases[0]
+        : bases.includes(selectedUnidade) ? selectedUnidade : "all";
 
     if (!isOpen) return null;
 
@@ -99,7 +168,7 @@ export default function StatsModal({ isOpen, onClose, bases }: StatsModalProps) 
     const exportToExcel = () => {
         let content = "\uFEFF"; // BOM para UTF-8 (acentos no Excel)
 
-        const createCsvSection = (title: string, data: { label: string, value: number }[]) => {
+        const createCsvSection = (title: string, data: ChartData[]) => {
             if (data.length === 0) return "";
             return `${title}\nCategoria,Quantidade\n` + data.map(d => `"${d.label}",${d.value}`).join("\n") + "\n\n";
         };
@@ -123,71 +192,8 @@ export default function StatsModal({ isOpen, onClose, bases }: StatsModalProps) 
         document.body.appendChild(link);
         link.click();
         document.body.removeChild(link);
+        URL.revokeObjectURL(url);
     };
-
-    // Componentes de Gráficos Isolados
-    const GraficoEvolucao = () => (
-        <Box h="300px" w="full" p={4} borderRadius="xl" borderColor={{ base: "gray.100", _dark: "slate.700" }}>
-            <Text fontSize="sm" fontWeight="bold" color={{ base: "gray.500", _dark: "slate.400" }} mb={4}>EVOLUÇÃO DE SOLICITAÇÕES</Text>
-            <ResponsiveContainer width="100%" height="100%">
-                <AreaChart data={charts.evolucao} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
-                    <defs>
-                        <linearGradient id="colorValue" x1="0" y1="0" x2="0" y2="1">
-                            <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.3} />
-                            <stop offset="95%" stopColor="#3b82f6" stopOpacity={0} />
-                        </linearGradient>
-                    </defs>
-                    <CartesianGrid strokeDasharray="3 3" vertical={false} />
-                    <XAxis dataKey="label" tick={{ fill: '#64748b', fontSize: 12 }} />
-                    <YAxis tick={{ fill: '#64748b', fontSize: 12 }} />
-                    <Tooltip contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px rgba(0,0,0,0.1)' }} />
-                    <Area type="monotone" dataKey="value" stroke="#3b82f6" strokeWidth={3} fillOpacity={1} fill="url(#colorValue)" name="Solicitações" />
-                </AreaChart>
-            </ResponsiveContainer>
-        </Box>
-    );
-
-    const GraficoUnidades = () => (
-        <Box h="330px" w="full" p={4} borderRadius="xl" >
-            <Text fontSize="sm" fontWeight="bold" color={{ base: "gray.500", _dark: "slate.400" }} mb={4}>VOLUME POR UNIDADE</Text>
-            <ResponsiveContainer width="100%" height="100%">
-                <PieChart>
-                    <Pie
-                        data={charts.unidades}
-                        cx="50%"
-                        cy="50%"
-                        innerRadius={60}
-                        outerRadius={90}
-                        paddingAngle={4}
-                        dataKey="value"
-                        nameKey="label"
-                        label={({ percent }) => `${(percent! * 100).toFixed(0)}%`}
-                    >
-                        {charts.unidades.map((entry, index) => (
-                            <Cell key={`cell-${index}`} fill={PIE_COLORS[index % PIE_COLORS.length]} />
-                        ))}
-                    </Pie>
-                    <Tooltip contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px rgba(0,0,0,0.1)' }} />
-                    <Legend verticalAlign="bottom" height={36} />
-                </PieChart>
-            </ResponsiveContainer>
-        </Box>
-    );
-
-    const GraficoCargos = () => (
-        <Box h="300px" w="full" p={4} borderRadius="xl" >
-            <Text fontSize="sm" fontWeight="bold" color={{ base: "gray.500", _dark: "slate.400" }} mb={4}>VOLUME POR CARGO</Text>
-            <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={charts.cargos} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
-                    <CartesianGrid strokeDasharray="3 3" vertical={false} />
-                    <XAxis dataKey="label" tick={false} />
-                    <YAxis tick={{ fill: '#64748b', fontSize: 12 }} />
-                    <Tooltip cursor={{ fill: '#f1f5f9' }} contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px rgba(0,0,0,0.1)' }} />
-                    <Bar dataKey="value" fill="#8b5cf6" radius={[4, 4, 0, 0]} name="Quantidade" />
-                </BarChart>
-            </ResponsiveContainer>
-        </Box>
-    );
 
     const hasData = charts.unidades.length > 0 || charts.evolucao.length > 0 || charts.cargos.length > 0;
 
@@ -216,32 +222,28 @@ export default function StatsModal({ isOpen, onClose, bases }: StatsModalProps) 
                         <SimpleGrid columns={{ base: 1, md: 5 }} gap={4} alignItems="end">
                             <VStack align="start" gap={1}>
                                 <Text fontSize="xs" fontWeight="black" color={{ base: "gray.500", _dark: "slate.400" }}>DATA INICIAL</Text>
-                                {/* @ts-ignore */}
-                                <Box as="input" type="date" value={startDate} onChange={(e: any) => setStartDate(e.target.value)} w="full" p="10px" borderRadius="12px" border="1px solid" borderColor={{ base: "gray.200", _dark: "slate.600" }} bg={{ base: "white", _dark: "slate.900" }} color={{ base: "black", _dark: "white" }} fontSize="14px" fontWeight="600" outline="none" />
+                                <StyledInput type="date" value={startDate} onChange={(event: ChangeEvent<HTMLInputElement>) => setStartDate(event.target.value)} w="full" p="10px" borderRadius="12px" border="1px solid" borderColor={{ base: "gray.200", _dark: "slate.600" }} bg={{ base: "white", _dark: "slate.900" }} color={{ base: "black", _dark: "white" }} fontSize="14px" fontWeight="600" outline="none" />
                             </VStack>
                             <VStack align="start" gap={1}>
                                 <Text fontSize="xs" fontWeight="black" color={{ base: "gray.500", _dark: "slate.400" }}>DATA FINAL</Text>
-                                {/* @ts-ignore */}
-                                <Box as="input" type="date" value={endDate} onChange={(e: any) => setEndDate(e.target.value)} w="full" p="10px" borderRadius="12px" border="1px solid" borderColor={{ base: "gray.200", _dark: "slate.600" }} bg={{ base: "white", _dark: "slate.900" }} color={{ base: "black", _dark: "white" }} fontSize="14px" fontWeight="600" outline="none" />
+                                <StyledInput type="date" value={endDate} onChange={(event: ChangeEvent<HTMLInputElement>) => setEndDate(event.target.value)} w="full" p="10px" borderRadius="12px" border="1px solid" borderColor={{ base: "gray.200", _dark: "slate.600" }} bg={{ base: "white", _dark: "slate.900" }} color={{ base: "black", _dark: "white" }} fontSize="14px" fontWeight="600" outline="none" />
                             </VStack>
 
                             {/* NOVO: Select de Unidade */}
                             <VStack align="start" gap={1}>
                                 <Text fontSize="xs" fontWeight="black" color={{ base: "gray.500", _dark: "slate.400" }}>UNIDADE</Text>
-                                {/* @ts-ignore */}
-                                <Box as="select" value={unidade} onChange={(e: any) => setUnidade(e.target.value)} w="full" p="10px" borderRadius="12px" border="1px solid" borderColor={{ base: "gray.200", _dark: "slate.600" }} bg={{ base: "white", _dark: "slate.900" }} color={{ base: "black", _dark: "white" }} fontSize="14px" fontWeight="600" outline="none">
+                                <StyledSelect value={unidade} onChange={(event: ChangeEvent<HTMLSelectElement>) => setSelectedUnidade(event.target.value)} w="full" p="10px" borderRadius="12px" border="1px solid" borderColor={{ base: "gray.200", _dark: "slate.600" }} bg={{ base: "white", _dark: "slate.900" }} color={{ base: "black", _dark: "white" }} fontSize="14px" fontWeight="600" outline="none">
                                     {bases.length > 1 && (
                                         <option value="all">Todas as Unidades</option>
                                     )}
                                     {bases.map(b => <option key={b} value={b}>{b}</option>)}
-                                </Box>
+                                </StyledSelect>
                             </VStack>
 
 
                             <VStack align="start" gap={1}>
                                 <Text fontSize="xs" fontWeight="black" color={{ base: "gray.500", _dark: "slate.400" }}>VISUALIZAÇÃO</Text>
-                                {/* @ts-ignore */}
-                                <Box as="select" value={chartType} onChange={(e: any) => setChartType(e.target.value)} w="full" p="10px" borderRadius="12px" border="1px solid" borderColor={{ base: "gray.200", _dark: "slate.600" }} bg={{ base: "white", _dark: "slate.900" }} color={{ base: "black", _dark: "white" }} fontSize="14px" fontWeight="600" outline="none">
+                                <StyledSelect value={chartType} onChange={(event: ChangeEvent<HTMLSelectElement>) => setChartType(event.target.value as ChartType)} w="full" p="10px" borderRadius="12px" border="1px solid" borderColor={{ base: "gray.200", _dark: "slate.600" }} bg={{ base: "white", _dark: "slate.900" }} color={{ base: "black", _dark: "white" }} fontSize="14px" fontWeight="600" outline="none">
                                     <option value="TODOS">Visão Geral (Todos)</option>
                                     <option value="EVOLUCAO_DIARIA">Apenas Evolução Diária</option>
                                     <option value="RANKING_UNIDADES">Apenas Volume por Unidade</option>
@@ -249,7 +251,7 @@ export default function StatsModal({ isOpen, onClose, bases }: StatsModalProps) 
                                         <option value="VOLUME_CARGO">Apenas Volume por Cargo</option>
 
                                     )}
-                                </Box>
+                                </StyledSelect>
                             </VStack>
                             <Button colorPalette="blue" onClick={() => fetchStats()} loading={loadingStats ? true : undefined} w="full">
                                 Gerar Relatórios
@@ -269,16 +271,16 @@ export default function StatsModal({ isOpen, onClose, bases }: StatsModalProps) 
                         <VStack align="stretch" gap={4}>
                             {/* Gráfico 1: Evolução Temporal (Largura total, ou apenas se for selecionado/Todos) */}
                             {(chartType === "TODOS" || chartType === "EVOLUCAO_DIARIA") && charts.evolucao.length > 0 && (
-                                <GraficoEvolucao />
+                                <GraficoEvolucao data={charts.evolucao} />
                             )}
 
                             {/* Gráficos 2 e 3: Unidades e Cargos (Lado a lado no Desktop, um embaixo do outro no Mobile) */}
                             <SimpleGrid columns={{ base: 1, md: chartType === "TODOS" ? 2 : 1 }} gap={4}>
                                 {(chartType === "TODOS" || chartType === "RANKING_UNIDADES") && charts.unidades.length > 1 && (
-                                    <GraficoUnidades />
+                                    <GraficoUnidades data={charts.unidades} />
                                 )}
                                 {(chartType === "TODOS" || chartType === "VOLUME_CARGO") && charts.cargos.length > 0 && (
-                                    <GraficoCargos />
+                                    <GraficoCargos data={charts.cargos} />
                                 )}
                             </SimpleGrid>
                         </VStack>
