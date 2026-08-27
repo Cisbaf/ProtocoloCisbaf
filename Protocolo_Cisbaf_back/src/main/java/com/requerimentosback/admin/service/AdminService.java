@@ -90,6 +90,30 @@ public class AdminService implements UserDetailsService {
         return adminMapper.toAdminResponse(savedEntity);
     }
 
+    public AdminResponse update(@NonNull String username, AdminRequest request, Principal principal) {
+        var current = requireAcessoTotal(principal);
+        if (request == null) {
+            throw new IllegalArgumentException("Dados do usuário são obrigatórios");
+        }
+
+        var entity = adminRepository.findByUsername(username)
+                .orElseThrow(() -> new UsernameNotFoundException("Usuário não encontrado: " + username));
+        Set<String> assuntos = normalizarAssuntos(request.assuntosPermitidos());
+        boolean acessoTotal = request.acessoTotal() || assuntos.isEmpty();
+
+        if (current.getUsername().equalsIgnoreCase(entity.getUsername()) && !acessoTotal) {
+            throw new IllegalArgumentException("Você não pode remover seu próprio acesso de administrador");
+        }
+
+        entity.setAssuntosPermitidos(new LinkedHashSet<>(assuntos));
+        entity.setAcessoTotal(acessoTotal);
+        if (request.password() != null && !request.password().isBlank()) {
+            entity.setPassword(passwordEncoder.encode(request.password().trim()));
+        }
+
+        return adminMapper.toAdminResponse(adminRepository.save(entity));
+    }
+
 
     public void delete(@NonNull String username, Principal principal) {
         var current = requireAcessoTotal(principal);

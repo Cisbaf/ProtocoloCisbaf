@@ -3,7 +3,7 @@
 import { assuntos } from '@/components/types';
 import { toaster } from '@/components/ui/toaster';
 import { Badge, Box, Button, HStack, Input, SimpleGrid, Spinner, Text, VStack } from '@chakra-ui/react';
-import { ShieldCheck, Trash2, UserPlus, X } from 'lucide-react';
+import { Pencil, ShieldCheck, Trash2, UserPlus, X } from 'lucide-react';
 import { ChangeEvent, FormEvent, useEffect, useState } from 'react';
 
 export interface AdminAccount {
@@ -25,6 +25,7 @@ export default function AdminUsersModal({ isOpen, onClose, currentUsername }: Ad
   const [password, setPassword] = useState('');
   const [assuntosSelecionados, setAssuntosSelecionados] = useState<string[]>([]);
   const [acessoTotal, setAcessoTotal] = useState(false);
+  const [editingUser, setEditingUser] = useState<AdminAccount | null>(null);
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
 
@@ -59,13 +60,38 @@ export default function AdminUsersModal({ isOpen, onClose, currentUsername }: Ad
     );
   };
 
+  const resetForm = () => {
+    setUsername('');
+    setPassword('');
+    setAssuntosSelecionados([]);
+    setAcessoTotal(false);
+    setEditingUser(null);
+  };
+
+  const editUser = (user: AdminAccount) => {
+    setEditingUser(user);
+    setUsername(user.username);
+    setPassword('');
+    setAssuntosSelecionados(user.assuntosPermitidos);
+    setAcessoTotal(user.acessoTotal);
+  };
+
+  const handleClose = () => {
+    resetForm();
+    onClose();
+  };
+
   const handleSubmit = async (event: FormEvent) => {
     event.preventDefault();
 
     setSaving(true);
     try {
-      const res = await fetch('/api/admin/users', {
-        method: 'POST',
+      const isEditing = editingUser !== null;
+      const endpoint = isEditing
+        ? `/api/admin/users/${encodeURIComponent(editingUser.username)}`
+        : '/api/admin/users';
+      const res = await fetch(endpoint, {
+        method: isEditing ? 'PUT' : 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           username,
@@ -76,18 +102,17 @@ export default function AdminUsersModal({ isOpen, onClose, currentUsername }: Ad
       });
       if (!res.ok) {
         const body = await res.json().catch(() => null);
-        throw new Error(body?.message || body?.error || 'Não foi possível criar o usuário');
+        throw new Error(body?.message || body?.error || (isEditing
+          ? 'Não foi possível editar o usuário'
+          : 'Não foi possível criar o usuário'));
       }
 
-      setUsername('');
-      setPassword('');
-      setAssuntosSelecionados([]);
-      setAcessoTotal(false);
+      resetForm();
       await loadUsers();
-      toaster.create({ title: 'Usuário criado com sucesso', type: 'success' });
+      toaster.create({ title: isEditing ? 'Usuário atualizado com sucesso' : 'Usuário criado com sucesso', type: 'success' });
     } catch (error: unknown) {
       toaster.create({
-        title: 'Erro ao criar usuário',
+        title: editingUser ? 'Erro ao editar usuário' : 'Erro ao criar usuário',
         description: error instanceof Error ? error.message : 'Erro interno',
         type: 'error',
       });
@@ -118,24 +143,27 @@ export default function AdminUsersModal({ isOpen, onClose, currentUsername }: Ad
               <Text fontSize="xs" color="slate.300">Defina exatamente quais assuntos cada usuário pode visualizar</Text>
             </Box>
           </HStack>
-          <Button aria-label="Fechar" variant="ghost" color="white" onClick={onClose}><X /></Button>
+          <Button aria-label="Fechar" variant="ghost" color="white" onClick={handleClose}><X /></Button>
         </HStack>
 
         <SimpleGrid columns={{ base: 1, lg: 2 }} gap={0}>
           <Box as="form" onSubmit={handleSubmit} p={{ base: 5, md: 8 }} borderRight={{ lg: '1px solid' }} borderColor={{ base: 'gray.200', _dark: 'slate.700' }}>
-            <HStack mb={5}><UserPlus size={20} /><Text fontWeight="black">Novo usuário</Text></HStack>
+            <HStack mb={5}>
+              {editingUser ? <Pencil size={20} /> : <UserPlus size={20} />}
+              <Text fontWeight="black">{editingUser ? `Editar ${editingUser.username}` : 'Novo usuário'}</Text>
+            </HStack>
             <VStack align="stretch" gap={4}>
               <Box>
                 <Text fontSize="xs" fontWeight="black" mb={1}>USUÁRIO</Text>
-                <Input required value={username} onChange={(event: ChangeEvent<HTMLInputElement>) => setUsername(event.target.value)} autoComplete="off" borderRadius="xl" bg={{ base: 'white', _dark: 'slate.800' }} color={{ base: 'slate.900', _dark: 'white' }} borderColor={{ base: 'gray.300', _dark: 'slate.600' }} />
+                <Input required disabled={editingUser !== null} value={username} onChange={(event: ChangeEvent<HTMLInputElement>) => setUsername(event.target.value)} autoComplete="off" borderRadius="xl" bg={{ base: 'white', _dark: 'slate.800' }} color={{ base: 'slate.900', _dark: 'white' }} borderColor={{ base: 'gray.300', _dark: 'slate.600' }} />
               </Box>
               <Box>
                 <Text fontSize="xs" fontWeight="black" mb={1}>SENHA</Text>
-                <Input required type="password" minLength={4} value={password} onChange={(event: ChangeEvent<HTMLInputElement>) => setPassword(event.target.value)} autoComplete="new-password" borderRadius="xl" bg={{ base: 'white', _dark: 'slate.800' }} color={{ base: 'slate.900', _dark: 'white' }} borderColor={{ base: 'gray.300', _dark: 'slate.600' }} />
+                <Input required={!editingUser} type="password" minLength={4} value={password} onChange={(event: ChangeEvent<HTMLInputElement>) => setPassword(event.target.value)} autoComplete="new-password" placeholder={editingUser ? 'Deixe em branco para manter a senha' : undefined} borderRadius="xl" bg={{ base: 'white', _dark: 'slate.800' }} color={{ base: 'slate.900', _dark: 'white' }} borderColor={{ base: 'gray.300', _dark: 'slate.600' }} />
               </Box>
 
               <HStack p={3} border="1px solid" borderColor={acessoTotal ? { base: 'green.400', _dark: 'green.600' } : { base: 'gray.200', _dark: 'slate.600' }} borderRadius="xl" bg={acessoTotal ? { base: 'green.50', _dark: 'green.950' } : { base: 'gray.50', _dark: 'slate.800' }}>
-                <input type="checkbox" checked={acessoTotal} onChange={(event: ChangeEvent<HTMLInputElement>) => setAcessoTotal(event.target.checked)} style={{ width: 18, height: 18 }} />
+                <input type="checkbox" checked={acessoTotal} disabled={editingUser?.username.toLowerCase() === currentUsername.toLowerCase()} onChange={(event: ChangeEvent<HTMLInputElement>) => setAcessoTotal(event.target.checked)} style={{ width: 18, height: 18 }} />
                 <Box>
                   <Text fontWeight="bold">Acesso de Administrador</Text>
                   <Text fontSize="xs" color={{ base: 'gray.600', _dark: 'slate.200' }}>Inclui todos os assuntos atuais e futuros, além de permitir a adição e remoção de usuários.</Text>
@@ -161,7 +189,12 @@ export default function AdminUsersModal({ isOpen, onClose, currentUsername }: Ad
                 </Box>
               )}
 
-              <Button type="submit" colorPalette="blue" loading={saving} borderRadius="xl">Criar usuário</Button>
+              <HStack>
+                <Button type="submit" flex={1} colorPalette="blue" loading={saving} borderRadius="xl">
+                  {editingUser ? 'Salvar alterações' : 'Criar usuário'}
+                </Button>
+                {editingUser && <Button type="button" variant="outline" onClick={resetForm} borderRadius="xl">Cancelar</Button>}
+              </HStack>
             </VStack>
           </Box>
 
@@ -178,7 +211,10 @@ export default function AdminUsersModal({ isOpen, onClose, currentUsername }: Ad
                           {user.acessoTotal ? <Badge bg="green.600" color="white">Acesso total</Badge> : user.assuntosPermitidos.map((assunto) => <Badge key={assunto} bg="blue.600" color="white">{assunto}</Badge>)}
                         </HStack>
                       </Box>
-                      <Button aria-label="Excluir usuário" size="sm" colorPalette="red" variant="ghost" disabled={user.username === currentUsername} onClick={() => void deleteUser(user)}><Trash2 size={17} /></Button>
+                      <HStack gap={1}>
+                        <Button aria-label={`Editar usuário ${user.username}`} size="sm" colorPalette="blue" variant="ghost" onClick={() => editUser(user)}><Pencil size={17} /></Button>
+                        <Button aria-label="Excluir usuário" size="sm" colorPalette="red" variant="ghost" disabled={user.username === currentUsername} onClick={() => void deleteUser(user)}><Trash2 size={17} /></Button>
+                      </HStack>
                     </HStack>
                   </Box>
                 ))}

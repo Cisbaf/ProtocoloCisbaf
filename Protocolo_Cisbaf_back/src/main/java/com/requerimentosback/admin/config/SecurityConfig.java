@@ -40,6 +40,8 @@ public class SecurityConfig {
 
                         .requestMatchers(HttpMethod.POST, "/admin/login").permitAll()
 
+                        .requestMatchers(HttpMethod.PUT, "/admin/{username}").hasAuthority("ACESSO_TOTAL")
+
                         .requestMatchers(HttpMethod.DELETE, "/admin/{username}").hasAuthority("ACESSO_TOTAL")
 
 

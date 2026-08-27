@@ -47,6 +47,15 @@ public class AdminController {
         return ResponseEntity.created(uri).body(admin);
     }
 
+    @PutMapping("/{username}")
+    public ResponseEntity<AdminResponse> update(
+            @PathVariable String username,
+            @RequestBody AdminRequest request,
+            Principal principal
+    ) {
+        return ResponseEntity.ok(adminService.update(username, request, principal));
+    }
+
     @PostMapping("/login")
     public ResponseEntity<Void> login(@RequestBody LoginDTO login, HttpServletResponse response) throws AuthenticationException {
         try {
