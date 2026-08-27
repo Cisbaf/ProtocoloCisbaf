@@ -34,6 +34,7 @@ public class AdminService implements UserDetailsService {
             "Desligamento",
             "Folha de Pagamento",
             "Ouvidoria",
+            "Responsáveis Técnicos",
             "Assuntos Administrativos"
     );
 
