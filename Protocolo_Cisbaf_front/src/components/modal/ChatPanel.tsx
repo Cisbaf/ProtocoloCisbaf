@@ -112,7 +112,9 @@ export default function ChatPanel({ formularioId, remetente, nomeRemetente }: Ch
 
     const handleDownloadArquivo = async (arquivoPath: string) => {
         try {
-            const res = await fetch(`/api/download/${arquivoPath}`);
+            const res = await fetch(
+                `/api/download/${encodeURIComponent(arquivoPath)}?formularioId=${encodeURIComponent(formularioId)}`
+            );
             if (!res.ok) throw new Error("Erro ao baixar arquivo");
             const blob = await res.blob();
 

@@ -227,6 +227,38 @@ class FormularioServicePermissionTest {
     }
 
     @Test
+    void exigeAssinaturaAoArquivarRequerimento() {
+        var existente = Formulario.builder().id("123").finalizarArquivar(FinArq.EM_ANALISE).build();
+        prepararAtualizacaoStatus(existente);
+
+        var exception = assertThrows(IllegalArgumentException.class,
+                () -> service.updateStatusByAdmin("123", FinArq.ARQUIVADO, null, principal));
+
+        assertEquals("A assinatura é obrigatória para arquivar o requerimento", exception.getMessage());
+        verify(repository, never()).saveAndFlush(any());
+    }
+
+    @Test
+    void adicionaArquivamentoAssinadoAoHistorico() {
+        var existente = Formulario.builder().id("123").finalizarArquivar(FinArq.EM_ANALISE).build();
+        prepararAtualizacaoStatus(existente);
+        when(repository.saveAndFlush(any(Formulario.class))).thenAnswer(invocation -> invocation.getArgument(0));
+
+        var resultado = service.updateStatusByAdmin(
+                "123",
+                FinArq.ARQUIVADO,
+                "Carlos Souza",
+                principal
+        );
+
+        var evento = resultado.getHistoricoAssinaturas().getFirst();
+        assertEquals("ARQUIVOU", evento.getAcao());
+        assertEquals("Carlos Souza", evento.getNome());
+        org.junit.jupiter.api.Assertions.assertNotNull(evento.getData());
+        assertEquals(FinArq.ARQUIVADO, resultado.getFinalizarArquivar());
+    }
+
+    @Test
     void informaOCampoQuandoEmailPertenceAOutroUsuario() {
         var usuarioRequest = Usuarios.builder()
                 .cpf("12345678909")

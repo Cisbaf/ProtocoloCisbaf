@@ -1,7 +1,7 @@
 'use client';
 
 import { Box, Button, HStack, Input, Text, VStack } from '@chakra-ui/react';
-import { CheckCircle, PenLine, RotateCcw, X } from 'lucide-react';
+import { Archive, CheckCircle, PenLine, RotateCcw, X } from 'lucide-react';
 import { FormEvent, useState } from 'react';
 
 const contarLetras = (valor: string) => valor.match(/\p{L}/gu)?.length ?? 0;
@@ -9,7 +9,7 @@ const contemApenasLetrasEEspacos = (valor: string) => /^[\p{L} ]*$/u.test(valor)
 
 interface ProcessSignatureModalProps {
     isOpen: boolean;
-    action: 'FINALIZAR' | 'REABRIR';
+    action: 'FINALIZAR' | 'REABRIR' | 'ARQUIVAR';
     loading: boolean;
     onCancel: () => void;
     onConfirm: (assinatura: string) => void;
@@ -27,6 +27,10 @@ export default function ProcessSignatureModal({
     if (!isOpen) return null;
 
     const reabrindo = action === 'REABRIR';
+    const arquivando = action === 'ARQUIVAR';
+    const corAcao = reabrindo ? 'blue' : arquivando ? 'red' : 'green';
+    const nomeAcao = reabrindo ? 'reabertura' : arquivando ? 'arquivamento' : 'finalização';
+    const verboAcao = reabrindo ? 'reabriu' : arquivando ? 'arquivou' : 'finalizou';
     const caracteresValidos = contemApenasLetrasEEspacos(assinatura);
     const assinaturaValida = caracteresValidos && contarLetras(assinatura) >= 3;
     const handleSubmit = (event: FormEvent) => {
@@ -61,15 +65,15 @@ export default function ProcessSignatureModal({
                 overflow="hidden"
             >
                 <HStack px={6} py={5} bg={{ base: 'slate.800', _dark: 'slate.950' }} color="white" gap={3}>
-                    <Box p={2} bg={reabrindo ? 'blue.500' : 'green.500'} borderRadius="xl">
-                        {reabrindo ? <RotateCcw size={20} /> : <PenLine size={20} />}
+                    <Box p={2} bg={`${corAcao}.500`} borderRadius="xl">
+                        {reabrindo ? <RotateCcw size={20} /> : arquivando ? <Archive size={20} /> : <PenLine size={20} />}
                     </Box>
                     <Box flex={1}>
                         <Text fontWeight="black" fontSize="lg">
-                            Assinatura da {reabrindo ? 'reabertura' : 'finalização'}
+                            Assinatura de {nomeAcao}
                         </Text>
                         <Text fontSize="sm" color="slate.300">
-                            Informe o nome de quem {reabrindo ? 'reabriu' : 'finalizou'} o processo.
+                            Informe o nome de quem {verboAcao} o processo.
                         </Text>
                     </Box>
                     <Button aria-label="Fechar" variant="ghost" color="white" size="sm" onClick={onCancel} disabled={loading}>
@@ -111,9 +115,9 @@ export default function ProcessSignatureModal({
                         <Button type="button" variant="ghost" onClick={onCancel} disabled={loading}>
                             Cancelar
                         </Button>
-                        <Button type="submit" colorPalette={reabrindo ? 'blue' : 'green'} loading={loading} disabled={!assinaturaValida}>
-                            {reabrindo ? <RotateCcw size={18} /> : <CheckCircle size={18} />}
-                            {reabrindo ? 'Reabrir e assinar' : 'Finalizar e assinar'}
+                        <Button type="submit" colorPalette={corAcao} loading={loading} disabled={!assinaturaValida}>
+                            {reabrindo ? <RotateCcw size={18} /> : arquivando ? <Archive size={18} /> : <CheckCircle size={18} />}
+                            {reabrindo ? 'Reabrir e assinar' : arquivando ? 'Arquivar e assinar' : 'Finalizar e assinar'}
                         </Button>
                     </HStack>
                 </VStack>

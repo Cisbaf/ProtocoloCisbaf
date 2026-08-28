@@ -30,7 +30,7 @@ export default function Inspector() {
   const [updatingId, setUpdatingId] = useState<string | null>(null);
   const [signatureAction, setSignatureAction] = useState<{
     id: string;
-    status: 'FINALIZADO' | 'EM_ANALISE';
+    status: 'FINALIZADO' | 'EM_ANALISE' | 'ARQUIVADO';
   } | null>(null);
 
   const [isStatsModalOpen, setIsStatsModalOpen] = useState(false);
@@ -69,10 +69,6 @@ export default function Inspector() {
     novoStatus: 'FINALIZADO' | 'ARQUIVADO' | 'EM_ANALISE' | 'TERMINADO',
     assinatura?: string
   ) => {
-    if (novoStatus === 'ARQUIVADO') {
-      if (!window.confirm("Tem certeza que deseja arquivar este requerimento?")) return false;
-    }
-
     try {
       setUpdatingId(id);
 
@@ -505,7 +501,7 @@ export default function Inspector() {
                               <CheckCircle size={18} />
                             </Button>
 
-                            <Button size="sm" colorPalette="red" borderRadius="lg" onClick={() => r.id && updateStatus(r.id, 'ARQUIVADO')} disabled={r.finalizarArquivar === 'ARQUIVADO'
+                            <Button size="sm" colorPalette="red" borderRadius="lg" onClick={() => r.id && setSignatureAction({ id: r.id, status: 'ARQUIVADO' })} disabled={r.finalizarArquivar === 'ARQUIVADO'
                               || updatingId === r.id} loading={updatingId === r.id ? true : undefined} flex={1}>
                               <Archive size={18} />
                             </Button>
@@ -584,7 +580,7 @@ export default function Inspector() {
                                 <HStack gap={2} justify="flex-end">
                                   <Button size="sm" colorPalette="blue" borderRadius="lg" onClick={() => setSelectedReq(r)} disabled={!!updatingId}><Eye size={18} /></Button>
                                   <Button size="sm" colorPalette="green" borderRadius="lg" onClick={() => r.id && setSignatureAction({ id: r.id, status: 'FINALIZADO' })} disabled={r.finalizarArquivar === 'FINALIZADO' || r.finalizarArquivar === 'TERMINADO' || !!updatingId} loading={updatingId === r.id} shadow="sm"><CheckCircle size={18} /></Button>
-                                  <Button size="sm" colorPalette="red" borderRadius="lg" onClick={() => r.id && updateStatus(r.id, 'ARQUIVADO')} disabled={r.finalizarArquivar === 'ARQUIVADO' || !!updatingId} loading={updatingId === r.id} shadow="sm"><Archive size={18} /></Button>
+                                  <Button size="sm" colorPalette="red" borderRadius="lg" onClick={() => r.id && setSignatureAction({ id: r.id, status: 'ARQUIVADO' })} disabled={r.finalizarArquivar === 'ARQUIVADO' || !!updatingId} loading={updatingId === r.id} shadow="sm"><Archive size={18} /></Button>
                                   {currentAdmin?.acessoTotal && (
                                     <Button size="sm" colorPalette="gray" borderRadius="lg" onClick={() => r.id && deleteForm(r.id)} disabled={!!updatingId && updatingId !== r.id} loading={updatingId === r.id} shadow="sm"><Trash size={18} /></Button>
                                   )}
@@ -610,17 +606,16 @@ export default function Inspector() {
         onClose={() => setSelectedReq(null)}
         renderStatus={renderStatus}
         onApprove={(id) => setSignatureAction({ id, status: 'FINALIZADO' })}
-        onArchive={(id) => {
-          updateStatus(id, 'ARQUIVADO');
-          setSelectedReq(null);
-        }}
+        onArchive={(id) => setSignatureAction({ id, status: 'ARQUIVADO' })}
         onDownload={handleDownloadArquivo}
       />
 
       <ProcessSignatureModal
         key={signatureAction ? `${signatureAction.id}-${signatureAction.status}` : 'closed'}
         isOpen={signatureAction !== null}
-        action={signatureAction?.status === 'EM_ANALISE' ? 'REABRIR' : 'FINALIZAR'}
+        action={signatureAction?.status === 'EM_ANALISE'
+          ? 'REABRIR'
+          : signatureAction?.status === 'ARQUIVADO' ? 'ARQUIVAR' : 'FINALIZAR'}
         loading={signatureAction !== null && updatingId === signatureAction.id}
         onCancel={() => setSignatureAction(null)}
         onConfirm={async (assinatura) => {

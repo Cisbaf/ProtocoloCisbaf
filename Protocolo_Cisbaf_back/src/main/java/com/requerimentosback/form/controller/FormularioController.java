@@ -18,13 +18,13 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.Resource;
 import org.springframework.core.io.UrlResource;
 import org.springframework.format.annotation.DateTimeFormat;
+import org.springframework.http.ContentDisposition;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
-import java.net.URLDecoder;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -87,13 +87,30 @@ public class FormularioController {
 
     @GetMapping("/arquivos/download/{nomeArquivo:.+}")
     public ResponseEntity<Resource> baixarArquivo(@PathVariable String nomeArquivo) {
+        return carregarArquivo(nomeArquivo);
+    }
+
+    @GetMapping("/{id}/arquivos/download/{nomeArquivo:.+}")
+    public ResponseEntity<Resource> baixarArquivoDoFormulario(
+            @PathVariable String id,
+            @PathVariable String nomeArquivo
+    ) {
+        if (!service.possuiArquivo(id, nomeArquivo)) {
+            return ResponseEntity.notFound().build();
+        }
+        return carregarArquivo(nomeArquivo);
+    }
+
+    private ResponseEntity<Resource> carregarArquivo(String nomeArquivo) {
         try {
             log.info("Baixando arquivo {}", nomeArquivo);
-            String nomeDecodificado = URLDecoder.decode(nomeArquivo, StandardCharsets.UTF_8);
-            log.info("Baixando arquivo {}", nomeDecodificado);
 
             Path raiz = Paths.get(diretorioUpload).toAbsolutePath().normalize();
-            Path caminhoArquivo = raiz.resolve(nomeDecodificado).normalize();
+            Path caminhoArquivo = raiz.resolve(nomeArquivo).normalize();
+
+            if (!caminhoArquivo.startsWith(raiz)) {
+                return ResponseEntity.notFound().build();
+            }
 
             System.out.println("Tentando ler o arquivo no caminho: " + caminhoArquivo.toAbsolutePath());
 
@@ -112,7 +129,10 @@ public class FormularioController {
 
             return ResponseEntity.ok()
                     .contentType(MediaType.parseMediaType(contentType))
-                    .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + resource.getFilename() + "\"")
+                    .header(HttpHeaders.CONTENT_DISPOSITION, ContentDisposition.attachment()
+                            .filename(resource.getFilename(), StandardCharsets.UTF_8)
+                            .build()
+                            .toString())
                     .body(resource);
 
         } catch (Exception e) {

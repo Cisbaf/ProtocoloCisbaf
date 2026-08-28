@@ -63,6 +63,8 @@ public class SecurityConfig {
 
                         .requestMatchers(HttpMethod.GET, "/form/arquivos/download/**").authenticated()
 
+                        .requestMatchers(HttpMethod.GET, "/form/{id}/arquivos/download/**").permitAll()
+
                         .requestMatchers(HttpMethod.GET, "/form/{id}/mensagens").permitAll()
                         .requestMatchers(HttpMethod.POST, "/form/{id}/mensagens").permitAll()
 

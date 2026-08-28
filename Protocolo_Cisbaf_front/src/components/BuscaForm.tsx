@@ -48,9 +48,11 @@ export default function BuscaForm() {
     const [data, setData] = useState<Formulario | null>(null);
     const [chatAberto, setChatAberto] = useState(false);
 
-    const handleDownloadArquivo = async (arquivoPath: string) => {
+    const handleDownloadArquivo = async (arquivoPath: string, formularioId: string) => {
         try {
-            const res = await fetch(`/api/download/${arquivoPath}`);
+            const res = await fetch(
+                `/api/download/${encodeURIComponent(arquivoPath)}?formularioId=${encodeURIComponent(formularioId)}`
+            );
             if (!res.ok) throw new Error("Erro ao baixar arquivo");
             const blob = await res.blob();
 
@@ -302,7 +304,9 @@ export default function BuscaForm() {
                                             <DetailCard
                                                 key={`${evento.acao}-${evento.data}-${index}`}
                                                 icon={<PenLine size={20} />}
-                                                label={evento.acao === 'FINALIZADO' ? 'FINALIZOU' : 'REABRIU'}
+                                                label={evento.acao === 'FINALIZADO'
+                                                    ? 'FINALIZOU'
+                                                    : evento.acao === 'ARQUIVOU' ? 'ARQUIVOU' : 'REABRIU'}
                                                 value={`${evento.nome} em ${formatarDataCriacao(evento.data)}`}
                                             />
                                         ))}
@@ -350,7 +354,7 @@ export default function BuscaForm() {
                                                                 size="sm"
                                                                 colorPalette="blue"
                                                                 borderRadius="xl"
-                                                                onClick={() => handleDownloadArquivo(path)}
+                                                                onClick={() => handleDownloadArquivo(path, data.id!)}
                                                             >
                                                                 Baixar Arquivo
                                                             </Button>

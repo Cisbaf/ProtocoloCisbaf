@@ -66,6 +66,30 @@ export function formatarDataCriacao(dataCriacao?: string) {
     return `${dataFormatada} às ${horaFormatada}`;
 }
 
+const eventoConfig = {
+    FINALIZADO: {
+        movimentacao: 'FINALIZAÇÃO',
+        acao: 'FINALIZOU',
+        colorPalette: 'green',
+        fillColor: [220, 252, 231] as [number, number, number],
+        textColor: [21, 128, 61] as [number, number, number],
+    },
+    REABRIU: {
+        movimentacao: 'REABERTURA',
+        acao: 'REABRIU',
+        colorPalette: 'blue',
+        fillColor: [219, 234, 254] as [number, number, number],
+        textColor: [29, 78, 216] as [number, number, number],
+    },
+    ARQUIVOU: {
+        movimentacao: 'ARQUIVAMENTO',
+        acao: 'ARQUIVOU',
+        colorPalette: 'red',
+        fillColor: [254, 226, 226] as [number, number, number],
+        textColor: [185, 28, 28] as [number, number, number],
+    },
+} as const;
+
 export default function ReqDetailsModal({
     req,
     onClose,
@@ -163,7 +187,7 @@ export default function ReqDetailsModal({
                 ],
                 body: historico.map((evento, index) => [
                     String(index + 1).padStart(2, '0'),
-                    evento.acao === 'FINALIZADO' ? 'FINALIZAÇÃO' : 'REABERTURA',
+                    eventoConfig[evento.acao].movimentacao,
                     evento.nome,
                     formatarDataCriacao(evento.data),
                 ]),
@@ -191,13 +215,10 @@ export default function ReqDetailsModal({
                     if (data.section !== 'body' || data.column.index !== 1) return;
 
                     const evento = historico[data.row.index];
-                    if (evento?.acao === 'FINALIZADO') {
-                        data.cell.styles.fillColor = [220, 252, 231];
-                        data.cell.styles.textColor = [21, 128, 61];
-                    } else {
-                        data.cell.styles.fillColor = [219, 234, 254];
-                        data.cell.styles.textColor = [29, 78, 216];
-                    }
+                    if (!evento) return;
+                    const config = eventoConfig[evento.acao];
+                    data.cell.styles.fillColor = config.fillColor;
+                    data.cell.styles.textColor = config.textColor;
                 },
                 margin: { bottom: 18 },
             });
@@ -430,8 +451,8 @@ export default function ReqDetailsModal({
                                         borderColor={{ base: "gray.200", _dark: "slate.700" }}
                                         align="start"
                                     >
-                                        <Badge colorPalette={evento.acao === 'FINALIZADO' ? 'green' : 'blue'}>
-                                            {evento.acao === 'FINALIZADO' ? 'FINALIZOU' : 'REABRIU'}
+                                            <Badge colorPalette={eventoConfig[evento.acao].colorPalette}>
+                                                {eventoConfig[evento.acao].acao}
                                         </Badge>
                                         <Box flex={1}>
                                             <Text fontWeight="bold" color={{ base: "slate.700", _dark: "slate.200" }}>{evento.nome}</Text>

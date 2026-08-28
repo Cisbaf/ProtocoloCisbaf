@@ -24,7 +24,7 @@ export interface Mensagem {
 }
 
 export interface AssinaturaProcesso {
-  acao: 'FINALIZADO' | 'REABRIU';
+  acao: 'FINALIZADO' | 'REABRIU' | 'ARQUIVOU';
   nome: string;
   data: string;
 }

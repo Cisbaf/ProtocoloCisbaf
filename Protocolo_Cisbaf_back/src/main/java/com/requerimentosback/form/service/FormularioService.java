@@ -55,6 +55,23 @@ public class FormularioService {
         return repository.findById(id);
     }
 
+    public boolean possuiArquivo(String formularioId, String nomeArquivo) {
+        if (nomeArquivo == null || nomeArquivo.isBlank()) {
+            return false;
+        }
+
+        return repository.findById(formularioId)
+                .map(formulario -> contemArquivo(formulario.getArquivoPath(), nomeArquivo)
+                        || mensagemRepository.findByFormularioIdOrderByDataEnvioAsc(formularioId).stream()
+                        .anyMatch(mensagem -> contemArquivo(mensagem.getArquivoPath(), nomeArquivo)))
+                .orElse(false);
+    }
+
+    private boolean contemArquivo(String arquivos, String nomeArquivo) {
+        return arquivos != null && List.of(arquivos.split(";")).stream()
+                .anyMatch(nomeArquivo::equals);
+    }
+
     @Transactional
     public Formulario save(Formulario formulario, List<MultipartFile> arquivos) {
 
@@ -187,6 +204,10 @@ public class FormularioService {
                 adicionarEventoAssinado(formulario, "FINALIZADO", validarAssinatura(assinatura, "finalizar"));
                 mudouParaFinalizado = true;
             }
+
+            if (statusNovo == FinArq.ARQUIVADO) {
+                adicionarEventoAssinado(formulario, "ARQUIVOU", validarAssinatura(assinatura, "arquivar"));
+            }
         }
 
         formulario.setFinalizarArquivar(statusNovo);
@@ -207,7 +228,11 @@ public class FormularioService {
         if (formulario.getHistoricoAssinaturas() == null || formulario.getHistoricoAssinaturas().isEmpty()) {
             return null;
         }
-        String acao = statusNovo == FinArq.FINALIZADO ? "FINALIZADO" : "REABRIU";
+        String acao = switch (statusNovo) {
+            case FINALIZADO -> "FINALIZADO";
+            case ARQUIVADO -> "ARQUIVOU";
+            default -> "REABRIU";
+        };
         return formulario.getHistoricoAssinaturas().reversed().stream()
                 .filter(evento -> acao.equals(evento.getAcao()))
                 .map(AssinaturaProcesso::getNome)

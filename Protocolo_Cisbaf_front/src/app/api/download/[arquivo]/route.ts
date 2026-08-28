@@ -7,7 +7,11 @@ export async function GET(
   const { arquivo } = await params;
 
   try {
-    const urlBackend = `${process.env.BACKEND_INTERNAL_URL}/form/arquivos/download/${encodeURIComponent(arquivo)}`;
+    const formularioId = new URL(request.url).searchParams.get('formularioId');
+    const caminhoDownload = formularioId
+      ? `/form/${encodeURIComponent(formularioId)}/arquivos/download/${encodeURIComponent(arquivo)}`
+      : `/form/arquivos/download/${encodeURIComponent(arquivo)}`;
+    const urlBackend = `${process.env.BACKEND_INTERNAL_URL}${caminhoDownload}`;
     const cookieHeader = request.headers.get('cookie');
 
     const res = await fetch(urlBackend, {
@@ -17,22 +21,21 @@ export async function GET(
       },
     });
 
-    if (res.status === 404) {
-      return NextResponse.json({ error: 'Arquivo não encontrado no servidor' }, { status: 404 });
-    }
-
     if (!res.ok) {
-      throw new Error('Erro ao baixar o arquivo do servidor');
+      const message = res.status === 404
+        ? 'Arquivo não encontrado no servidor'
+        : 'Erro ao baixar o arquivo do servidor';
+      return NextResponse.json({ error: message }, { status: res.status });
     }
 
-    const blob = await res.blob();
     const contentType = res.headers.get('Content-Type') || 'application/octet-stream';
+    const contentDisposition = res.headers.get('Content-Disposition') || `attachment; filename="${arquivo}"`;
 
     const headers = new Headers();
     headers.set('Content-Type', contentType);
-    headers.set('Content-Disposition', `attachment; filename="${arquivo}"`);
+    headers.set('Content-Disposition', contentDisposition);
 
-    return new NextResponse(blob, {
+    return new NextResponse(res.body, {
       status: 200,
       headers: headers,
     });
