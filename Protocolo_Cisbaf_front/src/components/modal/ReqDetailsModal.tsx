@@ -1,6 +1,6 @@
 'use client';
 
-import { Formulario } from '@/components/types';
+import { Formulario, getNomeUsuario, getTipoDocumento } from '@/components/types';
 import {
     Badge,
     Box,
@@ -131,8 +131,8 @@ export default function ReqDetailsModal({
             startY: 45,
             head: [['Dados do Solicitante', '']],
             body: [
-                ['Nome Completo', `${req.usuario?.nome || ''} ${req.usuario?.sobrenome || ''}`],
-                ['CPF', req.usuario?.cpf || '—'],
+                [getTipoDocumento(req.usuario) === 'CNPJ' ? 'Nome Fantasia' : 'Nome Completo', getNomeUsuario(req.usuario)],
+                [getTipoDocumento(req.usuario), req.usuario?.cpf || '—'],
                 ['Matrícula', req.usuario?.matricula || '—'],
                 ['Cargo', req.usuario?.cargo || '—'],
                 ['Unidade', req.unidade || '—'],
@@ -378,8 +378,11 @@ export default function ReqDetailsModal({
                             <SimpleGrid columns={{ base: 1, md: 2 }} gap={{ base: 6, md: 8 }}>
                                 <VStack align="stretch" gap={4}>
                                     <Text fontSize="xs" fontWeight="bold" color="gray.400" textTransform="uppercase" borderBottomWidth="1px" pb={1} borderColor={{ base: "gray.100", _dark: "slate.700" }}>Identificação</Text>
-                                    <DetailItem label="Nome Completo" value={req.usuario?.nome + " " + req.usuario?.sobrenome} />
-                                    <DetailItem label="CPF" value={req.usuario?.cpf} icon={<CreditCard size={14} />} />
+                                    <DetailItem
+                                        label={getTipoDocumento(req.usuario) === 'CNPJ' ? 'Nome Fantasia' : 'Nome Completo'}
+                                        value={getNomeUsuario(req.usuario)}
+                                    />
+                                    <DetailItem label={getTipoDocumento(req.usuario)} value={req.usuario?.cpf} icon={<CreditCard size={14} />} />
                                     <DetailItem label="Matrícula" value={req.usuario?.matricula} icon={<IdCardLanyard size={14} />} />
                                     <DetailItem label="Cargo" value={req.usuario?.cargo} icon={<Briefcase size={14} />} />
                                     <DetailItem label="Unidade" value={req.unidade} icon={<Building size={14} />} />

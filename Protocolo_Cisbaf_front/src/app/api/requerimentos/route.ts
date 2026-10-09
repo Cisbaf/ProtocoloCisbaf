@@ -87,9 +87,11 @@ export async function POST(request: Request) {
         try {
           const parsed = JSON.parse(formularioJson);
           formularioResumo = {
-            cpf: parsed?.usuario?.cpf,
+            documento: parsed?.usuario?.cpf,
+            tipoDocumento: parsed?.usuario?.tipoDocumento,
             nome: parsed?.usuario?.nome,
             sobrenome: parsed?.usuario?.sobrenome,
+            nomeFantasia: parsed?.usuario?.nomeFantasia,
             email: parsed?.usuario?.email,
             assunto: parsed?.assunto,
             unidade: parsed?.unidade,

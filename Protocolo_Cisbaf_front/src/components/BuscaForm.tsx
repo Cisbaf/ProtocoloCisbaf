@@ -37,7 +37,7 @@ import {
 import { useState } from "react";
 import Header from "./Header";
 import { toaster } from "@/components/ui/toaster";
-import { Formulario } from '@/components/types';
+import { Formulario, getNomeUsuario, getTipoDocumento } from '@/components/types';
 import ChatPanel from '@/components/modal/ChatPanel';
 import { formatarDataCriacao } from '@/components/modal/ReqDetailsModal';
 
@@ -278,14 +278,18 @@ export default function BuscaForm() {
                                             <ChatPanel
                                                 formularioId={data.id!}
                                                 remetente="SOLICITANTE"
-                                                nomeRemetente={`${data.usuario?.nome} ${data.usuario?.sobrenome}`}
+                                                nomeRemetente={getNomeUsuario(data.usuario)}
                                             />
                                         )}
                                     </Box>
 
                                     {/* ── Cards de detalhe ── */}
                                     <SimpleGrid columns={{ base: 1, md: 2 }} gap={4}>
-                                        <DetailCard icon={<User size={20} />} label="NOME" value={data.usuario?.nome + " " + data.usuario?.sobrenome} />
+                                        <DetailCard
+                                            icon={<User size={20} />}
+                                            label={getTipoDocumento(data.usuario) === 'CNPJ' ? 'NOME FANTASIA' : 'NOME'}
+                                            value={getNomeUsuario(data.usuario)}
+                                        />
 
                                         {(data.usuario?.matricula != null && data.usuario.matricula.trim() !== "") && (
                                             <DetailCard icon={<Hash size={20} />} label="MATRÍCULA" value={data.usuario.matricula ?? ""} />

@@ -1,6 +1,6 @@
 'use client';
 
-import { FormValues, assuntos, beneficios, responsaveis_tec, unidades } from '@/components/types';
+import { FormValues, TipoDocumento, assuntos, beneficios, responsaveis_tec, unidades } from '@/components/types';
 import { toaster } from "@/components/ui/toaster";
 import {
   Badge, Box, Button, Card, Center, Container, Field, Flex,
@@ -9,7 +9,7 @@ import {
   Portal,
   Select,
   Separator,
-  SimpleGrid, Spinner, Text, Textarea, VStack,
+  SimpleGrid, Spinner, Text, Textarea, VStack, chakra,
 } from '@chakra-ui/react';
 
 import { COLORS, inputStyle, labelStyle } from '@/components/ui/formStyles';
@@ -24,6 +24,7 @@ import type { ComponentProps } from 'react';
 import { Controller, useForm, useWatch } from 'react-hook-form';
 import Header from './Header';
 
+const CompactDocumentSelect = chakra('select');
 
 // ─── Sub-componente: cabeçalho de seção ──────────────────────────────────────
 function SectionHeader({ step, title, badgeBg, badgeColor, }: {
@@ -104,6 +105,23 @@ const isValidCPF = (cpf: string): boolean => {
   return true;
 };
 
+// Validador de CNPJ brasileiro
+const isValidCNPJ = (cnpj: string): boolean => {
+  const cleanCNPJ = cnpj.replace(/\D/g, '');
+  if (cleanCNPJ.length !== 14 || /^(\d)\1{13}$/.test(cleanCNPJ)) return false;
+
+  const calcularDigito = (base: string, pesos: number[]) => {
+    const soma = base.split('').reduce((total, digito, index) =>
+      total + Number(digito) * pesos[index], 0);
+    const resto = soma % 11;
+    return resto < 2 ? 0 : 11 - resto;
+  };
+
+  const primeiro = calcularDigito(cleanCNPJ.slice(0, 12), [5, 4, 3, 2, 9, 8, 7, 6, 5, 4, 3, 2]);
+  const segundo = calcularDigito(cleanCNPJ.slice(0, 12) + primeiro, [6, 5, 4, 3, 2, 9, 8, 7, 6, 5, 4, 3, 2]);
+  return cleanCNPJ.endsWith(`${primeiro}${segundo}`);
+};
+
 // ─── Componente principal ─────────────────────────────────────────────────────
 export default function RequerimentoForm() {
   const [, setResetKey] = useState(0);
@@ -119,8 +137,10 @@ export default function RequerimentoForm() {
     getValues,
     control,
     setError,
+    clearErrors,
     formState: { isSubmitting, errors },
   } = useForm<FormValues>({
+    defaultValues: { tipoDocumento: 'CPF' },
   });
 
 
@@ -163,6 +183,7 @@ export default function RequerimentoForm() {
   }, [submittedId]);
 
   const watchAssunto = useWatch({ control, name: 'assunto' });
+  const watchTipoDocumento = useWatch({ control, name: 'tipoDocumento' }) || 'CPF';
 
   // ── Submit ────────────────────────────────────────────────────────────────
   const onSubmit = async (data: FormValues) => {
@@ -170,9 +191,11 @@ export default function RequerimentoForm() {
 
       const payload = {
         usuario: {
-          cpf: data.cpf.trim(),
-          nome: data.nome.trim(),
-          sobrenome: data.sobrenome.trim(),
+          cpf: data.cpf.replace(/\D/g, ''),
+          tipoDocumento: data.tipoDocumento,
+          nome: data.tipoDocumento === 'CPF' ? data.nome?.trim() : data.nomeFantasia?.trim(),
+          sobrenome: data.tipoDocumento === 'CPF' ? data.sobrenome?.trim() : '',
+          nomeFantasia: data.tipoDocumento === 'CNPJ' ? data.nomeFantasia?.trim() : undefined,
           email: data.email.trim(),
           telefone: data.telefone,
           celular: data.celular,
@@ -226,7 +249,7 @@ export default function RequerimentoForm() {
       }
 
       setSubmittedId(String(responseData.id));
-      reset();
+      reset({ tipoDocumento: 'CPF' });
       setResetKey((prev) => prev + 1);
 
     } catch (error: unknown) {
@@ -283,31 +306,44 @@ export default function RequerimentoForm() {
     }
   };
 
-  // ── Busca de usuário por CPF ──────────────────────────────────────────────
-  const fetchUsuario = async (cpf: string, nome: string, sobrenome: string) => {
-    cpf = cpf.replace(/\D/g, '');
-    if (cpf.length !== 11) return;
+  // ── Busca de usuário por CPF ou CNPJ ──────────────────────────────────────
+  const fetchUsuario = async (
+    documento: string,
+    tipoDocumento: TipoDocumento,
+    nome: string,
+    sobrenome: string,
+    nomeFantasia: string,
+  ) => {
+    documento = documento.replace(/\D/g, '');
+    if (documento.length !== (tipoDocumento === 'CPF' ? 11 : 14)) return;
 
     setIsFetchingUser(true);
     try {
-      const res = await fetch(`/api/usuarios/${cpf}?nome=${encodeURIComponent(nome)}&sobrenome=${encodeURIComponent(sobrenome)}`);
+      const params = new URLSearchParams({ tipoDocumento });
+      if (tipoDocumento === 'CPF') {
+        params.set('nome', nome);
+        params.set('sobrenome', sobrenome);
+      } else {
+        params.set('nomeFantasia', nomeFantasia);
+      }
+      const res = await fetch(`/api/usuarios/${documento}?${params.toString()}`);
       if (!res.ok) {
         return;
       }
 
       const user = await res.json();
 
-      // Validar se o nome e o sobrenome batem com o banco
-      if (
-        (user.nome || '').trim().toLowerCase() !== nome.toLowerCase() ||
-        (user.sobrenome || '').trim().toLowerCase() !== sobrenome.toLowerCase()
-      ) {
+      const identificacaoConfere = tipoDocumento === 'CPF'
+        ? (user.nome || '').trim().toLowerCase() === nome.toLowerCase()
+          && (user.sobrenome || '').trim().toLowerCase() === sobrenome.toLowerCase()
+        : (user.nomeFantasia || user.nome || '').trim().toLowerCase() === nomeFantasia.toLowerCase();
+      if (!identificacaoConfere) {
         return;
       }
 
-
       if (user.nome) setValue('nome', user.nome, { shouldValidate: true });
       if (user.sobrenome) setValue('sobrenome', user.sobrenome, { shouldValidate: true })
+      if (user.nomeFantasia) setValue('nomeFantasia', user.nomeFantasia, { shouldValidate: true });
       if (user.email) setValue('email', user.email, { shouldValidate: true });
       if (user.telefone) setValue('telefone', user.telefone);
       if (user.celular) setValue('celular', user.celular);
@@ -318,7 +354,7 @@ export default function RequerimentoForm() {
 
       toaster.create({
         title: 'Dados carregados',
-        description: `Campos preenchidos automaticamente para ${user.nome}.`,
+        description: `Campos preenchidos automaticamente para ${user.nomeFantasia || user.nome}.`,
         type: 'info',
       });
     } catch (err: unknown) {
@@ -335,13 +371,27 @@ export default function RequerimentoForm() {
 
   const triggerFetchUsuario = async () => {
     const values = getValues();
-    const cpf = (values.cpf || '').replace(/\D/g, '');
+    const documento = (values.cpf || '').replace(/\D/g, '');
+    const tipoDocumento = values.tipoDocumento || 'CPF';
     const nome = (values.nome || '').trim();
     const sobrenome = (values.sobrenome || '').trim();
+    const nomeFantasia = (values.nomeFantasia || '').trim();
 
-    if (cpf.length === 11 && nome.length > 0 && sobrenome.length > 0) {
-      await fetchUsuario(cpf, nome, sobrenome);
+    const podeBuscar = tipoDocumento === 'CPF'
+      ? documento.length === 11 && nome.length > 0 && sobrenome.length > 0
+      : documento.length === 14 && nomeFantasia.length > 0;
+    if (podeBuscar) {
+      await fetchUsuario(documento, tipoDocumento, nome, sobrenome, nomeFantasia);
     }
+  };
+
+  const alterarTipoDocumento = (tipoDocumento: TipoDocumento) => {
+    setValue('tipoDocumento', tipoDocumento, { shouldValidate: true });
+    setValue('cpf', '');
+    setValue('nome', '');
+    setValue('sobrenome', '');
+    setValue('nomeFantasia', '');
+    clearErrors(['cpf', 'nome', 'sobrenome', 'nomeFantasia']);
   };
   // ─── Render ───────────────────────────────────────────────────────────────
   return (
@@ -397,75 +447,118 @@ export default function RequerimentoForm() {
                   <VStack gap={8} align="stretch">
                     <SectionHeader
                       step="PASSO 01"
-                      title="Identificação Pessoal"
+                      title="Identificação do Solicitante"
                       badgeBg={COLORS.step1Bg}
                       badgeColor={COLORS.step1Text}
                     />
 
                     <SimpleGrid columns={{ base: 1, md: 2, lg: 3 }} gap={6}>
-                      {/* CPF */}
+                      {/* CPF/CNPJ */}
                       <Field.Root required invalid={!!errors.cpf}>
-                        <Field.Label {...labelStyle}>
-                          <Box color="currentColor"><CreditCard size={14} /></Box> CPF*
+                        <HStack {...labelStyle} gap={1.5}>
+                          <Box color="currentColor"><CreditCard size={14} /></Box>
+                          <CompactDocumentSelect
+                            aria-label="Tipo de documento"
+                            value={watchTipoDocumento}
+                            onChange={(event) => alterarTipoDocumento(event.currentTarget.value as TipoDocumento)}
+                            bg="transparent"
+                            border="none"
+                            color="inherit"
+                            cursor="pointer"
+                            fontSize="inherit"
+                            fontWeight="inherit"
+                            lineHeight="inherit"
+                            outline="none"
+                            pl={0}
+                            pr="22px"
+                            py={0}
+                          >
+                            <option value="CPF">CPF</option>
+                            <option value="CNPJ">CNPJ</option>
+                          </CompactDocumentSelect>
                           {isFetchingUser && (
                             <Spinner size="xs" color={COLORS.btnBg} ml={1} />
                           )}
-                        </Field.Label>
+                        </HStack>
                         <Input
                           {...register('cpf', {
-                            required: 'O campo CPF é obrigatório',
-                            validate: (value) => isValidCPF(value) || 'CPF inválido',
+                            required: `O campo ${watchTipoDocumento} é obrigatório`,
+                            validate: (value) => watchTipoDocumento === 'CPF'
+                              ? isValidCPF(value) || 'CPF inválido'
+                              : isValidCNPJ(value) || 'CNPJ inválido',
                             onChange: (e) => {
                               e.target.value = e.target.value.replace(/\D/g, '');
                             },
                             onBlur: () => triggerFetchUsuario(),
                           })}
-                          maxLength={11}
+                          maxLength={watchTipoDocumento === 'CPF' ? 11 : 14}
                           {...inputStyle}
-                          placeholder="Números do CPF"
+                          placeholder={`Números do ${watchTipoDocumento}`}
                         />
                         <Field.ErrorText style={{ color: '#DC2626', fontSize: '12px' }}>
                           {errors.cpf?.message}
                         </Field.ErrorText>
                       </Field.Root>
 
-                      {/* Nome */}
-                      <Field.Root required invalid={!!errors.nome}>
-                        <Field.Label {...labelStyle}>
-                          <Box color="currentColor"><User size={14} /></Box> PRIMEIRO NOME*
-                        </Field.Label>
-                        <Input
-                          {...register('nome', {
-                            required: 'O campo Primeiro Nome é obrigatório',
-                            onBlur: () => triggerFetchUsuario(),
-                          })}
-                          {...inputStyle}
-                          placeholder="Seu primeiro nome"
-                          maxLength={70}
-                        />
-                        <Field.ErrorText style={{ color: '#DC2626', fontSize: '12px' }}>
-                          {errors.nome?.message}
-                        </Field.ErrorText>
-                      </Field.Root>
+                      {watchTipoDocumento === 'CPF' ? (
+                        <>
+                          {/* Nome */}
+                          <Field.Root required invalid={!!errors.nome}>
+                            <Field.Label {...labelStyle}>
+                              <Box color="currentColor"><User size={14} /></Box> PRIMEIRO NOME*
+                            </Field.Label>
+                            <Input
+                              {...register('nome', {
+                                required: watchTipoDocumento === 'CPF' ? 'O campo Primeiro Nome é obrigatório' : false,
+                                onBlur: () => triggerFetchUsuario(),
+                              })}
+                              {...inputStyle}
+                              placeholder="Seu primeiro nome"
+                              maxLength={70}
+                            />
+                            <Field.ErrorText style={{ color: '#DC2626', fontSize: '12px' }}>
+                              {errors.nome?.message}
+                            </Field.ErrorText>
+                          </Field.Root>
 
-                      {/* Sobrenome Nome */}
-                      <Field.Root required invalid={!!errors.sobrenome}>
-                        <Field.Label {...labelStyle}>
-                          <Box color="currentColor"><User size={14} /></Box> SOBRENOME*
-                        </Field.Label>
-                        <Input
-                          {...register('sobrenome', {
-                            required: 'O campo Sobrenome é obrigatório',
-                            onBlur: () => triggerFetchUsuario(),
-                          })}
-                          {...inputStyle}
-                          placeholder="Seu sobrenome"
-                          maxLength={70}
-                        />
-                        <Field.ErrorText style={{ color: '#DC2626', fontSize: '12px' }}>
-                          {errors.sobrenome?.message}
-                        </Field.ErrorText>
-                      </Field.Root>
+                          {/* Sobrenome */}
+                          <Field.Root required invalid={!!errors.sobrenome}>
+                            <Field.Label {...labelStyle}>
+                              <Box color="currentColor"><User size={14} /></Box> SOBRENOME*
+                            </Field.Label>
+                            <Input
+                              {...register('sobrenome', {
+                                required: watchTipoDocumento === 'CPF' ? 'O campo Sobrenome é obrigatório' : false,
+                                onBlur: () => triggerFetchUsuario(),
+                              })}
+                              {...inputStyle}
+                              placeholder="Seu sobrenome"
+                              maxLength={70}
+                            />
+                            <Field.ErrorText style={{ color: '#DC2626', fontSize: '12px' }}>
+                              {errors.sobrenome?.message}
+                            </Field.ErrorText>
+                          </Field.Root>
+                        </>
+                      ) : (
+                        <Field.Root required invalid={!!errors.nomeFantasia} gridColumn={{ lg: 'span 2' }}>
+                          <Field.Label {...labelStyle}>
+                            <Box color="currentColor"><User size={14} /></Box> NOME FANTASIA*
+                          </Field.Label>
+                          <Input
+                            {...register('nomeFantasia', {
+                              required: watchTipoDocumento === 'CNPJ' ? 'O campo Nome Fantasia é obrigatório' : false,
+                              onBlur: () => triggerFetchUsuario(),
+                            })}
+                            {...inputStyle}
+                            placeholder="Nome fantasia da empresa"
+                            maxLength={100}
+                          />
+                          <Field.ErrorText style={{ color: '#DC2626', fontSize: '12px' }}>
+                            {errors.nomeFantasia?.message}
+                          </Field.ErrorText>
+                        </Field.Root>
+                      )}
                     </SimpleGrid>
                   </VStack>
 

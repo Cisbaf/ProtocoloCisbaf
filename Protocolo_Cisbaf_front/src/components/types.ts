@@ -3,8 +3,10 @@ import { createListCollection } from "@chakra-ui/react";
 // ─── Usuário (@Entity Usuarios) ──────────────────────────────────────────────
 export interface Usuario {
   cpf: string;
-  nome: string;
-  sobrenome: string;
+  tipoDocumento?: TipoDocumento;
+  nome?: string;
+  sobrenome?: string;
+  nomeFantasia?: string;
   email: string;
   telefone?: string;
   celular?: string;
@@ -55,9 +57,11 @@ export interface RequerimentoPayload {
 // ─── Valores do formulário (react-hook-form) ──────────────────────────────────
 export interface FormValues {
   // Identificação
+  tipoDocumento: TipoDocumento;
   cpf: string;
-  nome: string;
-  sobrenome: string;
+  nome?: string;
+  sobrenome?: string;
+  nomeFantasia?: string;
 
   // Contato
   email: string;
@@ -75,6 +79,21 @@ export interface FormValues {
   beneficio?: string;
   descricao: string;
   arquivo?: FileList;
+}
+
+export type TipoDocumento = 'CPF' | 'CNPJ';
+
+export function getTipoDocumento(usuario?: Usuario | null): TipoDocumento {
+  if (usuario?.tipoDocumento) return usuario.tipoDocumento;
+  return (usuario?.cpf || '').replace(/\D/g, '').length === 14 ? 'CNPJ' : 'CPF';
+}
+
+export function getNomeUsuario(usuario?: Usuario | null): string {
+  if (!usuario) return '—';
+  if (getTipoDocumento(usuario) === 'CNPJ') {
+    return usuario.nomeFantasia?.trim() || usuario.nome?.trim() || '—';
+  }
+  return [usuario.nome, usuario.sobrenome].filter(Boolean).join(' ').trim() || '—';
 }
 
 export const assuntos = createListCollection({

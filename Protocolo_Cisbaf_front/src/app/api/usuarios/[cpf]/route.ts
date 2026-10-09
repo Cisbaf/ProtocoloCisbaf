@@ -8,11 +8,14 @@ export async function GET(
 
   // Extract query parameters
   const { searchParams } = new URL(request.url);
-  const nome = searchParams.get('nome') || '';
-  const sobrenome = searchParams.get('sobrenome') || '';
+    const nome = searchParams.get('nome') || '';
+    const sobrenome = searchParams.get('sobrenome') || '';
+    const nomeFantasia = searchParams.get('nomeFantasia') || '';
+    const tipoDocumento = searchParams.get('tipoDocumento') || 'CPF';
 
   try {
-    const backendUrl = `${process.env.BACKEND_INTERNAL_URL}/user/${cpf}?nome=${encodeURIComponent(nome)}&sobrenome=${encodeURIComponent(sobrenome)}`;
+    const query = new URLSearchParams({ nome, sobrenome, nomeFantasia, tipoDocumento });
+    const backendUrl = `${process.env.BACKEND_INTERNAL_URL}/user/${cpf}?${query.toString()}`;
     const res = await fetch(backendUrl, {});
 
     if (res.status === 404) {

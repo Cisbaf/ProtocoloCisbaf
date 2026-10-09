@@ -1,6 +1,6 @@
 'use client';
 
-import { Formulario } from '@/components/types';
+import { Formulario, getNomeUsuario } from '@/components/types';
 import { toaster } from '@/components/ui/toaster';
 import { Badge, Box, Button, Card, Center, Container, HStack, Heading, SimpleGrid, Spinner, Table, Text, VStack, chakra } from '@chakra-ui/react';
 import { AlertCircle, Archive, ArchiveRestore, BarChartIcon, CheckCircle, Eye, RefreshCw, Search, Trash, Undo2, User, Users } from 'lucide-react';
@@ -185,10 +185,9 @@ export default function Inspector() {
 
     // 2. Filtros de Texto e Base
     const matchesName = nameFilter === "" ||
-      r.usuario?.nome.toLowerCase().includes(nameFilter.toLowerCase()) ||
+      getNomeUsuario(r.usuario).toLowerCase().includes(nameFilter.toLowerCase()) ||
       r.usuario?.cpf.includes(nameFilter) ||
-      r.usuario?.matricula?.includes(nameFilter) ||
-      r.usuario?.sobrenome.toLowerCase().includes(nameFilter);
+      r.usuario?.matricula?.includes(nameFilter);
 
     const matchesBase = baseFilter === "all" || r.unidade === baseFilter;
     const matchesAssunto = assuntoFilter === "all" || r.assunto === assuntoFilter;
@@ -326,7 +325,7 @@ export default function Inspector() {
                 <Box bg={{ base: "gray.50", _dark: "slate.800" }} p={{ base: 4, md: 6 }} borderRadius="2xl" border="1px solid" borderColor={{ base: "gray.200", _dark: "slate.700" }}>
                   <SimpleGrid columns={{ base: 1, md: 2, lg: bases.length > 1 ? 4 : 3 }} gap={4}>
                     <VStack align="start" gap={1}>
-                      <Text fontSize="xs" fontWeight="black" color={{ base: "gray.500", _dark: "slate.400" }}>NOME OU CPF</Text>
+                      <Text fontSize="xs" fontWeight="black" color={{ base: "gray.500", _dark: "slate.400" }}>NOME, CPF OU CNPJ</Text>
                       <Box position="relative" w="full">
                         <Box position="absolute" left={3} top="50%" transform="translateY(-50%)" zIndex={10} color={{ base: "gray.400", _dark: "slate.500" }}>
                           <Search size={16} />
@@ -472,7 +471,7 @@ export default function Inspector() {
                               <User size={20} />
                             </Box>
                             <VStack align="start" gap={0}>
-                              <Text fontWeight="black" color={{ base: "slate.800", _dark: "slate.200" }} fontSize="md">{r.usuario?.nome + " " + r.usuario?.sobrenome}</Text>
+                              <Text fontWeight="black" color={{ base: "slate.800", _dark: "slate.200" }} fontSize="md">{getNomeUsuario(r.usuario)}</Text>
                               <HStack gap={2} flexWrap="wrap">
                                 <Text fontSize="xs" fontWeight="bold" color={{ base: "gray.500", _dark: "slate.400" }}>{r.usuario?.cargo?.toUpperCase()}</Text>
                                 <Badge size="sm" variant="subtle">{r.usuario?.matricula}</Badge>
@@ -552,7 +551,7 @@ export default function Inspector() {
                                     <User size={20} />
                                   </Box>
                                   <VStack align="start" gap={0}>
-                                    <Text fontWeight="black" color={{ base: "slate.800", _dark: "slate.200" }}>{r.usuario?.nome + " " + r.usuario?.sobrenome}</Text>
+                                    <Text fontWeight="black" color={{ base: "slate.800", _dark: "slate.200" }}>{getNomeUsuario(r.usuario)}</Text>
                                     {r.usuario?.cargo !== null && r.usuario?.matricula !== null && (
                                       <HStack gap={2}>
                                         <Text fontSize="xs" fontWeight="bold" color={{ base: "gray.500", _dark: "slate.400" }}>{r.usuario?.cargo?.toUpperCase()}</Text>
