@@ -98,6 +98,15 @@ export default function ProcessSignatureModal({
                             autoFocus
                             mt={2}
                             borderRadius="xl"
+                            bg={{ base: 'white', _dark: 'slate.800' }}
+                            color={{ base: 'slate.900', _dark: 'white' }}
+                            caretColor={{ base: 'slate.900', _dark: 'white' }}
+                            borderColor={{ base: 'gray.300', _dark: 'slate.600' }}
+                            _placeholder={{ color: { base: 'gray.400', _dark: 'slate.400' } }}
+                            _focus={{
+                                borderColor: { base: 'blue.500', _dark: 'blue.400' },
+                                boxShadow: '0 0 0 1px var(--chakra-colors-blue-400)',
+                            }}
                         />
                         {!caracteresValidos && (
                             <Text mt={2} fontSize="xs" color="red.500" fontWeight="bold">
