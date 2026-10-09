@@ -1,6 +1,6 @@
 'use client';
 
-import { assuntos } from '@/components/types';
+import { assuntos, unidades } from '@/components/types';
 import { toaster } from '@/components/ui/toaster';
 import { Badge, Box, Button, HStack, Input, SimpleGrid, Spinner, Text, VStack } from '@chakra-ui/react';
 import { Pencil, ShieldCheck, Trash2, UserPlus, X } from 'lucide-react';
@@ -10,8 +10,13 @@ export interface AdminAccount {
   id: number;
   username: string;
   assuntosPermitidos: string[];
+  basesPermitidas: string[];
   acessoTotal: boolean;
 }
+
+// Bases que podem ser atribuídas a um usuário (a Ouvidoria é a base padrão dos requerimentos sem unidade).
+const basesDisponiveis = [...unidades.items, { label: 'Ouvidoria', value: 'OUVIDORIA' }];
+const nomeDaBase = (valor: string) => basesDisponiveis.find((base) => base.value === valor)?.label ?? valor;
 
 interface AdminUsersModalProps {
   isOpen: boolean;
@@ -24,6 +29,7 @@ export default function AdminUsersModal({ isOpen, onClose, currentUsername }: Ad
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [assuntosSelecionados, setAssuntosSelecionados] = useState<string[]>([]);
+  const [basesSelecionadas, setBasesSelecionadas] = useState<string[]>([]);
   const [acessoTotal, setAcessoTotal] = useState(false);
   const [editingUser, setEditingUser] = useState<AdminAccount | null>(null);
   const [loading, setLoading] = useState(false);
@@ -60,10 +66,17 @@ export default function AdminUsersModal({ isOpen, onClose, currentUsername }: Ad
     );
   };
 
+  const toggleBase = (base: string) => {
+    setBasesSelecionadas((atuais) =>
+      atuais.includes(base) ? atuais.filter((item) => item !== base) : [...atuais, base]
+    );
+  };
+
   const resetForm = () => {
     setUsername('');
     setPassword('');
     setAssuntosSelecionados([]);
+    setBasesSelecionadas([]);
     setAcessoTotal(false);
     setEditingUser(null);
   };
@@ -73,6 +86,7 @@ export default function AdminUsersModal({ isOpen, onClose, currentUsername }: Ad
     setUsername(user.username);
     setPassword('');
     setAssuntosSelecionados(user.assuntosPermitidos);
+    setBasesSelecionadas(user.basesPermitidas ?? []);
     setAcessoTotal(user.acessoTotal);
   };
 
@@ -97,7 +111,8 @@ export default function AdminUsersModal({ isOpen, onClose, currentUsername }: Ad
           username,
           password,
           assuntosPermitidos: assuntosSelecionados,
-          acessoTotal: acessoTotal || assuntosSelecionados.length === 0,
+          basesPermitidas: basesSelecionadas,
+          acessoTotal: acessoTotal || (assuntosSelecionados.length === 0 && basesSelecionadas.length === 0),
         }),
       });
       if (!res.ok) {
@@ -140,7 +155,7 @@ export default function AdminUsersModal({ isOpen, onClose, currentUsername }: Ad
             <ShieldCheck size={24} />
             <Box>
               <Text fontWeight="black" fontSize="lg">Usuários administrativos</Text>
-              <Text fontSize="xs" color="slate.300">Defina exatamente quais assuntos cada usuário pode visualizar</Text>
+              <Text fontSize="xs" color="slate.300">Defina quais bases e assuntos cada usuário pode visualizar</Text>
             </Box>
           </HStack>
           <Button aria-label="Fechar" variant="ghost" color="white" onClick={handleClose}><X /></Button>
@@ -181,9 +196,38 @@ export default function AdminUsersModal({ isOpen, onClose, currentUsername }: Ad
                       </HStack>
                     ))}
                   </VStack>
-                  {assuntosSelecionados.length === 0 && (
+                  {assuntosSelecionados.length === 0 && basesSelecionadas.length > 0 && (
+                    <Text mt={2} fontSize="xs" color={{ base: 'gray.600', _dark: 'slate.300' }} fontWeight="bold">
+                      Nenhum assunto selecionado: verá todos os assuntos das bases marcadas.
+                    </Text>
+                  )}
+                </Box>
+              )}
+
+              {!acessoTotal && (
+                <Box>
+                  <Text fontSize="xs" fontWeight="black" mb={2}>BASES PERMITIDAS</Text>
+                  <VStack align="stretch" gap={2}>
+                    {basesDisponiveis.map((base) => (
+                      <HStack key={base.value} as="label" cursor="pointer" p={2} borderRadius="lg" _hover={{ bg: { base: 'gray.50', _dark: 'slate.800' } }}>
+                        <input type="checkbox" checked={basesSelecionadas.includes(base.value)} onChange={() => toggleBase(base.value)} style={{ width: 18, height: 18 }} />
+                        <Text fontSize="sm" fontWeight="semibold">{base.label}</Text>
+                      </HStack>
+                    ))}
+                  </VStack>
+                  {basesSelecionadas.length === 0 && assuntosSelecionados.length > 0 && (
+                    <Text mt={2} fontSize="xs" color={{ base: 'gray.600', _dark: 'slate.300' }} fontWeight="bold">
+                      Nenhuma base selecionada: verá os assuntos marcados em todas as bases.
+                    </Text>
+                  )}
+                  {basesSelecionadas.length === 0 && assuntosSelecionados.length === 0 && (
                     <Text mt={2} fontSize="xs" color={{ base: 'green.700', _dark: 'green.300' }} fontWeight="bold">
-                      Nenhum assunto selecionado: este usuário poderá ver tudo.
+                      Nenhum assunto nem base selecionados: este usuário poderá ver tudo.
+                    </Text>
+                  )}
+                  {basesSelecionadas.length > 0 && assuntosSelecionados.length > 0 && (
+                    <Text mt={2} fontSize="xs" color={{ base: 'gray.600', _dark: 'slate.300' }} fontWeight="bold">
+                      O usuário verá apenas os assuntos marcados nas bases marcadas.
                     </Text>
                   )}
                 </Box>
@@ -208,7 +252,12 @@ export default function AdminUsersModal({ isOpen, onClose, currentUsername }: Ad
                       <Box>
                         <Text fontWeight="black">{user.username}</Text>
                         <HStack mt={2} gap={1} flexWrap="wrap">
-                          {user.acessoTotal ? <Badge bg="green.600" color="white">Acesso total</Badge> : user.assuntosPermitidos.map((assunto) => <Badge key={assunto} bg="blue.600" color="white">{assunto}</Badge>)}
+                          {user.acessoTotal ? <Badge bg="green.600" color="white">Acesso total</Badge> : (
+                            <>
+                              {(user.basesPermitidas ?? []).map((base) => <Badge key={base} bg="teal.600" color="white">{nomeDaBase(base)}</Badge>)}
+                              {user.assuntosPermitidos.map((assunto) => <Badge key={assunto} bg="blue.600" color="white">{assunto}</Badge>)}
+                            </>
+                          )}
                         </HStack>
                       </Box>
                       <HStack gap={1}>
