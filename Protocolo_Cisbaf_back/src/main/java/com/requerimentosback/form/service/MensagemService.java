@@ -1,5 +1,6 @@
 package com.requerimentosback.form.service;
 
+import com.requerimentosback.admin.repository.AdminRepository;
 import com.requerimentosback.admin.service.AdminDisplayNameService;
 import com.requerimentosback.form.model.Formulario;
 import com.requerimentosback.form.model.Mensagem;
@@ -27,6 +28,7 @@ public class MensagemService {
     private final EmailService emailService;
     private final DiscoService discoService;
     private final AdminDisplayNameService adminDisplayNameService;
+    private final AdminRepository adminRepository;
 
     public List<Mensagem> listarPorFormulario(String formularioId) {
         return mensagemRepository.findByFormularioIdOrderByDataEnvioAsc(formularioId);
@@ -66,6 +68,15 @@ public class MensagemService {
 
         Formulario formulario = formularioRepository.findById(formularioId)
                 .orElseThrow(() -> new EntityNotFoundException("Requerimento não encontrado: " + formularioId));
+
+        if (mensagemAdmin) {
+            // Mensagem como administrador só vale para requerimentos que o usuário pode ver (assunto e base).
+            var admin = adminRepository.findByUsername(principal.getName())
+                    .orElseThrow(() -> new AccessDeniedException("Administrador não encontrado"));
+            if (!admin.podeVer(formulario)) {
+                throw new AccessDeniedException("Sem acesso a este requerimento");
+            }
+        }
 
         String arquivoPath = null;
         if (arquivos != null && !arquivos.isEmpty()) {

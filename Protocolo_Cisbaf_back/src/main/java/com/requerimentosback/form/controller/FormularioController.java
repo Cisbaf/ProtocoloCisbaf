@@ -48,8 +48,9 @@ public class FormularioController {
     private String diretorioUpload;
 
     @GetMapping
-    public List<Formulario> findAll() {
-        return service.findAll();
+    public List<Formulario> findAll(Principal principal) {
+        // Rota autenticada: devolve só o que o usuário pode ver (antes devolvia tudo a qualquer usuário logado).
+        return service.findByAdmin(principal);
     }
 
     @GetMapping("/admin")

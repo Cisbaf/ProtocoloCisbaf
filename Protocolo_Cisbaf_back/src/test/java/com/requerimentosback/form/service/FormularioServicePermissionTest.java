@@ -85,7 +85,7 @@ class FormularioServicePermissionTest {
         var admin = AdminEntity.builder().username("jardim.iris").base(Unidades.IRIS).build();
         var esperado = List.of(Formulario.builder().assunto("Atestado").build());
         when(adminRepository.findByUsername("jardim.iris")).thenReturn(Optional.of(admin));
-        when(repository.findByUnidade(Unidades.IRIS)).thenReturn(esperado);
+        when(repository.findByUnidadeIn(Set.of(Unidades.IRIS))).thenReturn(esperado);
 
         assertSame(esperado, service.findByAdmin(principal));
     }
@@ -279,5 +279,61 @@ class FormularioServicePermissionTest {
         assertEquals("Este e-mail já está cadastrado para outro usuário.", exception.getMessage());
         verify(usuariosRepository, never()).save(org.mockito.ArgumentMatchers.any());
         verify(repository, never()).saveAndFlush(org.mockito.ArgumentMatchers.any());
+    }
+
+    @Test
+    void usuarioComBaseEAssuntoBuscaOsDoisFiltrosJuntos() {
+        var bases = Set.of(Unidades.QUEIMADOS);
+        var assuntos = Set.of("Atestado");
+        var admin = AdminEntity.builder().username("jardim.iris").assuntosPermitidos(assuntos).basesPermitidas(bases).build();
+        var esperado = List.of(Formulario.builder().assunto("Atestado").unidade(Unidades.QUEIMADOS).build());
+        when(adminRepository.findByUsername("jardim.iris")).thenReturn(Optional.of(admin));
+        when(repository.findByAssuntoInAndUnidadeIn(assuntos, bases)).thenReturn(esperado);
+
+        assertSame(esperado, service.findByAdmin(principal));
+        verify(repository, never()).findAll();
+    }
+
+    @Test
+    void usuarioSoComBaseVeTodosOsAssuntosDaBase() {
+        var bases = Set.of(Unidades.QUEIMADOS, Unidades.NILOPOLIS);
+        var admin = AdminEntity.builder().username("jardim.iris").basesPermitidas(bases).build();
+        var esperado = List.of(Formulario.builder().assunto("Benefício").unidade(Unidades.NILOPOLIS).build());
+        when(adminRepository.findByUsername("jardim.iris")).thenReturn(Optional.of(admin));
+        when(repository.findByUnidadeIn(bases)).thenReturn(esperado);
+
+        assertSame(esperado, service.findByAdmin(principal));
+    }
+
+    @Test
+    void usuarioSemAcessoTotalESemFiltrosNaoVeNada() {
+        var admin = AdminEntity.builder().username("jardim.iris").build();
+        when(adminRepository.findByUsername("jardim.iris")).thenReturn(Optional.of(admin));
+
+        assertEquals(List.of(), service.findByAdmin(principal));
+        verify(repository, never()).findAll();
+    }
+
+    @Test
+    void usuarioRestritoPorBaseNaoPodeAlterarRequerimentoDeOutraBase() {
+        var admin = AdminEntity.builder().username("jardim.iris").basesPermitidas(Set.of(Unidades.QUEIMADOS)).build();
+        var formulario = Formulario.builder().id("123").assunto("Atestado").unidade(Unidades.NILOPOLIS).build();
+        when(adminRepository.findByUsername("jardim.iris")).thenReturn(Optional.of(admin));
+        when(repository.findById("123")).thenReturn(Optional.of(formulario));
+
+        assertThrows(org.springframework.security.access.AccessDeniedException.class,
+                () -> service.updateByAdmin("123", formulario, principal));
+        verify(repository, never()).saveAndFlush(any());
+    }
+
+    @Test
+    void usuarioComBaseEAssuntoSoAcessaQuandoOsDoisConferem() {
+        var admin = AdminEntity.builder().username("x")
+                .assuntosPermitidos(Set.of("Atestado"))
+                .basesPermitidas(Set.of(Unidades.QUEIMADOS)).build();
+
+        org.junit.jupiter.api.Assertions.assertTrue(admin.podeVer(Formulario.builder().assunto("Atestado").unidade(Unidades.QUEIMADOS).build()));
+        org.junit.jupiter.api.Assertions.assertFalse(admin.podeVer(Formulario.builder().assunto("Atestado").unidade(Unidades.IRIS).build()));
+        org.junit.jupiter.api.Assertions.assertFalse(admin.podeVer(Formulario.builder().assunto("Benefício").unidade(Unidades.QUEIMADOS).build()));
     }
 }

@@ -278,11 +278,18 @@ public class FormularioService {
         if (admin.podeVerTudo()) {
             return repository.findAll();
         }
-        if (admin.getAssuntosPermitidos() != null && !admin.getAssuntosPermitidos().isEmpty()) {
-            return repository.findByAssuntoIn(admin.getAssuntosPermitidos());
+        // Os filtros de assunto e de base se somam (E); uma lista vazia não restringe aquele eixo.
+        var assuntos = admin.getAssuntosPermitidos();
+        var bases = admin.basesEfetivas();
+        boolean filtraAssunto = assuntos != null && !assuntos.isEmpty();
+        if (filtraAssunto && !bases.isEmpty()) {
+            return repository.findByAssuntoInAndUnidadeIn(assuntos, bases);
         }
-        if (admin.getBase() != null) {
-            return repository.findByUnidade(admin.getBase());
+        if (filtraAssunto) {
+            return repository.findByAssuntoIn(assuntos);
+        }
+        if (!bases.isEmpty()) {
+            return repository.findByUnidadeIn(bases);
         }
         return List.of();
     }
@@ -344,8 +351,8 @@ public class FormularioService {
     private void validarAcessoAoFormulario(String id, Principal principal) {
         var admin = adminRepository.findByUsername(principal.getName()).orElseThrow(EntityNotFoundException::new);
         var formulario = repository.findById(id).orElseThrow(EntityNotFoundException::new);
-        if (!admin.podeVerAssunto(formulario.getAssunto())) {
-            throw new org.springframework.security.access.AccessDeniedException("Sem acesso a este assunto");
+        if (!admin.podeVer(formulario)) {
+            throw new org.springframework.security.access.AccessDeniedException("Sem acesso a este requerimento");
         }
     }
 

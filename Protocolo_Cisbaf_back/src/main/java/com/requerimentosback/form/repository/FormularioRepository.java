@@ -18,6 +18,8 @@ public interface FormularioRepository extends JpaRepository<Formulario, String> 
 
     List<Formulario> findByUnidade(Unidades unidade);
     List<Formulario> findByAssuntoIn(Collection<String> assuntos);
+    List<Formulario> findByUnidadeIn(Collection<Unidades> unidades);
+    List<Formulario> findByAssuntoInAndUnidadeIn(Collection<String> assuntos, Collection<Unidades> unidades);
 
     // --- QUERIES GERAIS (TODAS AS UNIDADES) ---
 
