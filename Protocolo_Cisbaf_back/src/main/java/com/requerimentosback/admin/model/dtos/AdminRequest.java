@@ -9,6 +9,7 @@ public record AdminRequest(
         String username,
         String password,
         Set<String> assuntosPermitidos,
+        Set<String> basesPermitidas,
         boolean acessoTotal
 ) {
 }

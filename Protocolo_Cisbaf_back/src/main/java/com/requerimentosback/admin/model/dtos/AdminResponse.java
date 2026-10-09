@@ -10,6 +10,7 @@ public record AdminResponse(
         Long id,
         String username,
         Set<String> assuntosPermitidos,
+        Set<String> basesPermitidas,
         boolean acessoTotal
 ) {
 }

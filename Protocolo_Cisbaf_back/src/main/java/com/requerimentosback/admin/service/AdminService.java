@@ -4,6 +4,7 @@ import com.requerimentosback.admin.model.AdminEntity;
 import com.requerimentosback.admin.model.dtos.AdminRequest;
 import com.requerimentosback.admin.model.dtos.AdminResponse;
 import com.requerimentosback.admin.repository.AdminRepository;
+import com.requerimentosback.form.model.enuns.Unidades;
 import lombok.RequiredArgsConstructor;
 import org.jspecify.annotations.NonNull;
 import org.springframework.security.core.GrantedAuthority;
@@ -17,10 +18,12 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import java.security.Principal;
+import java.util.Arrays;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -70,7 +73,8 @@ public class AdminService implements UserDetailsService {
         }
 
         Set<String> assuntos = normalizarAssuntos(request.assuntosPermitidos());
-        boolean acessoTotal = request.acessoTotal() || assuntos.isEmpty();
+        Set<String> bases = normalizarBases(request.basesPermitidas());
+        boolean acessoTotal = request.acessoTotal() || (assuntos.isEmpty() && bases.isEmpty());
         if (primeiroUsuario && !acessoTotal) {
             throw new IllegalArgumentException("O primeiro usuário deve ter acesso total");
         }
@@ -79,6 +83,7 @@ public class AdminService implements UserDetailsService {
                 request.username().trim(),
                 request.password(),
                 assuntos,
+                bases,
                 acessoTotal
         );
         String password = passwordEncoder.encode(request.password().trim());
@@ -99,13 +104,15 @@ public class AdminService implements UserDetailsService {
         var entity = adminRepository.findByUsername(username)
                 .orElseThrow(() -> new UsernameNotFoundException("Usuário não encontrado: " + username));
         Set<String> assuntos = normalizarAssuntos(request.assuntosPermitidos());
-        boolean acessoTotal = request.acessoTotal() || assuntos.isEmpty();
+        Set<String> bases = normalizarBases(request.basesPermitidas());
+        boolean acessoTotal = request.acessoTotal() || (assuntos.isEmpty() && bases.isEmpty());
 
         if (current.getUsername().equalsIgnoreCase(entity.getUsername()) && !acessoTotal) {
             throw new IllegalArgumentException("Você não pode remover seu próprio acesso de administrador");
         }
 
         entity.setAssuntosPermitidos(new LinkedHashSet<>(assuntos));
+        entity.setBasesPermitidas(bases.stream().map(Unidades::valueOf).collect(Collectors.toCollection(LinkedHashSet::new)));
         entity.setAcessoTotal(acessoTotal);
         if (request.password() != null && !request.password().isBlank()) {
             entity.setPassword(passwordEncoder.encode(request.password().trim()));
@@ -157,6 +164,26 @@ public class AdminService implements UserDetailsService {
             normalizados.add(assuntoValido);
         }
         return normalizados;
+    }
+
+    /** Bases que podem ser atribuídas: todas as unidades, menos ADMIN (que equivale a acesso total). */
+    private Set<String> normalizarBases(Set<String> bases) {
+        if (bases == null) {
+            return Set.of();
+        }
+
+        Set<String> normalizadas = new LinkedHashSet<>();
+        for (String base : bases) {
+            if (base == null || base.isBlank()) {
+                continue;
+            }
+            Unidades unidade = Arrays.stream(Unidades.values())
+                    .filter(valor -> valor != Unidades.ADMIN && valor.name().equalsIgnoreCase(base.trim()))
+                    .findFirst()
+                    .orElseThrow(() -> new IllegalArgumentException("Base inválida: " + base));
+            normalizadas.add(unidade.name());
+        }
+        return normalizadas;
     }
 
     @Override
