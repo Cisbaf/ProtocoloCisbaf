@@ -147,7 +147,7 @@ public class EmailService {
                 "</div>" +
 
                 "<div style='padding: 30px;'>" +
-                "<p style='color: #334155; font-size: 16px; line-height: 1.6; margin-top: 0;'>Olá, <strong>" + safe(u.getNome()) + "</strong>!</p>" +
+                "<p style='color: #334155; font-size: 16px; line-height: 1.6; margin-top: 0;'>Olá, <strong>" + safe(u.getNomeExibicao()) + "</strong>!</p>" +
                 "<p style='color: #475569; font-size: 15px; line-height: 1.6;'>O Administrador acabou de enviar uma nova mensagem referente ao seu requerimento:</p>" +
 
                 // CAIXA DE ALERTA - Chamada para ação muito clara
@@ -206,7 +206,7 @@ public class EmailService {
                 "<h2 style='color: #ffffff; margin: 0; font-size: 22px; letter-spacing: 0.5px;'>Requerimento Recebido</h2>" +
                 "</div>" +
                 "<div style='padding: 30px;'>" +
-                "<p style='color: #334155; font-size: 16px; line-height: 1.6; margin-top: 0;'>Olá, <strong>" + safe(u.getNome()) + "</strong>!</p>" +
+                "<p style='color: #334155; font-size: 16px; line-height: 1.6; margin-top: 0;'>Olá, <strong>" + safe(u.getNomeExibicao()) + "</strong>!</p>" +
                 "<p style='color: #475569; font-size: 15px; line-height: 1.6;'>Seu requerimento foi registrado com sucesso e já está aguardando análise pela equipe.</p>" +
                 "<div style='background-color: #f1f5f9; padding: 20px; border-radius: 8px; margin: 25px 0;'>" +
                 "<table width='100%' border='0' cellpadding='0' cellspacing='0' style='font-size: 14px; text-align: left;'>" +
@@ -244,7 +244,7 @@ public class EmailService {
                 "<h2 style='color: #ffffff; margin: 0; font-size: 22px; letter-spacing: 0.5px;'>Requerimento Finalizado</h2>" +
                 "</div>" +
                 "<div style='padding: 30px;'>" +
-                "<p style='color: #334155; font-size: 16px; line-height: 1.6; margin-top: 0;'>Olá, <strong>" + safe(u.getNome()) + "</strong>!</p>" +
+                "<p style='color: #334155; font-size: 16px; line-height: 1.6; margin-top: 0;'>Olá, <strong>" + safe(u.getNomeExibicao()) + "</strong>!</p>" +
                 "<p style='color: #475569; font-size: 15px; line-height: 1.6;'>O seu requerimento foi analisado e <strong>finalizado</strong> pela equipe.</p>" +
                 "<div style='background-color: #f1f5f9; padding: 20px; border-radius: 8px; margin: 25px 0;'>" +
                 "<table width='100%' border='0' cellpadding='0' cellspacing='0' style='font-size: 14px; text-align: left;'>" +

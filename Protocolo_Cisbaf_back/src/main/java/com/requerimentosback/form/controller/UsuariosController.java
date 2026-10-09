@@ -1,6 +1,7 @@
 package com.requerimentosback.form.controller;
 
 import com.requerimentosback.form.model.Usuarios;
+import com.requerimentosback.form.model.enuns.TipoDocumento;
 import com.requerimentosback.form.service.UsuariosService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -25,10 +26,12 @@ public class UsuariosController {
     public ResponseEntity<Usuarios> findById(
             @PathVariable String cpf,
             @RequestParam(required = false) String nome,
-            @RequestParam(required = false) String sobrenome
+            @RequestParam(required = false) String sobrenome,
+            @RequestParam(required = false) String nomeFantasia,
+            @RequestParam(required = false) TipoDocumento tipoDocumento
     ) {
-        if (nome != null && sobrenome != null) {
-            return service.findByIdAndNomeAndSobrenome(cpf, nome, sobrenome)
+        if ((nome != null && sobrenome != null) || nomeFantasia != null) {
+            return service.findByIdAndIdentificacao(cpf, tipoDocumento, nome, sobrenome, nomeFantasia)
                     .map(ResponseEntity::ok)
                     .orElse(ResponseEntity.notFound().build());
         }

@@ -195,9 +195,12 @@ public class FormularioController {
             return new ErroDeValidacaoDto("matricula", "Esta matrícula já está cadastrada para outro usuário.");
         }
         if (usuario != null && valorDuplicado(mensagemBanco, usuario.getCpf())) {
-            return new ErroDeValidacaoDto("cpf", "Este CPF já está cadastrado.");
+            return new ErroDeValidacaoDto(
+                    "cpf",
+                    "Este " + usuario.getTipoDocumentoEfetivo().name() + " já está cadastrado."
+            );
         }
-        return new ErroDeValidacaoDto("cpf", "Já existe um usuário com os dados informados.");
+        return new ErroDeValidacaoDto("cpf", "Já existe um solicitante com os dados informados.");
     }
 
     private boolean valorDuplicado(String mensagemBanco, String valor) {

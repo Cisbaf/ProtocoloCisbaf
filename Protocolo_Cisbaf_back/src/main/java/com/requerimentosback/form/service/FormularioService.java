@@ -7,6 +7,7 @@ import com.requerimentosback.form.model.Formulario;
 import com.requerimentosback.form.model.Usuarios;
 import com.requerimentosback.form.model.enuns.FinArq;
 import com.requerimentosback.form.model.enuns.TipoGrafico;
+import com.requerimentosback.form.model.enuns.TipoDocumento;
 import com.requerimentosback.form.model.enuns.Unidades;
 import com.requerimentosback.form.model.erros.CampoDuplicadoException;
 import com.requerimentosback.form.repository.FormularioRepository;
@@ -95,6 +96,8 @@ public class FormularioService {
                 .map(usuarioExistente -> {
                     usuarioExistente.setNome(usuarioRequest.getNome());
                     usuarioExistente.setSobrenome(usuarioRequest.getSobrenome());
+                    usuarioExistente.setNomeFantasia(usuarioRequest.getNomeFantasia());
+                    usuarioExistente.setTipoDocumento(usuarioRequest.getTipoDocumento());
                     usuarioExistente.setEmail(usuarioRequest.getEmail());
 
                     usuarioExistente.setTelefone(usuarioRequest.getTelefone() != null
@@ -122,6 +125,29 @@ public class FormularioService {
     }
 
     private void normalizarEValidarUsuario(Usuarios usuario) {
+        if (usuario == null) {
+            throw new IllegalArgumentException("Os dados do solicitante são obrigatórios.");
+        }
+
+        String documento = usuario.getCpf() == null ? "" : usuario.getCpf().replaceAll("\\D", "");
+        usuario.setCpf(documento);
+        TipoDocumento tipoDocumento = usuario.getTipoDocumento() != null
+                ? usuario.getTipoDocumento()
+                : (documento.length() == 14 ? TipoDocumento.CNPJ : TipoDocumento.CPF);
+        usuario.setTipoDocumento(tipoDocumento);
+
+        if (tipoDocumento == TipoDocumento.CNPJ) {
+            String nomeFantasia = usuario.getNomeFantasia() == null ? "" : usuario.getNomeFantasia().trim();
+            usuario.setNomeFantasia(nomeFantasia);
+            // Mantém as colunas legadas preenchidas e compatíveis com a base atual.
+            usuario.setNome(nomeFantasia);
+            usuario.setSobrenome("");
+        } else {
+            usuario.setNome(usuario.getNome() == null ? null : usuario.getNome().trim());
+            usuario.setSobrenome(usuario.getSobrenome() == null ? null : usuario.getSobrenome().trim());
+            usuario.setNomeFantasia(null);
+        }
+
         if (usuario.getEmail() != null) {
             usuario.setEmail(usuario.getEmail().trim());
             usuariosRepository.findByEmailIgnoreCase(usuario.getEmail())

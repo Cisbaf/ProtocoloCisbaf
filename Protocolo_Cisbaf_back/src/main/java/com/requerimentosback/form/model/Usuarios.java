@@ -1,11 +1,14 @@
 package com.requerimentosback.form.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.requerimentosback.form.model.enuns.TipoDocumento;
+import com.requerimentosback.form.model.validation.IdentificacaoUsuarioValida;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.Pattern;
 import lombok.*;
-import org.hibernate.validator.constraints.br.CPF;
 
 @Entity
+@IdentificacaoUsuarioValida
 @Getter
 @Setter
 @AllArgsConstructor
@@ -13,15 +16,21 @@ import org.hibernate.validator.constraints.br.CPF;
 @Builder
 public class Usuarios {
     @Id
-    @CPF(message = "CPF inválido")
     @Column(nullable = false, unique = true, updatable = false)
     private String cpf;
+
+    @Enumerated(EnumType.STRING)
+    @Column(length = 10)
+    private TipoDocumento tipoDocumento;
 
     @Column(nullable = false, length = 100)
     private String nome;
 
     @Column(nullable = false, length = 100)
     private String sobrenome;
+
+    @Column(length = 100)
+    private String nomeFantasia;
 
     @Column(unique = true, length = 30)
     private String matricula;
@@ -53,4 +62,21 @@ public class Usuarios {
             message = "E-mail inválido."
     )
     private String emailAlt;
+
+    @JsonIgnore
+    @Transient
+    public TipoDocumento getTipoDocumentoEfetivo() {
+        if (tipoDocumento != null) return tipoDocumento;
+        String documento = cpf == null ? "" : cpf.replaceAll("\\D", "");
+        return documento.length() == 14 ? TipoDocumento.CNPJ : TipoDocumento.CPF;
+    }
+
+    @JsonIgnore
+    @Transient
+    public String getNomeExibicao() {
+        if (getTipoDocumentoEfetivo() == TipoDocumento.CNPJ) {
+            return nomeFantasia != null && !nomeFantasia.isBlank() ? nomeFantasia : nome;
+        }
+        return ((nome == null ? "" : nome) + " " + (sobrenome == null ? "" : sobrenome)).trim();
+    }
 }
