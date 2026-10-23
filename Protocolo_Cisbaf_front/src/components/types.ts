@@ -38,6 +38,7 @@ export interface Formulario {
   beneficio?: string;     // só obrigatório quando assunto === 'beneficios'
   descricao: string;
   finalizarArquivar?: 'FINALIZADO' | 'ARQUIVADO' | 'EM_ANALISE' | 'TERMINADO';
+  mensagemNaoRespondida?: boolean; // última mensagem do chat é do solicitante
   motivo?: string;        // preenchido pelo RH na recusa
   historicoAssinaturas?: AssinaturaProcesso[];
   arquivoPath?: string;   // preenchido pelo backend após upload

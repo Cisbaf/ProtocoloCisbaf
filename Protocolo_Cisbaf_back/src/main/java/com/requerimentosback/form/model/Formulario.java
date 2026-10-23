@@ -53,6 +53,9 @@ public class Formulario {
     @Column(nullable = false)
     private FinArq finalizarArquivar;
 
+    // Última mensagem do chat veio do solicitante e ainda não foi respondida por um administrador.
+    private Boolean mensagemNaoRespondida;
+
     @ManyToOne(cascade = CascadeType.PERSIST)
     @JoinColumn(name = "userId")
     private Usuarios usuario;

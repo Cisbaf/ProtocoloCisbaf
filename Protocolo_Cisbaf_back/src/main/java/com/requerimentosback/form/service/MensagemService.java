@@ -5,6 +5,7 @@ import com.requerimentosback.admin.service.AdminDisplayNameService;
 import com.requerimentosback.form.model.Formulario;
 import com.requerimentosback.form.model.Mensagem;
 import com.requerimentosback.form.model.MensagemRequestDTO;
+import com.requerimentosback.form.model.enuns.FinArq;
 import com.requerimentosback.form.model.enuns.TipoRemetente;
 import com.requerimentosback.form.repository.FormularioRepository;
 import com.requerimentosback.form.repository.MensagemRepository;
@@ -101,11 +102,23 @@ public class MensagemService {
 
         mensagem = mensagemRepository.save(mensagem);
 
+        atualizarSituacaoDoRequerimento(formulario, mensagemAdmin);
+
         if (mensagemAdmin && deveEnviarEmail) {
             emailService.enviarEmailPorCadaMensagemAdmin(formulario);
         }
 
         return mensagem;
+    }
+
+    private void atualizarSituacaoDoRequerimento(Formulario formulario, boolean mensagemAdmin) {
+        formulario.setMensagemNaoRespondida(!mensagemAdmin);
+        // Resposta do solicitante tira o protocolo do arquivo para a equipe perceber.
+        if (!mensagemAdmin && formulario.getFinalizarArquivar() == FinArq.ARQUIVADO) {
+            formulario.setFinalizarArquivar(FinArq.EM_ANALISE);
+            formulario.setDataMudanca(null);
+        }
+        formularioRepository.save(formulario);
     }
 
     private String resolverNomeRemetente(
