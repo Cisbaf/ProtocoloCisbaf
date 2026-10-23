@@ -3,7 +3,7 @@
 import { Formulario, getNomeUsuario } from '@/components/types';
 import { toaster } from '@/components/ui/toaster';
 import { Badge, Box, Button, Card, Center, Container, HStack, Heading, SimpleGrid, Spinner, Table, Text, VStack, chakra } from '@chakra-ui/react';
-import { AlertCircle, Archive, ArchiveRestore, BarChartIcon, CheckCircle, Eye, RefreshCw, Search, Trash, Undo2, User, Users } from 'lucide-react';
+import { AlertCircle, Archive, ArchiveRestore, BarChartIcon, CheckCircle, ChevronLeft, ChevronRight, Eye, RefreshCw, Search, Trash, Undo2, User, Users } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { ChangeEvent, useEffect, useState } from 'react';
 import Header from './Header';
@@ -14,6 +14,8 @@ import StatsModal from './modal/StatsModal';
 
 const StyledInput = chakra('input');
 const StyledSelect = chakra('select');
+
+const ITENS_POR_PAGINA = 20;
 
 export default function Inspector() {
   const router = useRouter();
@@ -215,6 +217,14 @@ export default function Inspector() {
 
     return aDate - bDate;
   });
+
+  // A página volta para 1 sempre que aba ou filtros mudam (a chave muda e a página guardada deixa de valer).
+  const chaveFiltros = [isArchiveMode, nameFilter, baseFilter, assuntoFilter, statusFilter].join('|');
+  const [paginaAtual, setPaginaAtual] = useState({ chave: chaveFiltros, pagina: 1 });
+  const totalPaginas = Math.max(1, Math.ceil(sorted.length / ITENS_POR_PAGINA));
+  const pagina = Math.min(paginaAtual.chave === chaveFiltros ? paginaAtual.pagina : 1, totalPaginas);
+  const irParaPagina = (n: number) => setPaginaAtual({ chave: chaveFiltros, pagina: n });
+  const paginados = sorted.slice((pagina - 1) * ITENS_POR_PAGINA, pagina * ITENS_POR_PAGINA);
 
   const renderStatus = (status?: 'FINALIZADO' | 'ARQUIVADO' | 'EM_ANALISE' | 'TERMINADO') => {
     if (status === 'FINALIZADO') return <Badge bg="green.100" color="green.700" borderRadius="full" px={3} py={1} fontWeight="black" display="flex" alignItems="center" gap={1}><CheckCircle size={12} /> FINALIZADO</Badge>;
@@ -451,7 +461,7 @@ export default function Inspector() {
                   <>
                     {/* ── VISUALIZAÇÃO MOBILE (CARDS) ── */}
                     <VStack display={{ base: "flex", md: "none" }} gap={4} align="stretch">
-                      {sorted.map((r) => (
+                      {paginados.map((r) => (
                         <Box
                           key={r.id}
                           p={4}
@@ -462,7 +472,7 @@ export default function Inspector() {
                           shadow="sm"
                         >
                           <HStack justify="space-between" mb={3}>
-                            <Text fontWeight="black" color={{ base: "blue.600", _dark: "blue.400" }} fontSize="xs">ID: {r.id}</Text>
+                            <HStack gap={2}><Text fontWeight="black" color={{ base: "blue.600", _dark: "blue.400" }} fontSize="xs">ID: {r.id}</Text>{r.mensagemNaoRespondida && <Box as="span" title="Mensagem não respondida" aria-label="Mensagem não respondida" w={3} h={3} borderRadius="full" bg="green.500" boxShadow="0 0 0 3px rgba(34,197,94,0.3)" flexShrink={0} />}</HStack>
                             {renderStatus(r.finalizarArquivar)}
                           </HStack>
 
@@ -536,10 +546,10 @@ export default function Inspector() {
                           </Table.Row>
                         </Table.Header>
                         <Table.Body>
-                          {sorted.map((r) => (
+                          {paginados.map((r) => (
                             <Table.Row key={r.id} _hover={{ bg: { base: "blue.50", _dark: "blue.900/20" } }} transition="all 0.2s" bg={(isPending(r.finalizarArquivar)) ? { base: "red.50", _dark: "red.900/20" } : undefined}>
                               <Table.Cell px={6}>
-                                <Text fontWeight="black" color={{ base: "blue.600", _dark: "blue.400" }} fontSize="sm">{r.id}</Text>
+                                <HStack gap={2}><Text fontWeight="black" color={{ base: "blue.600", _dark: "blue.400" }} fontSize="sm">{r.id}</Text>{r.mensagemNaoRespondida && <Box as="span" title="Mensagem não respondida" aria-label="Mensagem não respondida" w={3} h={3} borderRadius="full" bg="green.500" boxShadow="0 0 0 3px rgba(34,197,94,0.3)" flexShrink={0} />}</HStack>
                               </Table.Cell>
                               <Table.Cell px={6}>
                                 <Text fontWeight="black" color={{ base: "slate.600", _dark: "slate.400" }} fontSize="sm">{formatarDataCriacao(r.dataCriacao)}</Text>
@@ -591,6 +601,18 @@ export default function Inspector() {
                         </Table.Body>
                       </Table.Root>
                     </Box>
+
+                    {/* ── PAGINAÇÃO ── */}
+                    <HStack justify="space-between" flexWrap="wrap" gap={3} pt={4}>
+                      <Text fontSize="sm" fontWeight="bold" color={{ base: "gray.500", _dark: "slate.400" }}>
+                        {(pagina - 1) * ITENS_POR_PAGINA + 1}–{Math.min(pagina * ITENS_POR_PAGINA, sorted.length)} de {sorted.length}
+                      </Text>
+                      <HStack gap={2}>
+                        <Button size="sm" variant="outline" borderRadius="lg" onClick={() => irParaPagina(pagina - 1)} disabled={pagina <= 1} aria-label="Página anterior"><ChevronLeft size={16} /></Button>
+                        <Text fontSize="sm" fontWeight="black" color={{ base: "slate.700", _dark: "slate.200" }}>Página {pagina} de {totalPaginas}</Text>
+                        <Button size="sm" variant="outline" borderRadius="lg" onClick={() => irParaPagina(pagina + 1)} disabled={pagina >= totalPaginas} aria-label="Próxima página"><ChevronRight size={16} /></Button>
+                      </HStack>
+                    </HStack>
                   </>
                 )}
               </VStack>
